@@ -35,7 +35,7 @@ python3.11 -m pip install launch-cli
 
 2. You can now use the `launch` command family from your CLI. Issue `launch --help` to confirm the launch command is available in your shell.
 
-In the unlikely event that you need to install a specific version of `launch-cli` you may specify a version found on our [releases page](https://github.com/nexient-llc/launch-cli/releases):
+In the unlikely event that you need to install a specific version of `launch-cli` you may specify a version found on our [releases page](https://github.com/launchbynttdata/launch-cli/releases):
 
 ```sh
 python3.11 -m pip install launch-cli==0.1.0
@@ -105,7 +105,7 @@ Usage: launch service create [OPTIONS]
 
 Options:
   --organization TEXT   GitHub organization containing your repository.
-                        Defaults to the nexient-llc organization.
+                        Defaults to the launchbynttdata organization.
   --name TEXT           Name of the service to  be created.  [required]
   --description TEXT    A short description of the repository.
   --public              The visibility of the repository.
@@ -136,11 +136,11 @@ Example of launch_az_inputs.json:
 {
     "sources":{
         "service":{
-            "module": "https://github.com/nexient-llc/tf-azurerm-module-resource_group.git",
+            "module": "https://github.com/launchbynttdata/tf-azurerm-module-resource_group.git",
             "tag" : "0.2.0"
         },
         "pipeline":{
-            "module": "https://github.com/nexient-llc/tf-azureado-module_ref-pipeline.git",
+            "module": "https://github.com/launchbynttdata/tf-azureado-module_ref-pipeline.git",
             "tag" : "0.1.0"
         }
     },
@@ -179,15 +179,15 @@ Example of launch_aws_inputs.json:
 {
     "sources":{
         "service":{
-            "module": "https://github.com/nexient-llc/tf-aws-wrapper_module-s3_bucket.git",
+            "module": "https://github.com/launchbynttdata/tf-aws-wrapper_module-s3_bucket.git",
             "tag" : "0.1.1"
         },
         "pipeline":{
-            "module": "https://github.com/nexient-llc/tf-aws-wrapper_module-codepipelines.git",
+            "module": "https://github.com/launchbynttdata/tf-aws-wrapper_module-codepipelines.git",
             "tag" : "0.1.1"
         },
         "webhook":{
-            "module": "https://github.com/nexient-llc/tf-aws-wrapper_module-bulk_lambda_function.git",
+            "module": "https://github.com/launchbynttdata/tf-aws-wrapper_module-bulk_lambda_function.git",
             "tag" : "0.1.0"
         }
     },
@@ -241,7 +241,7 @@ Usage: launch service update [OPTIONS]
 
 Options:
   --organization TEXT   GitHub organization containing your repository.
-                        Defaults to the nexient-llc organization.
+                        Defaults to the launchbynttdata organization.
   --name TEXT           Name of the service to  be created.  [required]
   --main-branch TEXT    The name of the main branch.
   --remote-branch TEXT  The name of the remote branch when creating/updating a
@@ -275,7 +275,7 @@ Usage: launch service generate [OPTIONS]
 
 Options:
   --organization TEXT    GitHub organization containing your repository.
-                         Defaults to the nexient-llc organization.
+                         Defaults to the launchbynttdata organization.
   --name TEXT            Name of the service to  be created.  [required]
   --service-branch TEXT  The name of the service branch.
   --skip-git             If set, it will ignore cloning and checking out the
@@ -322,7 +322,7 @@ Usage: launch terragrunt plan [OPTIONS]
 
 Options:
   --organization TEXT        GitHub organization containing your repository.
-                             Defaults to the nexient-llc organization.
+                             Defaults to the launchbynttdata organization.
   --name TEXT                Name of the service repository to run the
                              terragrunt command against.  [required]
   --git-token TEXT           The git token to use to clone the repositories.

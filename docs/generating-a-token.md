@@ -16,7 +16,7 @@ To configure a token to work with Launch-CLI, follow these steps:
 
 5. Choose an **Expiration**, we highly recommend setting yourself a reminder so that you can generate a new token prior to this token's expiration
 
-6. For **Resource owner**, you must choose the organization, not your personal account; select `nexient-llc` from the dropdown
+6. For **Resource owner**, you must choose the organization, not your personal account; select `launchbynttdata` from the dropdown
 
 7. For **Repository access**, choose `All repositories`
 
