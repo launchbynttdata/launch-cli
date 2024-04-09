@@ -18,7 +18,7 @@ def fakedata():
 
 @pytest.fixture
 def setup_file_structure(fakedata, tmp_path):
-    base_path = f"tmp_path/base/"
+    base_path = str(tmp_path) + "/base/"
     current_path = "current/path"
     (Path(base_path) / current_path).mkdir(parents=True, exist_ok=True)
 

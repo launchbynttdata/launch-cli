@@ -6,9 +6,9 @@ import uuid
 from pathlib import Path
 from typing import List
 
-import yaml
 from git.repo import Repo
 from jinja2 import Environment, FileSystemLoader
+from ruamel.yaml import YAML
 
 from launch import BUILD_DEPENDENCIES_DIR, SERVICE_SKELETON, SKELETON_BRANCH
 from launch.automation.common.functions import (
@@ -173,14 +173,14 @@ def write_text(
 ) -> None:
     if output_format == "json":
         serialized_data = json.dumps(data, indent=indent)
+        path.write_text(serialized_data)
     elif output_format == "yaml":
-        serialized_data = yaml.dump(data, indent=indent)
+        yaml = YAML()
+        yaml.dump(data=data, stream=path)
     else:
         message = f"Unsupported output format: {output_format}"
         logger.error(message)
         raise ValueError(message)
-
-    path.write_text(serialized_data)
 
 
 def input_data_validation(input_data: dict) -> dict:

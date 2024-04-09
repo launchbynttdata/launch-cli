@@ -1,6 +1,6 @@
 from semver import Version
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 
 SEMANTIC_VERSION = Version.parse(VERSION)
 GITHUB_ORG_NAME = "launchbynttdata"
