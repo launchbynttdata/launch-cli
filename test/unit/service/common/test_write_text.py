@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
+from launch.automation.common.functions import load_yaml
 from launch.service.common import write_text
 
 
@@ -20,16 +21,16 @@ def test_write_text_json(fakedata):
     test_path.write_text.assert_called_once_with(serialized_data)
 
 
-def test_write_text_yaml(fakedata):
-    serialized_data = yaml.dump(fakedata["copy_and_render"]["context_data"])
-    test_path = MagicMock(spec=Path)
-    test_path.write_text.return_value = MagicMock()
+def test_write_text_yaml(fakedata, tmp_path):
+    serialized_data = fakedata["copy_and_render"]["context_data"]
+    target_path = tmp_path.joinpath("sample.yaml")
     write_text(
-        path=test_path,
-        data=fakedata["copy_and_render"]["context_data"],
+        path=target_path,
+        data=serialized_data,
         output_format="yaml",
     )
-    test_path.write_text.assert_called_once_with(serialized_data)
+    deserialized = load_yaml(yaml_file=target_path)
+    assert deserialized == serialized_data
 
 
 def test_write_text_unsupported_format(fakedata):
