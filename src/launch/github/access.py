@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import requests
 from github.Branch import Branch
@@ -13,6 +14,8 @@ logging.getLogger("github.Requester").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_PLATFORM_TEAM_SLUGS = ["platform-team", "platform-engineering", "platform"]
+
 
 class NoMatchingTeamException(Exception):
     pass
@@ -22,7 +25,8 @@ class NoMatchingTeamException(Exception):
 REPO_PREFIX_ADMIN_TEAM_SLUG: dict[str, str] = {
     "tf-": "terraform-administrators",
     "depr-tf-": "terraform-administrators",
-    "caf-": "caf-administrators",
+    "lcaf-": "lcaf-administrators",
+    "asdf-": "tools-administrators",
 }
 
 
@@ -164,6 +168,26 @@ def set_require_approval_of_most_recent_reviewable_push(
         raise RuntimeError(
             f"Failed to set_require_approval_of_most_recent_reviewable_push to {url}"
         ) from e
+
+
+def select_platform_team(
+    organization: Organization, team_name: Optional[str] = None
+) -> Team:
+    if team_name is not None:
+        try:
+            return organization.get_team_by_slug(slug=team_name)
+        except:
+            raise NoMatchingTeamException(
+                f"No Platform team matching {team_name} in {organization}."
+            )
+    for team_slug in DEFAULT_PLATFORM_TEAM_SLUGS:
+        try:
+            return organization.get_team_by_slug(slug=team_slug)
+        except:
+            pass
+    raise NoMatchingTeamException(
+        f"Unable to find a suitable Platform team matching {DEFAULT_PLATFORM_TEAM_SLUGS} in {organization}."
+    )
 
 
 def select_administrative_team(

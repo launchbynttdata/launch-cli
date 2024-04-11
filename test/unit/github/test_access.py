@@ -5,6 +5,7 @@ from contextlib import ExitStack as does_not_raise
 import pytest
 import requests
 import responses
+from github.GithubException import UnknownObjectException
 
 from launch.github import access
 
@@ -167,3 +168,26 @@ def test_select_administrative_team(repo_name, expected_slug, raises, mocker):
         )
         organization.get_team_by_slug.assert_called_with(expected_slug)
         assert result is not None
+
+
+class TestSelectPlatformTeam:
+    def test_team_missing(self, mocker):
+        organization = mocker.MagicMock()
+        organization.get_team_by_slug.side_effect = UnknownObjectException
+        with pytest.raises(access.NoMatchingTeamException) as exc_ctx:
+            access.select_platform_team(organization=organization)
+            assert str(access.DEFAULT_PLATFORM_TEAM_SLUGS) in exc_ctx
+        assert organization.get_team_by_slug.call_count == 3
+
+    def test_specified_platform_team_not_found(self, mocker):
+        organization = mocker.MagicMock()
+        organization.get_team_by_slug.side_effect = UnknownObjectException
+        slug = "platform_slug"
+        with pytest.raises(access.NoMatchingTeamException, match=slug):
+            access.select_platform_team(organization=organization, team_name=slug)
+
+    def test_happy_path(self, mocker):
+        organization = mocker.MagicMock()
+        result = access.select_platform_team(organization=organization)
+        assert result is not None
+        assert organization.get_team_by_slug.call_count == 1
