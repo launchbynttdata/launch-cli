@@ -173,6 +173,20 @@ def set_require_approval_of_most_recent_reviewable_push(
 def select_platform_team(
     organization: Organization, team_name: Optional[str] = None
 ) -> Team:
+    """Selects the correct "Platform" team for this organization. If not using a Launch GitHub organization,
+    you may need to supply the team_name variable to search for a team named in a particular way.
+
+    Args:
+        organization (Organization): Organization in which the team resides.
+        team_name (Optional[str], optional): Optional explicit team name to look up. Defaults to None, which will search the known Launch platform team names for all our Organizations.
+
+    Raises:
+        NoMatchingTeamException: Raised when an explicit team wasn't found in the organization.
+        NoMatchingTeamException: Raised when the default teams weren't found in the organization.
+
+    Returns:
+        Team: Team object.
+    """
     if team_name is not None:
         try:
             return organization.get_team_by_slug(slug=team_name)
@@ -193,6 +207,18 @@ def select_platform_team(
 def select_administrative_team(
     repository: Repository, organization: Organization
 ) -> Team:
+    """Selects the correct administrative team for the repository based on the repository's name prefix.
+
+    Args:
+        repository (Repository): Repository to use for name prefix matching.
+        organization (Organization): Organization in which the team resides.
+
+    Raises:
+        NoMatchingTeamException: Raised when the repository's name doesn't match any of the expected prefixes and no administrative team could be selected.
+
+    Returns:
+        Team: Team object.
+    """
     for name_prefix, team_slug in REPO_PREFIX_ADMIN_TEAM_SLUG.items():
         if repository.name.startswith(name_prefix):
             return organization.get_team_by_slug(team_slug)
