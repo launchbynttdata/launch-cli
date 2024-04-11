@@ -14,12 +14,13 @@ logging.getLogger("github.Requester").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_PLATFORM_TEAM_SLUGS = ["platform-team", "platform-engineering", "platform"]
-
 
 class NoMatchingTeamException(Exception):
     pass
 
+
+# The main "Platform" team slug differs based on which of our organizations is being queried.
+DEFAULT_PLATFORM_TEAM_SLUGS = ["platform-team", "platform-engineering", "platform"]
 
 # Maps repo prefixes to the slug of the team responsible for administration
 REPO_PREFIX_ADMIN_TEAM_SLUG: dict[str, str] = {
@@ -28,6 +29,9 @@ REPO_PREFIX_ADMIN_TEAM_SLUG: dict[str, str] = {
     "lcaf-": "lcaf-administrators",
     "asdf-": "tools-administrators",
 }
+
+# Launch Organizations utilizing RuleSets instead of branch protections on individual repositories:
+LAUNCH_ORGS_USING_RULESETS = ["launchbynttdata", "nttdata-launch"]
 
 
 def grant_maintain(team: Team, repository: Repository, dry_run=True) -> None:
@@ -103,7 +107,20 @@ def grant_admin(team: Team, repository: Repository, dry_run=True) -> None:
 
 
 def configure_default_branch_protection(repository: Repository, dry_run=True) -> None:
+    """Configures the default branch protection on a given repository. Certain Launch organizations already have branch protections applied as a RuleSet, so this operation isn't necessary for those organizations.
+
+    Args:
+        repository (Repository): Repository on which to configure branch protections.
+        dry_run (bool, optional): Perform a dry run that reports on what this call would do, but does not apply changes. Defaults to True.
+    """
     default_branch: Branch = repository.get_branch(repository.default_branch)
+
+    if repository.organization.login in LAUNCH_ORGS_USING_RULESETS:
+        logger.warning(
+            f"Repository at {repository.url} belongs to the {repository.organization.login} organization, which does not use branch protection rules. No action will be taken."
+        )
+        return None
+
     if not default_branch.name == "main":
         logger.warning(
             f"Repository at {repository.url} uses default branch {default_branch.name}, should be main!"
