@@ -153,7 +153,7 @@ def test_set_require_approval_of_most_recent_reviewable_push_request_exception_r
             "terraform-administrators",
             does_not_raise(),
         ),
-        ("caf-component-platform", "caf-administrators", does_not_raise()),
+        ("lcaf-component-platform", "lcaf-administrators", does_not_raise()),
         ("bad-prefix", None, pytest.raises(access.NoMatchingTeamException)),
     ],
 )
