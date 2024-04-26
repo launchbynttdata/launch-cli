@@ -407,11 +407,6 @@ def update(
     help="If set, it will ignore cloning and checking out the git repository and it's properties.",
 )
 @click.option(
-    "--work-dir",
-    default=Path.cwd(),
-    help="The work directory to generate launch platform files. Defaults to the current directory.",
-)
-@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -424,7 +419,6 @@ def generate(
     name: str,
     service_branch: str,
     skip_git: bool,
-    work_dir: Path,
     dry_run: bool,
 ):
     """Dynamically generates terragrunt files based off a service."""
@@ -432,8 +426,8 @@ def generate(
     if dry_run:
         click.secho("Performing a dry run, nothing will be created", fg="yellow")
 
-    singlerun_path = f"{work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX}"
     service_path = f"{Path.cwd()}/{name}"
+    singlerun_path = f"{service_path}{CODE_GENERATION_DIR_SUFFIX}"
 
     if Path(singlerun_path).exists():
         click.secho(
@@ -442,13 +436,13 @@ def generate(
         )
         return
 
-    g = get_github_instance()
-    repo = g.get_repo(f"{organization}/{name}")
-
     if not skip_git:
+        g = get_github_instance()
+        repo = g.get_repo(f"{organization}/{name}")
+
         clone_repository(
             repository_url=repo.clone_url,
-            target=f"{work_dir}/{name}",
+            target=name,
             branch=service_branch,
         )
     else:
@@ -459,7 +453,7 @@ def generate(
             )
             return
 
-    with open(f"{work_dir}/{name}/.launch_config", "r") as f:
+    with open(f"{name}/.launch_config", "r") as f:
         input_data = json.load(f)
         input_data = input_data_validation(input_data)
 
@@ -508,11 +502,6 @@ def generate(
 @click.command()
 @click.option("--name", required=True, help="Name of the service to  be created.")
 @click.option(
-    "--work-dir",
-    default=Path.cwd(),
-    help="The work directory to clean the launch generated files from. Defaults to the current directory.",
-)
-@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -520,7 +509,6 @@ def generate(
 )
 def cleanup(
     name: str,
-    work_dir: Path,
     dry_run: bool,
 ):
     """Cleans up launch-cli reources that are created from code generation."""
@@ -529,11 +517,14 @@ def cleanup(
         click.secho("Performing a dry run, nothing will be cleaned", fg="yellow")
         return
 
+    code_generation_dir_name = f"{name}{CODE_GENERATION_DIR_SUFFIX}"
+    code_generation_path = Path.cwd().joinpath(code_generation_dir_name)
+
     try:
-        shutil.rmtree(f"{work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX}")
-        logger.info(f"Deleted {work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX} directory.")
+        shutil.rmtree(code_generation_path)
+        logger.info(f"Deleted the {code_generation_path} directory.")
     except FileNotFoundError:
         click.secho(
-            f"Repository not found: {work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX}",
+            f"Directory not found: {code_generation_path}",
             fg="red",
         )
