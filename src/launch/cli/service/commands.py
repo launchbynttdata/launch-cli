@@ -177,6 +177,84 @@ def create(
 
 
 @click.command()
+@click.option("--name", required=True, help="Name of the service to  be created.")
+@click.option(
+    "--in-file",
+    required=True,
+    type=click.File("r"),
+    help="Inputs to be used with the skeleton during creation.",
+)
+@click.option(
+    "--no-uuid",
+    is_flag=True,
+    default=False,
+    help="If set, it will not generate a UUID to be used in skeleton files.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Perform a dry run that reports on what it would do, but does not create webhooks.",
+)
+def create_no_git(
+    name: str,
+    in_file: IO[Any],
+    no_uuid: bool,
+    dry_run: bool,
+):
+    """Creates a new service without any Git interactions."""
+
+    if dry_run:
+        click.secho("Performing a dry run, nothing will be created", fg="yellow")
+        # TODO: add a dry run for the create command
+        return
+
+    service_path = f"{Path.cwd()}/{name}"
+    input_data = json.load(in_file)
+    input_data = input_data_validation(input_data)
+
+    needs_create = not Path(service_path).exists()
+    if needs_create:
+        Path(service_path).mkdir(exist_ok=False)
+    is_service_path_git_repo = (
+        Path(service_path).joinpath(".git").exists()
+        and Path(service_path).joinpath(".git").is_dir()
+    )
+
+    traverse_with_callback(
+        dictionary=input_data["platform"],
+        callback=callback_create_directories,
+        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
+    )
+
+    input_data["platform"] = traverse_with_callback(
+        dictionary=input_data["platform"],
+        callback=callback_copy_properties_files,
+        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
+        uuid=not no_uuid,
+    )
+    write_text(
+        data=input_data,
+        path=Path(f"{service_path}/.launch_config"),
+    )
+    click.echo(f"Service configuration files have been written to {service_path}")
+
+    if is_service_path_git_repo:
+        click.echo(
+            f"{service_path} appears to be a git repository! You will need to add, commit, and push these files manually."
+        )
+    else:
+        if needs_create:
+            click.echo(
+                f"{service_path} was created, but has not yet been initialized as a git repository. You will need to initialize it."
+            )
+        else:
+            click.echo(
+                f"{service_path} already existed, but has not yet been initialized as a git repository. You will need to initialize it."
+            )
+
+
+@click.command()
 @click.option(
     "--organization",
     default=GITHUB_ORG_NAME,
