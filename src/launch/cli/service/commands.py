@@ -177,6 +177,84 @@ def create(
 
 
 @click.command()
+@click.option("--name", required=True, help="Name of the service to  be created.")
+@click.option(
+    "--in-file",
+    required=True,
+    type=click.File("r"),
+    help="Inputs to be used with the skeleton during creation.",
+)
+@click.option(
+    "--no-uuid",
+    is_flag=True,
+    default=False,
+    help="If set, it will not generate a UUID to be used in skeleton files.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Perform a dry run that reports on what it would do, but does not create webhooks.",
+)
+def create_no_git(
+    name: str,
+    in_file: IO[Any],
+    no_uuid: bool,
+    dry_run: bool,
+):
+    """Creates a new service without any Git interactions."""
+
+    if dry_run:
+        click.secho("Performing a dry run, nothing will be created", fg="yellow")
+        # TODO: add a dry run for the create command
+        return
+
+    service_path = f"{Path.cwd()}/{name}"
+    input_data = json.load(in_file)
+    input_data = input_data_validation(input_data)
+
+    needs_create = not Path(service_path).exists()
+    if needs_create:
+        Path(service_path).mkdir(exist_ok=False)
+    is_service_path_git_repo = (
+        Path(service_path).joinpath(".git").exists()
+        and Path(service_path).joinpath(".git").is_dir()
+    )
+
+    traverse_with_callback(
+        dictionary=input_data["platform"],
+        callback=callback_create_directories,
+        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
+    )
+
+    input_data["platform"] = traverse_with_callback(
+        dictionary=input_data["platform"],
+        callback=callback_copy_properties_files,
+        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
+        uuid=not no_uuid,
+    )
+    write_text(
+        data=input_data,
+        path=Path(f"{service_path}/.launch_config"),
+    )
+    click.echo(f"Service configuration files have been written to {service_path}")
+
+    if is_service_path_git_repo:
+        click.echo(
+            f"{service_path} appears to be a git repository! You will need to add, commit, and push these files manually."
+        )
+    else:
+        if needs_create:
+            click.echo(
+                f"{service_path} was created, but has not yet been initialized as a git repository. You will need to initialize it."
+            )
+        else:
+            click.echo(
+                f"{service_path} already existed, but has not yet been initialized as a git repository. You will need to initialize it."
+            )
+
+
+@click.command()
 @click.option(
     "--organization",
     default=GITHUB_ORG_NAME,
@@ -329,11 +407,6 @@ def update(
     help="If set, it will ignore cloning and checking out the git repository and it's properties.",
 )
 @click.option(
-    "--work-dir",
-    default=Path.cwd(),
-    help="The work directory to generate launch platform files. Defaults to the current directory.",
-)
-@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -346,7 +419,6 @@ def generate(
     name: str,
     service_branch: str,
     skip_git: bool,
-    work_dir: Path,
     dry_run: bool,
 ):
     """Dynamically generates terragrunt files based off a service."""
@@ -354,8 +426,8 @@ def generate(
     if dry_run:
         click.secho("Performing a dry run, nothing will be created", fg="yellow")
 
-    singlerun_path = f"{work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX}"
     service_path = f"{Path.cwd()}/{name}"
+    singlerun_path = f"{service_path}{CODE_GENERATION_DIR_SUFFIX}"
 
     if Path(singlerun_path).exists():
         click.secho(
@@ -364,13 +436,13 @@ def generate(
         )
         return
 
-    g = get_github_instance()
-    repo = g.get_repo(f"{organization}/{name}")
-
     if not skip_git:
+        g = get_github_instance()
+        repo = g.get_repo(f"{organization}/{name}")
+
         clone_repository(
             repository_url=repo.clone_url,
-            target=f"{work_dir}/{name}",
+            target=name,
             branch=service_branch,
         )
     else:
@@ -381,7 +453,7 @@ def generate(
             )
             return
 
-    with open(f"{work_dir}/{name}/.launch_config", "r") as f:
+    with open(f"{name}/.launch_config", "r") as f:
         input_data = json.load(f)
         input_data = input_data_validation(input_data)
 
@@ -430,11 +502,6 @@ def generate(
 @click.command()
 @click.option("--name", required=True, help="Name of the service to  be created.")
 @click.option(
-    "--work-dir",
-    default=Path.cwd(),
-    help="The work directory to clean the launch generated files from. Defaults to the current directory.",
-)
-@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -442,7 +509,6 @@ def generate(
 )
 def cleanup(
     name: str,
-    work_dir: Path,
     dry_run: bool,
 ):
     """Cleans up launch-cli reources that are created from code generation."""
@@ -451,11 +517,14 @@ def cleanup(
         click.secho("Performing a dry run, nothing will be cleaned", fg="yellow")
         return
 
+    code_generation_dir_name = f"{name}{CODE_GENERATION_DIR_SUFFIX}"
+    code_generation_path = Path.cwd().joinpath(code_generation_dir_name)
+
     try:
-        shutil.rmtree(f"{work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX}")
-        logger.info(f"Deleted {work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX} directory.")
+        shutil.rmtree(code_generation_path)
+        logger.info(f"Deleted the {code_generation_path} directory.")
     except FileNotFoundError:
         click.secho(
-            f"Repository not found: {work_dir}/{name}{CODE_GENERATION_DIR_SUFFIX}",
+            f"Directory not found: {code_generation_path}",
             fg="red",
         )
