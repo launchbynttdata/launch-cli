@@ -40,6 +40,29 @@ def latest_tag(tags: list[Version]) -> Version:
     return sorted(tags)[-1]
 
 
+def validate_name(branch_name: str) -> bool:
+    """Checks the contents of a branch name against this module's configuration and returns a success/failure boolean with the outcome.
+
+    Args:
+        branch_name (str): Name of the branch to validate.
+
+    Returns:
+        bool: Success indicator. A True value indicates that this branch name conforms to the expected convention, a False value indicates otherwise.
+    """
+    try:
+        revision_type, _ = split_delimiter(branch_name=branch_name)
+    except InvalidBranchNameException:
+        return False
+
+    for breaking_char in BREAKING_CHARS:
+        if breaking_char in revision_type:
+            revision_type = revision_type.replace(breaking_char, "")
+
+    if revision_type.lower().strip() not in map(str.lower, ALL_NAME_PARTS):
+        return False
+    return True
+
+
 def predict_version(
     existing_tags: list[Version],
     branch_name: str,
