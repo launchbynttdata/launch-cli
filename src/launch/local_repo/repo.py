@@ -1,11 +1,18 @@
 import logging
-import subprocess
+import pathlib
 
 from git import GitCommandError, Repo
 
-from launch import INIT_BRANCH
-
 logger = logging.getLogger(__name__)
+
+
+def acquire_repo(repo_path: pathlib.Path) -> Repo:
+    try:
+        return Repo(path=repo_path)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to get a Repo instance from path {repo_path}: {e}"
+        ) from e
 
 
 def checkout_branch(

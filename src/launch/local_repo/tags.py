@@ -6,6 +6,8 @@ from git.objects.commit import Commit
 from git.repo import Repo
 from semver import Version
 
+from launch.local_repo.repo import acquire_repo
+
 logger = logging.getLogger(__name__)
 
 
@@ -15,15 +17,6 @@ class CommitNotTaggedException(Exception):
 
 class CommitTagNotSemanticVersionException(Exception):
     pass
-
-
-def acquire_repo(repo_path: pathlib.Path) -> Repo:
-    try:
-        return Repo(path=repo_path)
-    except Exception as e:
-        raise RuntimeError(
-            f"Failed to get a Repo instance from path {repo_path}: {e}"
-        ) from e
 
 
 def read_tags(repo_path: pathlib.Path) -> list[str]:
