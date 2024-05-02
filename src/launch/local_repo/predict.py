@@ -11,6 +11,10 @@ PATCH_NAME_PARTS = ["fix", "bug", "patch"]
 MINOR_NAME_PARTS = ["feature"]
 MAJOR_NAME_PARTS = []
 
+ALL_NAME_PARTS = list(
+    itertools.chain(MAJOR_NAME_PARTS, MINOR_NAME_PARTS, PATCH_NAME_PARTS)
+)
+
 BREAKING_CHARS = ["!"]
 CAPITALIZE_FIRST_IS_BREAKING = True
 DEFAULT_VERSION = Version(major=0, minor=1, patch=0)
@@ -36,6 +40,29 @@ def latest_tag(tags: list[Version]) -> Version:
     return sorted(tags)[-1]
 
 
+def validate_name(branch_name: str) -> bool:
+    """Checks the contents of a branch name against this module's configuration and returns a success/failure boolean with the outcome.
+
+    Args:
+        branch_name (str): Name of the branch to validate.
+
+    Returns:
+        bool: Success indicator. A True value indicates that this branch name conforms to the expected convention, a False value indicates otherwise.
+    """
+    try:
+        revision_type, _ = split_delimiter(branch_name=branch_name)
+    except InvalidBranchNameException:
+        return False
+
+    for breaking_char in BREAKING_CHARS:
+        if breaking_char in revision_type:
+            revision_type = revision_type.replace(breaking_char, "")
+
+    if revision_type.lower().strip() not in map(str.lower, ALL_NAME_PARTS):
+        return False
+    return True
+
+
 def predict_version(
     existing_tags: list[Version],
     branch_name: str,
@@ -59,11 +86,7 @@ def predict_version(
 
     revision_type, _ = split_delimiter(branch_name=branch_name)
 
-    valid_branch_revision_types = list(
-        itertools.chain(MAJOR_NAME_PARTS, MINOR_NAME_PARTS, PATCH_NAME_PARTS)
-    )
-
-    logger.debug(f"Evaluating {revision_type=} against {valid_branch_revision_types=}")
+    logger.debug(f"Evaluating {revision_type=} against {ALL_NAME_PARTS=}")
 
     for breaking_char in breaking_chars:
         if breaking_char in revision_type:
@@ -71,11 +94,11 @@ def predict_version(
                 f"Detected {breaking_char=} in branch name, setting {breaking_change=}"
             )
             breaking_change = True
-            revision_type = revision_type.strip(breaking_char)
+            revision_type = revision_type.replace(breaking_char, "")
 
-    if revision_type.lower().strip() not in map(str.lower, valid_branch_revision_types):
+    if revision_type.lower().strip() not in map(str.lower, ALL_NAME_PARTS):
         raise InvalidBranchNameException(
-            f"Branch name {branch_name} is invalid, must case-insensitively match one of {valid_branch_revision_types}"
+            f"Branch name {branch_name} is invalid, must case-insensitively match one of {ALL_NAME_PARTS}"
         )
 
     if capitalize_first_is_breaking:

@@ -5,10 +5,10 @@ from git.repo import Repo
 from semver import Version
 
 from launch.local_repo import tags  # Used for mocking only
+from launch.local_repo.repo import acquire_repo
 from launch.local_repo.tags import (
     CommitNotTaggedException,
     CommitTagNotSemanticVersionException,
-    acquire_repo,
     create_version_tag,
     push_version_tag,
     read_semantic_tags,
