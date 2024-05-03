@@ -11,6 +11,7 @@ ACCEPTABLE_BRANCH_NAMES = [
     "BUG/ok",
     "BUG!/ok",
     "!buG/ok",
+    "dependabot/ok",
     "feature/ok",
     "feature!/ok",
     "Feature/ok",
