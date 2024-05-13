@@ -17,7 +17,7 @@ ALL_NAME_PARTS = list(
 
 BREAKING_CHARS = ["!"]
 CAPITALIZE_FIRST_IS_BREAKING = True
-DEFAULT_VERSION = Version(major=0, minor=1, patch=0)
+DEFAULT_VERSION = Version(major=1, minor=0, patch=0)
 
 
 class InvalidBranchNameException(Exception):

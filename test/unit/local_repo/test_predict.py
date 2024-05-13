@@ -73,3 +73,13 @@ def test_predict(branch_name: str, expected_version: Version, raises):
             existing_tags=existing_tags, branch_name=branch_name
         )
         assert new_version == expected_version
+
+
+@pytest.mark.parametrize(
+    "branch_name", ["fix/no-tags-yet", "feature/no-tags-yet", "patch!/no-tags-yet"]
+)
+def test_predict_default_version(branch_name: str):
+    existing_tags = []
+    expected_version = Version(1, 0, 0)
+    new_version = predict_version(existing_tags=existing_tags, branch_name=branch_name)
+    assert new_version == expected_version
