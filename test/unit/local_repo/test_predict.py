@@ -5,8 +5,10 @@ import pytest
 from semver import Version
 
 from launch.local_repo.predict import (
+    ChangeType,
     InvalidBranchNameException,
     latest_tag,
+    predict_change_type,
     predict_version,
     split_delimiter,
 )
@@ -42,6 +44,33 @@ def test_latest_tag():
 
     latest = latest_tag([Version.parse(r) for r in raw_versions])
     assert latest == Version.parse("1.0.0")
+
+
+@pytest.mark.parametrize(
+    "branch_name, expected_change_type, raises",
+    (
+        ["fix/should-patch", ChangeType.PATCH, does_not_raise()],
+        ["bug/should-patch", ChangeType.PATCH, does_not_raise()],
+        ["patch/should-patch", ChangeType.PATCH, does_not_raise()],
+        ["dependabot/should-patch", ChangeType.PATCH, does_not_raise()],
+        ["feature/should-minor", ChangeType.MINOR, does_not_raise()],
+        ["fix!/breaking-char-should-major", ChangeType.MAJOR, does_not_raise()],
+        ["Fix/breaking-cap-should-major", ChangeType.MAJOR, does_not_raise()],
+        ["bad/name", None, pytest.raises(InvalidBranchNameException)],
+        ["bad_name", None, pytest.raises(InvalidBranchNameException)],
+        ["feat/is-not-valid-anymore", None, pytest.raises(InvalidBranchNameException)],
+        [
+            "release/is-not-valid-anymore",
+            None,
+            pytest.raises(InvalidBranchNameException),
+        ],
+    ),
+)
+def test_predict_change_type(
+    branch_name: str, expected_change_type: ChangeType, raises
+):
+    with raises:
+        assert predict_change_type(branch_name=branch_name) == expected_change_type
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,10 @@
 from dataclasses import dataclass
 
 from github.GithubException import GithubException
+from github.Label import Label
 from github.Repository import Repository
+
+from launch.local_repo.predict import ChangeType
 
 
 @dataclass
@@ -23,6 +26,16 @@ CUSTOM_LABELS = [
         description="Pull requests that contain a breaking change",
     ),
 ]
+
+CHANGE_TYPE_LABEL_MAP: dict[ChangeType, str] = {
+    ChangeType.MAJOR: "breaking",
+    ChangeType.MINOR: "enhancement",
+    ChangeType.PATCH: "bug",
+}
+
+
+def get_label_for_change_type(repository: Repository, change_type: ChangeType) -> Label:
+    return repository.get_label(name=CHANGE_TYPE_LABEL_MAP[change_type])
 
 
 def has_custom_labels(
