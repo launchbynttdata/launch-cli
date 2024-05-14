@@ -4,11 +4,17 @@ import sys
 import click
 import git
 from git.repo import Repo
+from github.GithubException import UnknownObjectException
 
 from launch import GITHUB_ORG_NAME
 from launch.github.auth import get_github_instance
-from launch.github.labels import create_custom_labels, has_custom_labels
+from launch.github.labels import (
+    create_custom_labels,
+    get_label_for_change_type,
+    has_custom_labels,
+)
 from launch.github.repo import create_repository
+from launch.local_repo.predict import InvalidBranchNameException, predict_change_type
 
 logger = logging.getLogger(__name__)
 
@@ -128,3 +134,46 @@ def create_labels(repository_name: str, organization: str):
     repo = g.get_repo(full_name_or_id=repo_full_name)
     labels_created = create_custom_labels(repository=repo)
     logger.info(f"Created {labels_created} new labels on {repo_full_name}.")
+
+
+@click.command()
+@click.option("--repository-name", required=True)
+@click.option(
+    "--pull-request-id", type=click.INT, required=True, help="Pull Request ID to label"
+)
+@click.option("--organization", default=GITHUB_ORG_NAME)
+def label_pull_request(repository_name: str, pull_request_id: int, organization: str):
+    """Applies labels to a GitHub pull request based on the predicted next version from the branch name."""
+    repo_full_name = f"{organization}/{repository_name}"
+
+    try:
+        g = get_github_instance()
+        repo = g.get_repo(full_name_or_id=repo_full_name)
+    except UnknownObjectException:
+        logger.error(
+            f"Failed to retrieve repository {repo_full_name}. Check for existence and access!"
+        )
+        sys.exit(1)
+    try:
+        pr = repo.get_pull(number=pull_request_id)
+    except UnknownObjectException:
+        logger.error(
+            f"Failed to retrieve pull request #{pull_request_id} from {repo_full_name}. Check for existence and access!"
+        )
+        sys.exit(2)
+
+    pr_branch_name = pr.head.ref
+    try:
+        predicted_change_type = predict_change_type(branch_name=pr_branch_name)
+    except InvalidBranchNameException as e:
+        logger.error(f"Failure when predicting change type: {e}")
+        sys.exit(3)
+
+    try:
+        label_to_add = get_label_for_change_type(
+            repository=repo, change_type=predicted_change_type
+        )
+        pr.add_to_labels(label_to_add)
+    except Exception as e:
+        logger.error(f"Failed to add labels to {repo_full_name}#{pull_request_id}: {e}")
+        sys.exit(4)

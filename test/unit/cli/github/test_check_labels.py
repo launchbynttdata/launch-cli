@@ -1,4 +1,4 @@
-from launch.cli.github.repo.commands import check_labels, create_labels
+from launch.cli.github.repo.commands import check_labels
 
 
 class TestCheckLabels:
