@@ -1,5 +1,6 @@
 import itertools
 import logging
+from enum import StrEnum
 
 from semver import Version
 
@@ -18,6 +19,12 @@ ALL_NAME_PARTS = list(
 BREAKING_CHARS = ["!"]
 CAPITALIZE_FIRST_IS_BREAKING = True
 DEFAULT_VERSION = Version(major=1, minor=0, patch=0)
+
+
+class ChangeType:
+    PATCH = "patch"
+    MINOR = "minor"
+    MAJOR = "major"
 
 
 class InvalidBranchNameException(Exception):
@@ -68,15 +75,37 @@ def predict_version(
     branch_name: str,
     breaking_chars: list[str] | None = None,
     capitalize_first_is_breaking: bool | None = None,
-):
-    breaking_change: bool = False
-
+) -> Version:
     if not len(existing_tags):
         logger.warning(f"No tags exist on this repo, defaulting to {DEFAULT_VERSION}")
         return DEFAULT_VERSION
 
     latest_version = latest_tag(tags=existing_tags)
     logger.debug(f"Got {latest_version=} as the latest tag")
+    predicted_change_type = predict_change_type(
+        branch_name=branch_name,
+        breaking_chars=breaking_chars,
+        capitalize_first_is_breaking=capitalize_first_is_breaking,
+    )
+    match predicted_change_type:
+        case ChangeType.MAJOR:
+            return latest_version.bump_major()
+        case ChangeType.MINOR:
+            return latest_version.bump_minor()
+        case ChangeType.PATCH:
+            return latest_version.bump_patch()
+        case _:
+            raise ValueError(
+                f"Unexpected change type predicted: {predicted_change_type=}"
+            )
+
+
+def predict_change_type(
+    branch_name: str,
+    breaking_chars: list[str] | None = None,
+    capitalize_first_is_breaking: bool | None = None,
+) -> ChangeType:
+    breaking_change: bool = False
 
     if not breaking_chars:
         breaking_chars = BREAKING_CHARS
@@ -109,11 +138,8 @@ def predict_version(
             breaking_change = True
 
     if breaking_change or revision_type.lower().strip() in MAJOR_NAME_PARTS:
-        logger.debug("Bumping major version!")
-        return latest_version.bump_major()
+        return ChangeType.MAJOR
     elif revision_type.lower().strip() in MINOR_NAME_PARTS:
-        logger.debug("Bumping minor version!")
-        return latest_version.bump_minor()
+        return ChangeType.MINOR
     else:
-        logger.debug("Bumping patch version!")
-        return latest_version.bump_patch()
+        return ChangeType.PATCH
