@@ -27,6 +27,7 @@ CUSTOM_LABELS = [
     ),
 ]
 
+
 CHANGE_TYPE_LABEL_MAP: dict[ChangeType, str] = {
     ChangeType.MAJOR: "breaking",
     ChangeType.MINOR: "enhancement",
