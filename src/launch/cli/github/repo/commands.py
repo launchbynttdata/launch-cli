@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import click
 import git
@@ -6,6 +7,7 @@ from git.repo import Repo
 
 from launch import GITHUB_ORG_NAME
 from launch.github.auth import get_github_instance
+from launch.github.labels import create_custom_labels, has_custom_labels
 from launch.github.repo import create_repository
 
 logger = logging.getLogger(__name__)
@@ -100,3 +102,29 @@ def create(
         public=public,
         visibility=visibility,
     )
+
+
+@click.command()
+@click.option("--repository-name", required=True)
+@click.option("--organization", default=GITHUB_ORG_NAME)
+def check_labels(repository_name: str, organization: str):
+    """Check a repository to see if it has all of the custom labels we expect for GitHub Actions.
+    If the repository is missing labels, a non-zero error code will be returned!"""
+    g = get_github_instance()
+    repo = g.get_repo(full_name_or_id=f"{organization}/{repository_name}")
+    if not has_custom_labels(repository=repo):
+        sys.exit(1)
+
+
+@click.command()
+@click.option("--repository-name", required=True)
+@click.option("--organization", default=GITHUB_ORG_NAME)
+def create_labels(repository_name: str, organization: str):
+    """Creates custom labels for GitHub Actions on a repository. If the repository has all the
+    expected labels, this will return successfully with a message showing zero labels created,
+    allowing this command to be safely rerun against a repository multiple times."""
+    repo_full_name = f"{organization}/{repository_name}"
+    g = get_github_instance()
+    repo = g.get_repo(full_name_or_id=repo_full_name)
+    labels_created = create_custom_labels(repository=repo)
+    logger.info(f"Created {labels_created} new labels on {repo_full_name}.")
