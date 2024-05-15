@@ -80,12 +80,19 @@ class TestCreateCustomLabels:
 
 class TestGetLabelForChangeType:
     @pytest.mark.parametrize(
-        "change_type", [ChangeType.PATCH, ChangeType.MINOR, ChangeType.MAJOR]
+        "change_type, label_name",
+        [
+            (ChangeType.PATCH, "bug"),
+            (ChangeType.MINOR, "enhancement"),
+            (ChangeType.MAJOR, "breaking"),
+        ],
     )
     def test_change_type_map(
-        self, mocked_repository: MagicMock, change_type: ChangeType, mocker
+        self,
+        mocked_repository: MagicMock,
+        change_type: ChangeType,
+        label_name: str,
+        mocker,
     ):
         get_label_for_change_type(repository=mocked_repository, change_type=change_type)
-        assert mocked_repository.get_label.called_with(
-            name=CHANGE_TYPE_LABEL_MAP[change_type]
-        )
+        mocked_repository.get_label.assert_has_calls([mocker.call(name=label_name)])
