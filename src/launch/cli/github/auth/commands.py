@@ -26,7 +26,6 @@ def application(
     installation_id_parameter_name: str,
     signing_cert_secret_name: str,
 ):
-    # signing_cert_secret = Path(signing_cert_secret)  # Convert string to Path object
     token = get_token(
         application_id_parameter_name=application_id_parameter_name,
         installation_id_parameter_name=installation_id_parameter_name,
