@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from launch import CODE_GENERATION_DIR_SUFFIX
+from launch.constants.common import CODE_GENERATION_DIR_SUFFIX
 from launch.cli.service.commands import generate
 
 

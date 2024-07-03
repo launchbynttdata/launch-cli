@@ -6,15 +6,15 @@ import git
 from git.repo import Repo
 from github.GithubException import UnknownObjectException
 
-from launch import GITHUB_ORG_NAME
-from launch.github.auth import get_github_instance
-from launch.github.labels import (
+from launch.constants.github import GITHUB_ORG_NAME
+from launch.lib.github.auth import get_github_instance
+from launch.lib.github.labels import (
     create_custom_labels,
     get_label_for_change_type,
     has_custom_labels,
 )
-from launch.github.repo import create_repository
-from launch.local_repo.predict import InvalidBranchNameException, predict_change_type
+from launch.lib.github.repo import create_repository
+from launch.lib.local_repo.predict import InvalidBranchNameException, predict_change_type
 
 logger = logging.getLogger(__name__)
 

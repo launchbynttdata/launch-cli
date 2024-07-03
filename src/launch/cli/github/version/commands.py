@@ -4,9 +4,9 @@ from functools import wraps
 
 import click
 
-from launch.local_repo.branch import get_current_branch_name
-from launch.local_repo.predict import predict_version
-from launch.local_repo.tags import (
+from launch.lib.local_repo.branch import get_current_branch_name
+from launch.lib.local_repo.predict import predict_version
+from launch.lib.local_repo.tags import (
     CommitNotTaggedException,
     CommitTagNotSemanticVersionException,
     create_version_tag,
