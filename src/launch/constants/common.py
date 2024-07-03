@@ -1,4 +1,4 @@
-SERVICE_SKELETON = "https://github.com/launchbynttdata/lcaf-skeleton-terragrunt.git"
+SERVICE_SKELETON = "https://github.com/launchbynttdata/lcaf-template-terragrunt.git"
 SKELETON_BRANCH = "main"
 MAIN_BRANCH = "main"
 INIT_BRANCH = "feature/init"
