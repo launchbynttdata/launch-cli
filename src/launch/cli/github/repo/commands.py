@@ -14,7 +14,10 @@ from launch.lib.github.labels import (
     has_custom_labels,
 )
 from launch.lib.github.repo import create_repository
-from launch.lib.local_repo.predict import InvalidBranchNameException, predict_change_type
+from launch.lib.local_repo.predict import (
+    InvalidBranchNameException,
+    predict_change_type,
+)
 
 logger = logging.getLogger(__name__)
 

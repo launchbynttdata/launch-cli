@@ -7,6 +7,7 @@ from typing import IO, Any
 import click
 from git import Repo
 
+from launch.cli.github.access.commands import set_default
 from launch.constants.common import (
     BUILD_DEPENDENCIES_DIR,
     CODE_GENERATION_DIR_SUFFIX,
@@ -15,7 +16,6 @@ from launch.constants.common import (
 )
 from launch.constants.github import GITHUB_ORG_NAME
 from launch.lib.automation.common.functions import traverse_with_callback
-from launch.cli.github.access.commands import set_default
 from launch.lib.github.auth import get_github_instance
 from launch.lib.github.repo import create_repository, repo_exist
 from launch.lib.local_repo.repo import checkout_branch, clone_repository, push_branch

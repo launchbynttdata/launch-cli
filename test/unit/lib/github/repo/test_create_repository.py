@@ -48,9 +48,9 @@ def test_create_repository_exception(mocker, repo_details):
         "Error"
     )
 
-    with patch("launch.lib.github.repo.Github", return_value=mock_github), pytest.raises(
-        RuntimeError
-    ) as exc_info:
+    with patch(
+        "launch.lib.github.repo.Github", return_value=mock_github
+    ), pytest.raises(RuntimeError) as exc_info:
         create_repository(
             mock_github,
             repo_details["organization"],

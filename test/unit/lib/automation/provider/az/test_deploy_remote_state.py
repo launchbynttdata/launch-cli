@@ -32,8 +32,12 @@ def test_deploy_remote_state_all_parameters(mocker, fakedata):
         "terragrunt/remote_state/azure",
     ]
 
-    mock_run = mocker.patch("launch.lib.automation.provider.az.functions.subprocess.run")
-    mock_logger = mocker.patch("launch.lib.automation.provider.az.functions.logger.info")
+    mock_run = mocker.patch(
+        "launch.lib.automation.provider.az.functions.subprocess.run"
+    )
+    mock_logger = mocker.patch(
+        "launch.lib.automation.provider.az.functions.logger.info"
+    )
 
     deploy_remote_state(
         uuid_value,
@@ -62,8 +66,12 @@ def test_deploy_remote_state_minimal_parameters(mocker, fakedata):
         "terragrunt/remote_state/azure",
     ]
 
-    mock_run = mocker.patch("launch.lib.automation.provider.az.functions.subprocess.run")
-    mock_logger = mocker.patch("launch.lib.automation.provider.az.functions.logger.info")
+    mock_run = mocker.patch(
+        "launch.lib.automation.provider.az.functions.subprocess.run"
+    )
+    mock_logger = mocker.patch(
+        "launch.lib.automation.provider.az.functions.logger.info"
+    )
 
     deploy_remote_state(
         uuid_value,

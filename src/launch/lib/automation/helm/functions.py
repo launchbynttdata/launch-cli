@@ -2,7 +2,11 @@ import logging
 import pathlib
 import subprocess
 
-from launch.lib.automation.common.functions import discover_files, load_yaml, unpack_archive
+from launch.lib.automation.common.functions import (
+    discover_files,
+    load_yaml,
+    unpack_archive,
+)
 
 logger = logging.getLogger(__name__)
 

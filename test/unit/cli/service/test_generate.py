@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from launch.constants.common import CODE_GENERATION_DIR_SUFFIX
 from launch.cli.service.commands import generate
+from launch.constants.common import CODE_GENERATION_DIR_SUFFIX
 
 
 def test_generate(cli_runner, initialized_repo: Path, fake_module_git_url):

@@ -10,7 +10,11 @@ from git.repo import Repo
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
-from launch.constants.common import BUILD_DEPENDENCIES_DIR, SERVICE_SKELETON, SKELETON_BRANCH
+from launch.constants.common import (
+    BUILD_DEPENDENCIES_DIR,
+    SERVICE_SKELETON,
+    SKELETON_BRANCH,
+)
 from launch.lib.automation.common.functions import (
     extract_uuid_key,
     recursive_dictionary_merge,
