@@ -36,7 +36,7 @@ def set_default(organization: str, repository_name: str, dry_run: bool):
 
     organization = g.get_organization(login=organization)
 
-    platform_team = organization.get_team_by_slug("platform")
+    platform_team = organization.get_team_by_slug("platform-team")
     platform_admin_team = organization.get_team_by_slug("platform-administrators")
 
     repository = organization.get_repo(name=repository_name)
