@@ -1,69 +1,21 @@
 import json
 import logging
 import re
-import shutil
-import uuid
 from pathlib import Path
 from typing import List
 
+import click
 from git.repo import Repo
 from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
-from launch.constants.common import (
-    BUILD_DEPENDENCIES_DIR,
-    SERVICE_SKELETON,
-    SKELETON_BRANCH,
-)
+from launch.config.service import SERVICE_SKELETON, SKELETON_BRANCH
 from launch.lib.automation.common.functions import (
     extract_uuid_key,
     recursive_dictionary_merge,
 )
 
 logger = logging.getLogger(__name__)
-
-
-def callback_create_directories(
-    key,
-    value,
-    **kwargs,
-) -> bool:
-    if isinstance(value, dict):
-        next_path = Path(kwargs["base_path"]) / kwargs["current_path"] / Path(key)
-        next_path.mkdir(parents=True, exist_ok=True)
-        return False
-    else:
-        next_path = Path(kwargs["base_path"]) / kwargs["current_path"]
-        next_path.mkdir(parents=True, exist_ok=True)
-
-    return True
-
-
-def callback_copy_properties_files(
-    key,
-    value,
-    **kwargs,
-) -> bool:
-    if isinstance(value, dict):
-        return None
-    elif key == "properties_file":
-        dest_path = kwargs["base_path"] / kwargs["current_path"]
-        dest_path.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Copying {kwargs.get('base_path')}/{value} to {dest_path}")
-        shutil.copy(
-            kwargs["base_path"] / Path(value), dest_path / Path("terraform.tfvars")
-        )
-
-        relative_path = str(dest_path).removeprefix(kwargs["base_path"])
-        kwargs["nested_dict"][
-            key
-        ] = f"{BUILD_DEPENDENCIES_DIR}/{relative_path}/terraform.tfvars"
-    elif key == "uuid":
-        kwargs["nested_dict"]["uuid"] = value
-    if kwargs.get("uuid", False):
-        kwargs["nested_dict"]["uuid"] = f"{str(uuid.uuid4())[:6]}"
-
-    return kwargs["nested_dict"]
 
 
 def list_jinja_templates(base_dir: str) -> tuple:
@@ -173,8 +125,19 @@ def copy_and_render_templates(
 
 
 def write_text(
-    path: Path, data: dict, output_format: str = "json", indent: int = 4
+    path: Path,
+    data: dict,
+    output_format: str = "json",
+    indent: int = 4,
+    dry_run: bool = False,
 ) -> None:
+    if dry_run:
+        click.secho(
+            f"[DRYRUN] Would have written data: {path=} {output_format=} {indent=} {data=}",
+            fg="yellow",
+        )
+        return
+
     if output_format == "json":
         serialized_data = json.dumps(data, indent=indent)
         path.write_text(serialized_data)
@@ -200,10 +163,9 @@ def input_data_validation(input_data: dict) -> dict:
     return input_data
 
 
-def determine_existing_uuid(input_data: dict, repository: Repo) -> dict:
-    launch_config_path = Path(repository.working_dir).joinpath(".launch_config")
+def determine_existing_uuid(input_data: dict, path: Path) -> dict:
+    launch_config_path = Path(path).joinpath(".launch_config")
     launch_config = json.loads(launch_config_path.read_text())
-    platform_config = launch_config["platform"]
-    uuid_dict = extract_uuid_key(platform_config)
-    recursive_dictionary_merge(input_data, uuid_dict)
+    uuid_dict = extract_uuid_key(launch_config["platform"])
+    input_data = recursive_dictionary_merge(input_data, uuid_dict["platform"])
     return input_data

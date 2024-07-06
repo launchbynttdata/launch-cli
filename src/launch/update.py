@@ -2,7 +2,7 @@ import logging
 
 from semver import Version
 
-from launch.constants.github import GITHUB_ORG_NAME, GITHUB_REPO_NAME
+from launch.config.github import GITHUB_ORG_NAME, GITHUB_REPO_NAME
 from launch.constants.version import SEMANTIC_VERSION
 from launch.lib.github.auth import get_anonymous_github_instance
 from launch.lib.github.tags import get_repo_semantic_versions

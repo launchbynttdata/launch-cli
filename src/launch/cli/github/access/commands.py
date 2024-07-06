@@ -2,7 +2,7 @@ import logging
 
 import click
 
-from launch.constants.github import (
+from launch.config.github import (
     GITHUB_ORG_NAME,
     GITHUB_ORG_PLATFORM_TEAM,
     GITHUB_ORG_PLATFORM_TEAM_ADMINISTRATORS,
@@ -36,6 +36,12 @@ logger = logging.getLogger(__name__)
 )
 def set_default(organization: str, repository_name: str, dry_run: bool):
     """Sets the default access and branch protections for a single repository."""
+    if dry_run:
+        click.secho(
+            "[DRYRUN] Performing a dry run, would have made changes to GitHub.",
+            fg="yellow",
+        )
+        return
     g = get_github_instance()
 
     organization = g.get_organization(login=organization)

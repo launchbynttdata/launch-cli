@@ -1,18 +1,16 @@
 import itertools
-import json
 import logging
-import os
 import pathlib
 import shutil
-import string
-import subprocess
-from pathlib import Path
-from typing import Callable
 
 from git import Repo
 from ruamel.yaml import YAML
 
 from launch.constants.common import DISCOVERY_FORBIDDEN_DIRECTORIES
+from launch.constants.launchconfig import (
+    LAUNCHCONFIG_HOME_LOCAL,
+    LAUNCHCONFIG_PATH_LOCAL,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -64,104 +62,6 @@ def check_git_changes(
         else:
             logger.info(f"Git changes only found in folder: {directory}")
             return True
-
-
-def read_key_value_from_file(file: str, key: str) -> string:
-    try:
-        with open(file) as blob:
-            data = json.load(blob)
-            value = data.get(key)
-            if value:
-                logger.info(f"Found key, value: {key}, {value}")
-                return value
-            else:
-                raise KeyError(f"No key found: {key}")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {file}")
-
-
-def install_tool_versions(file: str) -> None:
-    logger.info("Installing all asdf plugins under .tool-versions")
-    try:
-        with open(file, "r") as file:
-            lines = file.readlines()
-
-        for line in lines:
-            plugin = line.split()[0]
-            subprocess.run(["asdf", "plugin", "add", plugin])
-
-        subprocess.run(["asdf", "install"])
-    except Exception as e:
-        raise RuntimeError(
-            f"An error occurred with asdf install {file}: {str(e)}"
-        ) from e
-
-
-def set_netrc(password: str, machine: str, login: str) -> None:
-    logger.info("Setting ~/.netrc variables")
-    try:
-        with open(os.path.expanduser("~/.netrc"), "a") as file:
-            file.write(f"machine {machine}\n")
-            file.write(f"login {login}\n")
-            file.write(f"password {password}\n")
-
-        os.chmod(os.path.expanduser("~/.netrc"), 0o600)
-    except Exception as e:
-        raise RuntimeError(f"An error occurred: {str(e)}")
-
-
-def make_configure() -> None:
-    logger.info(f"Running make configure")
-    try:
-        subprocess.run(["make", "configure"], check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"An error occurred: {str(e)}") from e
-
-
-def traverse_with_callback(
-    dictionary: dict,
-    callback: Callable,
-    current_path: Path = Path("platform"),
-    **kwargs,
-) -> dict:
-    """
-    Recursively traverses a dictionary and applies a callback function. The callback function is expected to return a dictionary, which will replace the current dictionary. If the callback function returns None, the current dictionary will be used. The callback function is expected to accept the following keyword arguments:
-    - key: The current key in the dictionary
-    - value: The current value in the dictionary
-    - dictionary: The current dictionary being traversed
-    - current_path: The current path in the dictionary
-    - **kwargs: Additional keyword arguments to pass to the callback function
-
-    Args:
-        dictionary (dict): The dictionary to traverse.
-        callback (Callable): The callback function to apply to each key-value pair.
-        current_path (Path, optional): The current path in the dictionary. Defaults to Path("platform").
-        **kwargs: Additional keyword arguments to pass to the callback function.
-
-    Returns:
-        dict: The modified dictionary after applying the callback function.
-    """
-    data = None
-    if isinstance(dictionary, dict):
-        for key, value in list(dictionary.items()):
-            kwargs["nested_dict"] = dictionary
-            data = callback(
-                key=key,
-                value=value,
-                dictionary=dictionary,
-                current_path=current_path,
-                **kwargs,
-            )
-            if not data:
-                traverse_with_callback(
-                    dictionary=value,
-                    callback=callback,
-                    current_path=current_path / Path(key),
-                    **kwargs,
-                )
-    elif isinstance(dict, list):
-        pass
-    return data or dictionary
 
 
 def discover_files(

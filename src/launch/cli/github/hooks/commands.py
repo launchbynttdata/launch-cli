@@ -2,7 +2,7 @@ import json
 
 import click
 
-from launch.constants.github import GITHUB_ORG_NAME
+from launch.config.github import GITHUB_ORG_NAME
 from launch.lib.github.auth import get_github_instance
 from launch.lib.github.hooks import create_hook
 

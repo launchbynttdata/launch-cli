@@ -6,13 +6,8 @@ from pathlib import Path
 
 from git import Repo
 
-from launch.constants.common import BUILD_DEPENDENCIES_DIR, CODE_GENERATION_DIR_SUFFIX
-from launch.lib.automation.common.functions import (
-    install_tool_versions,
-    make_configure,
-    set_netrc,
-    traverse_with_callback,
-)
+from launch.config.common import BUILD_DEPENDENCIES_DIR, CODE_GENERATION_DIR_SUFFIX
+from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.provider.az.functions import callback_deploy_remote_state
 
@@ -148,16 +143,17 @@ def prepare_for_terragrunt(
                 repository_name=name,
                 target_environment=target_environment,
             )
-        if provider.startswith("az"):
-            make_configure()
-            traverse_with_callback(
-                dictionary=launch_config["platform"],
-                callback=callback_deploy_remote_state,
-                base_path=f"{path}/{name}{CODE_GENERATION_DIR_SUFFIX}/{BUILD_DEPENDENCIES_DIR}/",
-                naming_prefix=launch_config["naming_prefix"],
-                target_environment=target_environment,
-                provider_config=provider_config,
-            )
+        # Commenting this out with the template refactor. This needs to be reworked to work with the new structure.
+        # if provider.startswith("az"):
+        #     make_configure()
+        #     traverse_with_callback(
+        #         dictionary=launch_config["platform"],
+        #         callback=callback_deploy_remote_state,
+        #         base_path=f"{path}/{name}{CODE_GENERATION_DIR_SUFFIX}/{BUILD_DEPENDENCIES_DIR}/",
+        #         naming_prefix=launch_config["naming_prefix"],
+        #         target_environment=target_environment,
+        #         provider_config=provider_config,
+        #     )
 
     if pipeline_resource:
         exec_dir = Path(

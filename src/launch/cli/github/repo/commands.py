@@ -6,7 +6,7 @@ import git
 from git.repo import Repo
 from github.GithubException import UnknownObjectException
 
-from launch.constants.github import GITHUB_ORG_NAME
+from launch.config.github import GITHUB_ORG_NAME
 from launch.lib.github.auth import get_github_instance
 from launch.lib.github.labels import (
     create_custom_labels,

@@ -1,6 +1,6 @@
 import click
 
-from .commands import cleanup, create, create_no_git, generate, update
+from .commands import clean, create, generate, update
 
 
 @click.group(name="service")
@@ -10,6 +10,5 @@ def service_group():
 
 service_group.add_command(create)
 service_group.add_command(generate)
-service_group.add_command(cleanup)
+service_group.add_command(clean)
 service_group.add_command(update)
-service_group.add_command(create_no_git)

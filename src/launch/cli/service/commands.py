@@ -8,36 +8,24 @@ import click
 from git import Repo
 
 from launch.cli.github.access.commands import set_default
-from launch.constants.common import (
-    BUILD_DEPENDENCIES_DIR,
-    CODE_GENERATION_DIR_SUFFIX,
-    INIT_BRANCH,
-    MAIN_BRANCH,
-)
-from launch.constants.github import GITHUB_ORG_NAME
-from launch.lib.automation.common.functions import traverse_with_callback
+from launch.config.common import BUILD_DEPENDENCIES_DIR, CODE_GENERATION_DIR_SUFFIX
+from launch.config.github import GITHUB_ORG_NAME
+from launch.config.service import SERVICE_MAIN_BRANCH, SERVICE_REMOTE_BRANCH
 from launch.lib.github.auth import get_github_instance
 from launch.lib.github.repo import create_repository, repo_exist
-from launch.lib.local_repo.repo import checkout_branch, clone_repository, push_branch
+from launch.lib.local_repo.repo import checkout_branch, clone_repository
 from launch.lib.service.common import (
-    callback_copy_properties_files,
-    callback_create_directories,
     copy_and_render_templates,
     determine_existing_uuid,
     input_data_validation,
     list_jinja_templates,
-    write_text,
 )
+from launch.lib.service.functions import common_service_workflow, prepare_service
 
 logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.option(
-    "--organization",
-    default=GITHUB_ORG_NAME,
-    help=f"GitHub organization containing your repository. Defaults to the {GITHUB_ORG_NAME} organization.",
-)
 @click.option("--name", required=True, help="Name of the service to  be created.")
 @click.option(
     "--description",
@@ -56,20 +44,21 @@ logger = logging.getLogger(__name__)
     help="The visibility of the repository. Can be one of: public, private.",
 )
 @click.option(
-    "--main-branch",
-    default=MAIN_BRANCH,
-    help="The name of the main branch.",
-)
-@click.option(
-    "--remote-branch",
-    default=INIT_BRANCH,
-    help="The name of the remote branch when creating/updating a repository.",
-)
-@click.option(
     "--in-file",
     required=True,
     type=click.File("r"),
     help="Inputs to be used with the skeleton during creation.",
+)
+@click.option(
+    "--git-message",
+    default="Initial commit",
+    help="The git commit message to use when creating a commit. Defaults to 'Initial commit'.",
+)
+@click.option(
+    "--skip-git",
+    is_flag=True,
+    default=False,
+    help="If set, it will skip all actions with git. Overrides --skip-commit.",
 )
 @click.option(
     "--skip-commit",
@@ -78,12 +67,7 @@ logger = logging.getLogger(__name__)
     help="If set, it will skip commiting the local changes.",
 )
 @click.option(
-    "--git-message",
-    default="Initial commit",
-    help="The git commit message to use when creating a commit. Defaults to 'Initial commit'.",
-)
-@click.option(
-    "--no-uuid",
+    "--skip-uuid",
     is_flag=True,
     default=False,
     help="If set, it will not generate a UUID to be used in skeleton files.",
@@ -99,82 +83,141 @@ logger = logging.getLogger(__name__)
 # Ticket: 1633
 def create(
     context: click.Context,
-    organization: str,
     name: str,
     description: str,
     public: bool,
     visibility: str,
-    main_branch: str,
-    remote_branch: str,
     in_file: IO[Any],
-    skip_commit: bool,
     git_message: str,
-    no_uuid: bool,
+    skip_git: bool,
+    skip_commit: bool,
+    skip_uuid: bool,
     dry_run: bool,
 ):
-    """Creates a new service."""
+    """
+    Creates a new service.  This command will create a new repository in the organization, clone the skeleton repository,
+    create a directory structure based on the inputs and copy the necessary files to the new repository. It will then push
+    the changes to the remote repository.
 
-    if dry_run:
-        click.secho("Performing a dry run, nothing will be created", fg="yellow")
-        # TODO: add a dry run for the create command
-        return
+    Args:
+        name (str): The name of the service to be created.
+        description (str): A short description of the repository.
+        public (bool): The visibility of the repository.
+        visibility (str): The visibility of the repository. Can be one of: public, private.
+        in_file (IO[Any]): Inputs to be used with the skeleton during creation.
+        git_message (str): The git commit message to use when creating a commit. Defaults to 'Initial commit'.
+        skip_git (bool): If set, it will skip all actions with git. Overrides --skip-commit.
+        skip_commit (bool): If set, it will skip commiting the local changes.
+        skip_uuid (bool): If set, it will not generate a UUID to be used in skeleton files.
+        dry_run (bool): Perform a dry run that reports on what it would do, but does not create webhooks.
+    """
 
-    service_path = f"{Path.cwd()}/{name}"
-    input_data = json.load(in_file)
-    input_data = input_data_validation(input_data)
+    input_data, service_path, repository, g = prepare_service(
+        name=name,
+        in_file=in_file,
+        dry_run=dry_run,
+    )
 
-    g = get_github_instance()
-
-    if repo_exist(name=f"{organization}/{name}", g=g):
+    # Check if the repository already exists. If it does, we do not want to try and create it.
+    if repo_exist(name=f"{GITHUB_ORG_NAME}/{name}", g=g) and not skip_git:
         click.secho(
             "Repo already exists remotely. Please use launch service update, to update a service.",
             fg="red",
         )
         return
+    if Path(service_path).exists():
+        click.secho(
+            f"Directory with the name {service_path} already exists. Please remove this directory or use a different name.",
+            fg="red",
+        )
+        return
 
-    service_repo = create_repository(
-        g=g,
-        organization=organization,
-        name=name,
-        description=description,
-        public=public,
-        visibility=visibility,
-    )
-    context.invoke(
-        set_default,
-        organization=organization,
-        repository_name=name,
+    # Create the repository
+    if not skip_git:
+        service_repo = create_repository(
+            g=g,
+            organization=GITHUB_ORG_NAME,
+            name=name,
+            description=description,
+            public=public,
+            visibility=visibility,
+            dry_run=dry_run,
+        )
+    # Set the default access permissions on the repository
+    if not skip_git:
+        context.invoke(
+            set_default,
+            organization=GITHUB_ORG_NAME,
+            repository_name=name,
+            dry_run=dry_run,
+        )
+
+    # Clone the repository. When we create the repository, it does not create a local repository.
+    # thus we need to clone it to create a local repository.
+    if not skip_git:
+        if dry_run and not skip_git:
+            click.secho(
+                f"[DRYRUN] Would have cloned a repo into a dir with the following, {name=} {SERVICE_MAIN_BRANCH=}",
+                fg="yellow",
+            )
+
+        else:
+            repository = clone_repository(
+                repository_url=service_repo.clone_url,
+                target=name,
+                branch=SERVICE_MAIN_BRANCH,
+            )
+    else:
+        needs_create = not Path(service_path).exists()
+        if needs_create:
+            if dry_run:
+                click.secho(
+                    f"[DRYRUN] Would have created dir, {service_path=}",
+                    fg="yellow",
+                )
+            else:
+                Path(service_path).mkdir(exist_ok=False)
+        is_service_path_git_repo = (
+            Path(service_path).joinpath(".git").exists()
+            and Path(service_path).joinpath(".git").is_dir()
+        )
+        if is_service_path_git_repo:
+            click.secho(
+                f"{service_path} appears to be a git repository! You will need to add, commit, and push these files manually.",
+                fg="yellow",
+            )
+        else:
+            if needs_create:
+                click.secho(
+                    f"{service_path} was created, but has not yet been initialized as a git repository. You will need to initialize it.",
+                    fg="yellow",
+                )
+            else:
+                click.secho(
+                    f"{service_path} already existed, but has not yet been initialized as a git repository. You will need to initialize it.",
+                    fg="yellow",
+                )
+    # Checkout the branch
+    if not skip_git:
+        checkout_branch(
+            repository=repository,
+            target_branch=SERVICE_REMOTE_BRANCH,
+            new_branch=True,
+            dry_run=dry_run,
+        )
+
+    common_service_workflow(
+        service_path=service_path,
+        repository=repository,
+        input_data=input_data,
+        git_message=git_message,
+        uuid=not skip_uuid,
+        skip_sync=False,
+        skip_git=skip_git,
+        skip_commit=skip_commit,
         dry_run=dry_run,
     )
 
-    repository = clone_repository(
-        repository_url=service_repo.clone_url, target=name, branch=main_branch
-    )
-    checkout_branch(
-        repository=repository,
-        target_branch=remote_branch,
-        new_branch=True,
-    )
-
-    traverse_with_callback(
-        dictionary=input_data["platform"],
-        callback=callback_create_directories,
-        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
-    )
-
-    input_data["platform"] = traverse_with_callback(
-        dictionary=input_data["platform"],
-        callback=callback_copy_properties_files,
-        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
-        uuid=not no_uuid,
-    )
-    write_text(
-        data=input_data,
-        path=Path(f"{service_path}/.launch_config"),
-    )
-    if not skip_commit:
-        push_branch(repository=repository, branch=remote_branch, commit_msg=git_message)
-
 
 @click.command()
 @click.option("--name", required=True, help="Name of the service to  be created.")
@@ -185,97 +228,15 @@ def create(
     help="Inputs to be used with the skeleton during creation.",
 )
 @click.option(
-    "--no-uuid",
+    "--git-message",
+    default="bot: launch service update commit",
+    help="The git commit message to use when creating a commit. Defaults to 'bot: launch service update commit'.",
+)
+@click.option(
+    "--uuid",
     is_flag=True,
     default=False,
-    help="If set, it will not generate a UUID to be used in skeleton files.",
-)
-@click.option(
-    "--dry-run",
-    is_flag=True,
-    default=False,
-    help="Perform a dry run that reports on what it would do, but does not create webhooks.",
-)
-def create_no_git(
-    name: str,
-    in_file: IO[Any],
-    no_uuid: bool,
-    dry_run: bool,
-):
-    """Creates a new service without any Git interactions."""
-
-    if dry_run:
-        click.secho("Performing a dry run, nothing will be created", fg="yellow")
-        # TODO: add a dry run for the create command
-        return
-
-    service_path = f"{Path.cwd()}/{name}"
-    input_data = json.load(in_file)
-    input_data = input_data_validation(input_data)
-
-    needs_create = not Path(service_path).exists()
-    if needs_create:
-        Path(service_path).mkdir(exist_ok=False)
-    is_service_path_git_repo = (
-        Path(service_path).joinpath(".git").exists()
-        and Path(service_path).joinpath(".git").is_dir()
-    )
-
-    traverse_with_callback(
-        dictionary=input_data["platform"],
-        callback=callback_create_directories,
-        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
-    )
-
-    input_data["platform"] = traverse_with_callback(
-        dictionary=input_data["platform"],
-        callback=callback_copy_properties_files,
-        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
-        uuid=not no_uuid,
-    )
-    write_text(
-        data=input_data,
-        path=Path(f"{service_path}/.launch_config"),
-    )
-    click.echo(f"Service configuration files have been written to {service_path}")
-
-    if is_service_path_git_repo:
-        click.echo(
-            f"{service_path} appears to be a git repository! You will need to add, commit, and push these files manually."
-        )
-    else:
-        if needs_create:
-            click.echo(
-                f"{service_path} was created, but has not yet been initialized as a git repository. You will need to initialize it."
-            )
-        else:
-            click.echo(
-                f"{service_path} already existed, but has not yet been initialized as a git repository. You will need to initialize it."
-            )
-
-
-@click.command()
-@click.option(
-    "--organization",
-    default=GITHUB_ORG_NAME,
-    help=f"GitHub organization containing your repository. Defaults to the {GITHUB_ORG_NAME} organization.",
-)
-@click.option("--name", required=True, help="Name of the service to  be created.")
-@click.option(
-    "--main-branch",
-    default=MAIN_BRANCH,
-    help="The name of the main branch.",
-)
-@click.option(
-    "--remote-branch",
-    default=INIT_BRANCH,
-    help="The name of the remote branch when creating/updating a repository.",
-)
-@click.option(
-    "--in-file",
-    required=True,
-    type=click.File("r"),
-    help="Inputs to be used with the skeleton during creation.",
+    help="If set, it will generate a new UUID to be used in skeleton files.",
 )
 @click.option(
     "--skip-git",
@@ -290,15 +251,10 @@ def create_no_git(
     help="If set, it will skip commiting the local changes.",
 )
 @click.option(
-    "--git-message",
-    default="bot: launch service update commit",
-    help="The git commit message to use when creating a commit. Defaults to 'bot: launch service update commit'.",
-)
-@click.option(
-    "--uuid",
+    "--skip-sync",
     is_flag=True,
     default=False,
-    help="If set, it will generate a new UUID to be used in skeleton files.",
+    help="If set, it will skip syncing the template files and only update the properties files and directories.",
 )
 @click.option(
     "--dry-run",
@@ -307,99 +263,89 @@ def create_no_git(
     help="Perform a dry run that reports on what it would do, but does not create webhooks.",
 )
 def update(
-    organization: str,
     name: str,
-    main_branch: str,
-    remote_branch: str,
     in_file: IO[Any],
-    skip_git: bool,
-    skip_commit: bool,
     git_message: str,
     uuid: bool,
+    skip_git: bool,
+    skip_commit: bool,
+    skip_sync: bool,
     dry_run: bool,
 ):
     """Updates a service."""
 
-    if dry_run:
-        click.secho("Performing a dry run, nothing will be created", fg="yellow")
-        # TODO: add a dry run for the update command
-        return
-
-    service_path = f"{Path.cwd()}/{name}"
-
     if skip_git:
-        if not Path(service_path).exists():
+        if not f"{Path.cwd()}/{name}":
             click.secho(f"Error: Path {service_path} does not exist.", fg="red")
             return
 
-    input_data = json.load(in_file)
-    input_data = input_data_validation(input_data)
+    input_data, service_path, repository, g = prepare_service(
+        name=name,
+        in_file=in_file,
+        dry_run=dry_run,
+    )
 
-    g = get_github_instance()
-
-    if not repo_exist(name=f"{organization}/{name}", g=g):
+    if not repo_exist(name=f"{GITHUB_ORG_NAME}/{name}", g=g):
         click.secho(
             "Repo does not exist remotely. Please use launch service create to create a new service.",
             fg="red",
         )
         return
 
-    repository = g.get_repo(f"{organization}/{name}")
+    if dry_run:
+        click.secho(
+            f"[DRYRUN] Would have gotten repo object: {GITHUB_ORG_NAME}/{name}",
+            fg="yellow",
+        )
+    else:
+        remote_repo = g.get_repo(f"{GITHUB_ORG_NAME}/{name}")
 
     if not skip_git:
         if Path(service_path).exists():
             click.secho(
-                f"Service repo {service_path} already exist locally. Please remove this dir or add the --skip-git flag to skip cloning.",
+                f"Directory with the name {service_path} already exists. Skipping cloning the repository.",
                 fg="red",
             )
-            return
-        repository = clone_repository(
-            repository_url=repository.clone_url, target=name, branch=main_branch
-        )
-        checkout_branch(repository=repository, target_branch=remote_branch)
+            repository = Repo(service_path)
+        else:
+            if dry_run:
+                click.secho(
+                    f"[DRYRUN] Would have cloned a repo into a dir with the following, {name=} {SERVICE_REMOTE_BRANCH=}",
+                    fg="yellow",
+                )
+            else:
+                repository = clone_repository(
+                    repository_url=remote_repo.clone_url,
+                    target=name,
+                    branch=SERVICE_MAIN_BRANCH,
+                )
+            checkout_branch(
+                repository=repository,
+                target_branch=SERVICE_REMOTE_BRANCH,
+                dry_run=dry_run,
+            )
     else:
         repository = Repo(service_path)
-        try:
-            shutil.rmtree(f"{service_path}/{BUILD_DEPENDENCIES_DIR}")
-        except FileNotFoundError:
-            logger.info(
-                f"Directory not found when trying to delete: {service_path}/{BUILD_DEPENDENCIES_DIR}"
-            )
 
-    traverse_with_callback(
-        dictionary=input_data["platform"],
-        callback=callback_create_directories,
-        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
-    )
     input_data["platform"] = determine_existing_uuid(
-        input_data=input_data["platform"], repository=repository
+        input_data=input_data["platform"], path=service_path
     )
-    input_data["platform"] = traverse_with_callback(
-        dictionary=input_data["platform"],
-        callback=callback_copy_properties_files,
-        base_path=f"{service_path}/{BUILD_DEPENDENCIES_DIR}/",
+
+    common_service_workflow(
+        service_path=service_path,
+        repository=repository,
+        input_data=input_data,
+        git_message=git_message,
         uuid=uuid,
+        skip_sync=skip_sync,
+        skip_git=skip_git,
+        skip_commit=skip_commit,
+        dry_run=dry_run,
     )
-    write_text(
-        data=input_data,
-        path=Path(f"{service_path}/.launch_config"),
-    )
-    if not skip_commit:
-        push_branch(repository=repository, branch=remote_branch, commit_msg=git_message)
 
 
 @click.command()
-@click.option(
-    "--organization",
-    default=GITHUB_ORG_NAME,
-    help=f"GitHub organization containing your repository. Defaults to the {GITHUB_ORG_NAME} organization.",
-)
 @click.option("--name", required=True, help="Name of the service to  be created.")
-@click.option(
-    "--service-branch",
-    default=MAIN_BRANCH,
-    help="The name of the service branch.",
-)
 @click.option(
     "--skip-git",
     is_flag=True,
@@ -415,9 +361,7 @@ def update(
 # TODO: Optimize this function and logic
 # Ticket: 1633
 def generate(
-    organization: str,
     name: str,
-    service_branch: str,
     skip_git: bool,
     dry_run: bool,
 ):
@@ -438,12 +382,12 @@ def generate(
 
     if not skip_git:
         g = get_github_instance()
-        repo = g.get_repo(f"{organization}/{name}")
+        repo = g.get_repo(f"{GITHUB_ORG_NAME}/{name}")
 
         clone_repository(
             repository_url=repo.clone_url,
             target=name,
-            branch=service_branch,
+            branch=SERVICE_MAIN_BRANCH,
         )
     else:
         if not Path(service_path).exists():
@@ -507,7 +451,7 @@ def generate(
     default=False,
     help="Perform a dry run that reports on what it would do, but does not create webhooks.",
 )
-def cleanup(
+def clean(
     name: str,
     dry_run: bool,
 ):

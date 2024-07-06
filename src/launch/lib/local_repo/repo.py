@@ -1,6 +1,7 @@
 import logging
 import pathlib
 
+import click
 from git import GitCommandError, Repo
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,10 @@ def acquire_repo(repo_path: pathlib.Path) -> Repo:
 
 
 def checkout_branch(
-    repository: Repo, target_branch: str, new_branch: bool = False
+    repository: Repo,
+    target_branch: str,
+    new_branch: bool = False,
+    dry_run: bool = True,
 ) -> None:
     command_args = []
     if new_branch:
@@ -24,7 +28,13 @@ def checkout_branch(
     command_args.append(target_branch)
 
     try:
-        logger.debug(f"{repository}: git checkout {' '.join(command_args)}")
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have checked out a branch: {repository=} {command_args=}",
+                fg="yellow",
+            )
+            return
+
         repository.git.checkout(command_args)
         logger.info(f"Checked out branch {target_branch}")
     except GitCommandError as e:
@@ -33,9 +43,13 @@ def checkout_branch(
         raise RuntimeError(message) from e
 
 
-def clone_repository(repository_url: str, target: str, branch: str) -> Repo:
+def clone_repository(
+    repository_url: str,
+    target: str,
+    branch: str,
+) -> Repo:
     try:
-        logger.info(f"Attempting to clone repository: {repository_url} into {target}")
+        logger.info(f"Attempting to clone repository: {repository_url=} {target=}")
         repository = Repo.clone_from(repository_url, target, branch=branch)
         logger.info(f"Repository {repository_url} cloned successfully to {target}")
     except GitCommandError as e:
@@ -45,8 +59,17 @@ def clone_repository(repository_url: str, target: str, branch: str) -> Repo:
     return repository
 
 
-def push_branch(repository: Repo, branch: str, commit_msg="Initial commit") -> None:
-    logger.info(f"{repository=}, {branch=}, {commit_msg=}")
+def push_branch(
+    repository: Repo, branch: str, commit_msg="Initial commit", dry_run: bool = True
+) -> None:
+    if dry_run:
+        click.secho(
+            f"[DRYRUN] Would have pushed a branch with the following, {repository=} {branch=} {commit_msg=}",
+            fg="yellow",
+        )
+        return
+
     repository.git.add(["."])
     repository.git.commit(["-m", commit_msg])
     repository.git.push(["--set-upstream", "origin", branch])
+    logger.info(f"Pushed the following branch: {repository=} {branch=} {commit_msg=}")

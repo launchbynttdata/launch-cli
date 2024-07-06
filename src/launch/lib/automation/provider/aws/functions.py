@@ -2,8 +2,6 @@ import json
 import logging
 import subprocess
 
-from launch.lib.automation.common.functions import read_key_value_from_file
-
 logger = logging.getLogger(__name__)
 
 
