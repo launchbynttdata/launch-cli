@@ -7,7 +7,9 @@ import click
 from git import Repo
 
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
-from launch.config.service import SERVICE_REMOTE_BRANCH
+from launch.config.launchconfig import SERVICE_REMOTE_BRANCH
+from launch.constants.launchconfig import LAUNCHCONFIG_NAME
+from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.github.auth import get_github_instance
 from launch.lib.local_repo.repo import clone_repository, push_branch
 from launch.lib.service.common import input_data_validation, write_text
@@ -61,6 +63,10 @@ def common_service_workflow(
     skip_commit: bool,
     dry_run: bool,
 ) -> None:
+    skeleton_path = Path(
+        f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(input_data['skeleton']['url'])}"
+    )
+
     # Clone the skeleton repository. We need this to copy dir structure and any global repo files.
     # This is a temporary directory that will be deleted after the service is created.
     if dry_run and not skip_git:
@@ -73,14 +79,14 @@ def common_service_workflow(
     elif not skip_git:
         clone_repository(
             repository_url=input_data["skeleton"]["url"],
-            target=f"{BUILD_TEMP_DIR_PATH}/skeleton",
+            target=skeleton_path,
             branch=input_data["skeleton"]["tag"],
         )
 
     # Copy all the files from the skeleton repo to the service directory unless flag is set.
     if not skip_sync:
         copy_template_files(
-            src_dir=Path(f"{BUILD_TEMP_DIR_PATH}/skeleton"),
+            src_dir=skeleton_path,
             target_dir=Path(service_path),
             exclude_dir=PLATFORM_SRC_DIR_PATH,
             dry_run=dry_run,
@@ -88,10 +94,10 @@ def common_service_workflow(
 
     # Process the template files. This is the main logic that loops over the template and
     # creates the directories and files in the service directory.
-    input_data["platform"] = process_template(
-        src_base=Path(f"{BUILD_TEMP_DIR_PATH}/skeleton"),
+    input_data[PLATFORM_SRC_DIR_PATH] = process_template(
+        src_base=skeleton_path,
         dest_base=Path(service_path),
-        config={PLATFORM_SRC_DIR_PATH: input_data["platform"]},
+        config=input_data[PLATFORM_SRC_DIR_PATH],
         skip_uuid=not uuid,
         dry_run=dry_run,
     )
@@ -99,7 +105,7 @@ def common_service_workflow(
     # Write the .launch_config file
     write_text(
         data=input_data,
-        path=Path(f"{service_path}/.launch_config"),
+        path=Path(f"{service_path}/{LAUNCHCONFIG_NAME}"),
         dry_run=dry_run,
     )
 
@@ -114,6 +120,6 @@ def common_service_workflow(
 
     if dry_run:
         click.secho(
-            f"[DRYRUN] .launch_config: {input_data}",
+            f"[DRYRUN] {LAUNCHCONFIG_NAME}: {input_data}",
             fg="yellow",
         )

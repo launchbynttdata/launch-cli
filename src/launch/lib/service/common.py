@@ -1,127 +1,15 @@
 import json
 import logging
-import re
 from pathlib import Path
-from typing import List
 
 import click
-from git.repo import Repo
-from jinja2 import Environment, FileSystemLoader
 from ruamel.yaml import YAML
 
-from launch.config.service import SERVICE_SKELETON, SKELETON_BRANCH
-from launch.lib.automation.common.functions import (
-    extract_uuid_key,
-    recursive_dictionary_merge,
-)
+from launch.config.launchconfig import SERVICE_SKELETON, SKELETON_BRANCH
+from launch.constants.launchconfig import LAUNCHCONFIG_NAME
+from launch.lib.common.utilities import extract_uuid_key, recursive_dictionary_merge
 
 logger = logging.getLogger(__name__)
-
-
-def list_jinja_templates(base_dir: str) -> tuple:
-    base_path = Path(base_dir)
-    template_paths = []
-    modified_paths = []
-    pattern = re.compile(r"\{\{.*?\}\}")
-
-    for jinja_file in base_path.rglob("*.j2"):
-        modified_path = pattern.sub("*", str(jinja_file))
-        modified_path = modified_path.replace(str(base_path), "")
-        modified_path = modified_path.lstrip("/")
-        modified_paths.append(modified_path)
-        template_paths.append(jinja_file.as_posix())
-
-    return template_paths, modified_paths
-
-
-def render_jinja_template(
-    template_path: Path,
-    destination_dir: str,
-    file_name: str,
-    template_data: dict = {"data": None},
-) -> None:
-    if not template_data.get("data"):
-        template_data["data"] = {}
-
-    env = Environment(loader=FileSystemLoader(template_path.parent))
-    template = env.get_template(template_path.name)
-    template_data["data"]["path"] = str(destination_dir)
-    template_data["data"]["config"]["dir_dict"] = get_value_by_path(
-        template_data["data"]["config"]["platform"],
-        str(destination_dir)[(str(destination_dir).find("platform") + 9) :],
-    )
-    output = template.render(template_data)
-    destination_path = destination_dir / file_name
-
-    with open(destination_path, "w") as f:
-        f.write(output)
-    logger.info(f"Rendered template saved to {destination_path}")
-
-
-def create_specific_path(base_path: Path, path_parts: list) -> list:
-    specific_path = base_path.joinpath(*path_parts)
-    specific_path.mkdir(parents=True, exist_ok=True)
-    return [specific_path]
-
-
-def get_value_by_path(data: dict, path: str) -> dict:
-    keys = path.split("/")
-    val = data
-    for key in keys:
-        if isinstance(val, dict):
-            val = val.get(key)
-        else:
-            return None
-    return val
-
-
-def expand_wildcards(
-    current_path: Path,
-    remaining_parts: List[str],
-) -> List[Path]:
-    """Expand wildcard paths."""
-    if not remaining_parts:
-        return [current_path]
-
-    next_part, *next_remaining_parts = remaining_parts
-    if next_part == "*":
-        if not next_remaining_parts:
-            return list_directories(current_path)
-        else:
-            all_subdirs = []
-            for sub_path in list_directories(current_path):
-                all_subdirs.extend(expand_wildcards(sub_path, next_remaining_parts))
-            return all_subdirs
-    else:
-        next_path = current_path / next_part
-        next_path.mkdir(exist_ok=True)
-        return expand_wildcards(next_path, next_remaining_parts)
-
-
-def list_directories(directory: Path) -> List[Path]:
-    """List subdirectories in a given directory."""
-    return [sub_path for sub_path in directory.iterdir() if sub_path.is_dir()]
-
-
-def find_dirs_to_render(base_path: str, path_parts: list) -> list:
-    base_path_obj = Path(base_path)
-    if "*" not in path_parts:
-        return create_specific_path(base_path_obj, path_parts)
-    else:
-        return expand_wildcards(base_path_obj, path_parts)
-
-
-def copy_and_render_templates(
-    base_dir: str, template_paths: list, modified_paths: list, context_data: dict = {}
-) -> None:
-    base_path = Path(base_dir)
-    for template_path_str, modified_path in zip(template_paths, modified_paths):
-        template_path = Path(template_path_str)
-        file_name = template_path.name.replace(".j2", "")
-        path_parts = modified_path.strip("/").split("/")
-        dirs_to_render = find_dirs_to_render(base_path, path_parts[:-1])
-        for dir_path in dirs_to_render:
-            render_jinja_template(template_path, dir_path, file_name, context_data)
 
 
 def write_text(
@@ -164,7 +52,7 @@ def input_data_validation(input_data: dict) -> dict:
 
 
 def determine_existing_uuid(input_data: dict, path: Path) -> dict:
-    launch_config_path = Path(path).joinpath(".launch_config")
+    launch_config_path = Path(path).joinpath(LAUNCHCONFIG_NAME)
     launch_config = json.loads(launch_config_path.read_text())
     uuid_dict = extract_uuid_key(launch_config["platform"])
     input_data = recursive_dictionary_merge(input_data, uuid_dict["platform"])

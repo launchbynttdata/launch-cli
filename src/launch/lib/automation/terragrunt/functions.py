@@ -6,7 +6,8 @@ from pathlib import Path
 
 from git import Repo
 
-from launch.config.common import BUILD_DEPENDENCIES_DIR, CODE_GENERATION_DIR_SUFFIX
+from launch.config.common import BUILD_TEMP_DIR_PATH
+from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.provider.az.functions import callback_deploy_remote_state
@@ -123,8 +124,8 @@ def prepare_for_terragrunt(
     path: str,
     override: dict,
 ):
-    os.chdir(f"{path}/{name}{CODE_GENERATION_DIR_SUFFIX}")
-    with open(f"{path}/{name}{CODE_GENERATION_DIR_SUFFIX}/.launch_config", "r") as f:
+    os.chdir(f"{BUILD_TEMP_DIR_PATH}/{name}")
+    with open(f"{BUILD_TEMP_DIR_PATH}/{name}/{LAUNCHCONFIG_NAME}", "r") as f:
         launch_config = json.load(f)
 
     install_tool_versions(

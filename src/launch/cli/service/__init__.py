@@ -1,6 +1,9 @@
 import click
 
-from .commands import clean, create, generate, update
+from .clean import clean
+from .create import create
+from .generate import generate
+from .update import update
 
 
 @click.group(name="service")

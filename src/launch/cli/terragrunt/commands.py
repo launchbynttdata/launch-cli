@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 
-from launch.cli.service.commands import generate
+from launch.cli.service.generate import generate
 from launch.config.github import GITHUB_ORG_NAME
 from launch.lib.automation.terragrunt.functions import *
 from launch.lib.github.auth import get_github_instance

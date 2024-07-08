@@ -69,8 +69,9 @@ def override_default(key_name: str, default: str) -> str:
     if Path(LAUNCHCONFIG_PATH_LOCAL).exists():
         with open(LAUNCHCONFIG_PATH_LOCAL, "r") as f:
             local_config = json.load(f)
-            if key_name in local_config["override"]:
-                return local_config["override"][key_name]
+            if "override" in local_config:
+                if key_name in local_config["override"]:
+                    return local_config["override"][key_name]
 
     if Path(os.path.expanduser(LAUNCHCONFIG_HOME_LOCAL)).exists():
         with open(os.path.expanduser(LAUNCHCONFIG_HOME_LOCAL), "r") as f:
