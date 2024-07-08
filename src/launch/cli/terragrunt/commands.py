@@ -5,11 +5,11 @@ from pathlib import Path
 
 import click
 
-from launch import GITHUB_ORG_NAME
-from launch.automation.terragrunt.functions import *
 from launch.cli.service.commands import generate
-from launch.github.auth import get_github_instance
-from launch.local_repo.repo import checkout_branch, clone_repository
+from launch.constants.github import GITHUB_ORG_NAME
+from launch.lib.automation.terragrunt.functions import *
+from launch.lib.github.auth import get_github_instance
+from launch.lib.local_repo.repo import checkout_branch, clone_repository
 
 logger = logging.getLogger(__name__)
 

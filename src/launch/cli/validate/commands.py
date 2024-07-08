@@ -4,8 +4,8 @@ from pathlib import Path
 
 import click
 
-from launch.local_repo.predict import validate_name
-from launch.local_repo.repo import acquire_repo
+from launch.lib.local_repo.predict import validate_name
+from launch.lib.local_repo.repo import acquire_repo
 
 
 @click.command()

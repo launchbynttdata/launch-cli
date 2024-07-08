@@ -2,15 +2,19 @@ import logging
 
 import click
 
-from launch import GITHUB_ORG_NAME
-from launch.github.access import (
+from launch.constants.github import (
+    GITHUB_ORG_NAME,
+    GITHUB_ORG_PLATFORM_TEAM,
+    GITHUB_ORG_PLATFORM_TEAM_ADMINISTRATORS,
+)
+from launch.lib.github.access import (
     NoMatchingTeamException,
     configure_default_branch_protection,
     grant_admin,
     grant_maintain,
     select_administrative_team,
 )
-from launch.github.auth import get_github_instance
+from launch.lib.github.auth import get_github_instance
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +40,10 @@ def set_default(organization: str, repository_name: str, dry_run: bool):
 
     organization = g.get_organization(login=organization)
 
-    platform_team = organization.get_team_by_slug("platform")
-    platform_admin_team = organization.get_team_by_slug("platform-administrators")
+    platform_team = organization.get_team_by_slug(GITHUB_ORG_PLATFORM_TEAM)
+    platform_admin_team = organization.get_team_by_slug(
+        GITHUB_ORG_PLATFORM_TEAM_ADMINISTRATORS
+    )
 
     repository = organization.get_repo(name=repository_name)
 

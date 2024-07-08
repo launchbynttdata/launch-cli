@@ -1,5 +1,4 @@
 from contextlib import ExitStack as does_not_raise
-from functools import partial
 from random import randint
 
 import pytest

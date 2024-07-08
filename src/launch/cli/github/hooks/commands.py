@@ -2,9 +2,9 @@ import json
 
 import click
 
-from launch import GITHUB_ORG_NAME
-from launch.github.auth import get_github_instance
-from launch.github.hooks import create_hook
+from launch.constants.github import GITHUB_ORG_NAME
+from launch.lib.github.auth import get_github_instance
+from launch.lib.github.hooks import create_hook
 
 
 @click.command()

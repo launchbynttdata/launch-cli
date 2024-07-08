@@ -3,7 +3,7 @@ import pathlib
 
 import click
 
-from launch.automation.helm.functions import (
+from launch.lib.automation.helm.functions import (
     resolve_dependencies as resolve_helm_dependencies,
 )
 
