@@ -4,7 +4,7 @@ import pytest
 from boto3.session import Session
 from botocore.exceptions import ClientError
 
-from launch.github.generate_github_token import (
+from launch.lib.github.generate_github_token import (
     get_secret_value,
     get_ssm_parameter,
     get_token,
@@ -14,11 +14,11 @@ from launch.github.generate_github_token import (
 @pytest.fixture
 def mock_dependencies():
     with patch(
-        "launch.github.generate_github_token.get_ssm_parameter"
+        "launch.lib.github.generate_github_token.get_ssm_parameter"
     ) as mock_get_ssm_parameter, patch(
-        "launch.github.generate_github_token.create_jwt"
+        "launch.lib.github.generate_github_token.create_jwt"
     ) as mock_create_jwt, patch(
-        "launch.github.generate_github_token.get_secret_value"
+        "launch.lib.github.generate_github_token.get_secret_value"
     ) as mock_get_secret_value, patch(
         "requests.post"
     ) as mock_post:
@@ -91,11 +91,13 @@ def test_get_token_failure(mock_dependencies):
 @pytest.fixture
 def mock_ssm_parameter():
     # Mock the Session object itself
-    with patch("launch.github.generate_github_token.Session") as mock_session:
+    with patch("launch.lib.github.generate_github_token.Session") as mock_session:
         mock_session_instance = MagicMock()
         mock_session.return_value = mock_session_instance
 
-        with patch("launch.github.generate_github_token.Session.client") as mock_client:
+        with patch(
+            "launch.lib.github.generate_github_token.Session.client"
+        ) as mock_client:
             mock_client.return_value.get_parameter.return_value = {
                 "Parameter": {"Value": "test_value"}
             }
@@ -128,11 +130,13 @@ def test_get_ssm_parameter_exception(mock_ssm_parameter):
 @pytest.fixture
 def mock_secret_value():
     # Mock the Session object itself
-    with patch("launch.github.generate_github_token.Session") as mock_session:
+    with patch("launch.lib.github.generate_github_token.Session") as mock_session:
         mock_session_instance = MagicMock()
         mock_session.return_value = mock_session_instance
 
-        with patch("launch.github.generate_github_token.Session.client") as mock_client:
+        with patch(
+            "launch.lib.github.generate_github_token.Session.client"
+        ) as mock_client:
             mock_client.return_value.get_secret_value.return_value = {
                 "SecretString": "secret_value"  # pragma: allowlist secret
             }

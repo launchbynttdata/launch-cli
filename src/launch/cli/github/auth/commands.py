@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 
-from launch.github.generate_github_token import get_token
+from launch.lib.github.generate_github_token import get_token
 
 
 def validate_max_seconds(ctx, param, value):
