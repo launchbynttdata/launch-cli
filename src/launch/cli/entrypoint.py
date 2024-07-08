@@ -1,5 +1,4 @@
 import logging
-import os
 import sys
 
 import click
@@ -11,7 +10,7 @@ from launch.update import check_for_updates
 @click.command("version")
 def get_version():
     """Prints the current version of the tool and immediately exits"""
-    from launch import SEMANTIC_VERSION
+    from launch.constants.version import SEMANTIC_VERSION
 
     logging.info(f"Launch CLI Version {SEMANTIC_VERSION}")
     sys.exit(0)

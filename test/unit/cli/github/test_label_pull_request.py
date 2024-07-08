@@ -4,7 +4,6 @@ import pytest
 from github.GithubException import UnknownObjectException
 
 from launch.cli.github.repo import commands
-from launch.github.labels import CHANGE_TYPE_LABEL_MAP
 
 
 class TestLabelPullRequest:
