@@ -19,17 +19,26 @@ logger = logging.getLogger(__name__)
 
 
 def prepare_service(
-    name: str,
-    in_file: Path,
-    dry_run: bool,
+    in_file: Path = None,
+    dry_run: bool = True,
 ) -> None:
     if dry_run:
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be created", fg="yellow"
         )
 
-    service_path = f"{Path.cwd()}/{name}"
-    input_data = json.load(in_file)
+    if in_file:
+        input_data = json.loads(in_file)
+    elif Path(LAUNCHCONFIG_NAME).exists():
+        input_data = json.loads(Path(LAUNCHCONFIG_NAME).read_text())
+    else:
+        click.secho(
+            f"No --in-file supplied and could not find {LAUNCHCONFIG_NAME} in the current directory. Exiting...",
+            fg="red",
+        )
+        quit()
+
+    service_path = f"{Path.cwd()}"
     input_data = input_data_validation(input_data)
     repository = None
 
@@ -46,7 +55,7 @@ def prepare_service(
             shutil.rmtree(BUILD_TEMP_DIR_PATH)
     except FileNotFoundError:
         logger.info(
-            f"Directory not found when trying to delete: {BUILD_TEMP_DIR_PATH=}"
+            f"Directory not found when trying to delete to clean the workspace: {BUILD_TEMP_DIR_PATH=}"
         )
 
     return input_data, service_path, repository, g
@@ -91,16 +100,17 @@ def common_service_workflow(
             exclude_dir=PLATFORM_SRC_DIR_PATH,
             dry_run=dry_run,
         )
-
+    logger.info(f"{input_data=}")
     # Process the template files. This is the main logic that loops over the template and
     # creates the directories and files in the service directory.
     input_data[PLATFORM_SRC_DIR_PATH] = process_template(
         src_base=skeleton_path,
         dest_base=Path(service_path),
-        config=input_data[PLATFORM_SRC_DIR_PATH],
+        config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
         skip_uuid=not uuid,
         dry_run=dry_run,
-    )
+    )[PLATFORM_SRC_DIR_PATH]
+    logger.info(f"{input_data=}")
 
     # Write the .launch_config file
     write_text(

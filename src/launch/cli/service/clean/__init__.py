@@ -39,9 +39,9 @@ def clean(
             )
         else:
             shutil.rmtree(BUILD_TEMP_DIR_PATH)
-            logger.info(f"Deleted the {BUILD_TEMP_DIR_PATH} directory.")
+            logger.info(f"Deleted directory: {BUILD_TEMP_DIR_PATH=}")
     except FileNotFoundError:
         click.secho(
-            f"Directory not found: {BUILD_TEMP_DIR_PATH}",
+            f"Directory not found. nothing to clean: {BUILD_TEMP_DIR_PATH=}",
             fg="red",
         )

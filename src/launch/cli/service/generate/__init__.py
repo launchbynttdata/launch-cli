@@ -4,6 +4,7 @@ from pathlib import Path
 
 import click
 
+from launch.cli.service.clean import clean
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME, LAUNCHCONFIG_PATH_LOCAL
@@ -14,7 +15,6 @@ from launch.lib.service.template.functions import (
     copy_and_render_templates,
     copy_template_files,
     list_jinja_templates,
-    merge_templates,
     process_template,
 )
 
@@ -49,7 +49,9 @@ logger = logging.getLogger(__name__)
 )
 # TODO: Optimize this function and logic
 # Ticket: 1633
+@click.pass_context
 def generate(
+    context: click.Context,
     in_file: str,
     output_path: str,
     url: str,
@@ -60,6 +62,11 @@ def generate(
     Dynamically generates terragrunt files based off a service.
 
     """
+    context.invoke(
+        clean,
+        dry_run=dry_run,
+    )
+
     if dry_run:
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be created.", fg="yellow"
@@ -143,37 +150,19 @@ def generate(
     input_data[PLATFORM_SRC_DIR_PATH] = process_template(
         src_base=Path(build_skeleton_path),
         dest_base=Path(build_path_service),
-        config=input_data[PLATFORM_SRC_DIR_PATH],
+        config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
         skip_uuid=True,
         dry_run=dry_run,
+    )[PLATFORM_SRC_DIR_PATH]
+
+    # Placing Jinja templates
+    template_paths, jinja_paths = list_jinja_templates(
+        Path(build_skeleton_path),
     )
-
-    # # Placing Jinja templates
-    # template_paths, jinja_paths = list_jinja_templates(
-    #     Path(build_skeleton_path),
-    # )
-    # click.secho(
-    #     f"{jinja_paths=}",
-    # )
-    # click.secho(
-    #     f"{template_paths=}",
-    # )
-    # click.secho(
-    #     f"{build_path_service=}",
-    # )
-    # copy_and_render_templates(
-    #     base_dir=Path(build_path_service),
-    #     template_paths=template_paths,
-    #     modified_paths=jinja_paths,
-    #     context_data={"data": {"config": input_data}},
-    #     dry_run=dry_run,
-    # )
-
-    merge_templates(
-        src_dir=Path(build_skeleton_path).joinpath(PLATFORM_SRC_DIR_PATH),
-        dest_dir=Path(build_path_service).joinpath(PLATFORM_SRC_DIR_PATH),
+    copy_and_render_templates(
+        base_dir=Path(build_path_service),
+        template_paths=template_paths,
+        modified_paths=jinja_paths,
+        context_data={"data": {"config": input_data}},
         dry_run=dry_run,
     )
-
-    # # Remove the .launch directory
-    # shutil.rmtree(f"{singlerun_path}/.launch")

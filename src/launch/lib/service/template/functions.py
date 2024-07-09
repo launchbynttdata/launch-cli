@@ -10,6 +10,7 @@ from uuid import uuid4
 import click
 from jinja2 import Environment, FileSystemLoader
 
+from launch.config.common import PLATFORM_SRC_DIR_PATH
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
 
 logger = logging.getLogger(__name__)
@@ -69,7 +70,10 @@ def process_template(
                         fg="yellow",
                     )
                 else:
-                    shutil.copy(file_path, relative_path)
+                    try:
+                        shutil.copy(file_path, relative_path)
+                    except shutil.SameFileError:
+                        pass
             if LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value in value:
                 updated_files = []
                 for file in value[LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value]:
@@ -82,7 +86,7 @@ def process_template(
                             fg="yellow",
                         )
                     else:
-                        shutil.copy(file_path, relative_pcopy_and_render_templatesath)
+                        shutil.copy(file_path, relative_path)
             if LAUNCHCONFIG_KEYS.UUID.value in value and not skip_uuid:
                 value[LAUNCHCONFIG_KEYS.UUID.value] = f"{str(uuid4())[:6]}"
             updated_config[key] = process_template(
@@ -161,26 +165,42 @@ def render_jinja_template(
     template = env.get_template(template_path.name)
     template_data["data"]["path"] = str(destination_dir)
     template_data["data"]["config"]["dir_dict"] = get_value_by_path(
-        template_data["data"]["config"]["platform"],
-        str(destination_dir)[(str(destination_dir).find("platform") + 9) :],
+        template_data["data"]["config"][PLATFORM_SRC_DIR_PATH],
+        str(destination_dir)[(str(destination_dir).find(PLATFORM_SRC_DIR_PATH) + 9) :],
     )
     output = template.render(template_data)
     destination_path = destination_dir / file_name
 
+    if output.strip():
+        with open(destination_path, "w") as f:
+            if dry_run:
+                click.secho(
+                    f"[DRYRUN] Rending template, would have saved rendered file: {destination_path}",
+                    fg="yellow",
+                )
+            else:
+                f.write(output)
+                logger.info(f"Rendered template saved to {destination_path}")
+    else:
+        click.secho(
+            f"[WARNING] Template would have been empty; not rendering: {destination_path}",
+            fg="yellow",
+        )
+
+
+def create_specific_path(
+    base_path: Path,
+    path_parts: list,
+    dry_run: bool = True,
+) -> list:
+    specific_path = base_path.joinpath(*path_parts)
     if dry_run:
         click.secho(
-            f"[DRYRUN] Rending temlpate, would have rendered: {destination_path}",
+            f"[DRYRUN] Rending template, would have made dir: {specific_path}",
             fg="yellow",
         )
     else:
-        with open(destination_path, "w") as f:
-            f.write(output)
-        logger.info(f"Rendered template saved to {destination_path=}")
-
-
-def create_specific_path(base_path: Path, path_parts: list) -> list:
-    specific_path = base_path.joinpath(*path_parts)
-    specific_path.mkdir(parents=True, exist_ok=True)
+        specific_path.mkdir(parents=True, exist_ok=True)
     return [specific_path]
 
 
@@ -198,6 +218,7 @@ def get_value_by_path(data: dict, path: str) -> dict:
 def expand_wildcards(
     current_path: Path,
     remaining_parts: List[str],
+    dry_run: bool = True,
 ) -> List[Path]:
     """Expand wildcard paths."""
     if not remaining_parts:
@@ -210,25 +231,57 @@ def expand_wildcards(
         else:
             all_subdirs = []
             for sub_path in list_directories(current_path):
-                all_subdirs.extend(expand_wildcards(sub_path, next_remaining_parts))
+                all_subdirs.extend(
+                    expand_wildcards(
+                        sub_path,
+                        next_remaining_parts,
+                        dry_run=dry_run,
+                    )
+                )
             return all_subdirs
     else:
         next_path = current_path / next_part
-        next_path.mkdir(exist_ok=True)
-        return expand_wildcards(next_path, next_remaining_parts)
+
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Rending template, would have made dir: {next_path}",
+                fg="yellow",
+            )
+        else:
+            next_path.mkdir(exist_ok=True)
+        return expand_wildcards(
+            next_path,
+            next_remaining_parts,
+            dry_run=dry_run,
+        )
 
 
 def list_directories(directory: Path) -> List[Path]:
-    """List subdirectories in a given directory."""
+    """
+    List subdirectories in a given directory.
+    """
     return [sub_path for sub_path in directory.iterdir() if sub_path.is_dir()]
 
 
-def find_dirs_to_render(base_path: str, path_parts: list) -> list:
+def find_dirs_to_render(
+    base_path: str,
+    path_parts: list,
+    dry_run: bool = True,
+) -> list:
+    """ """
     base_path_obj = Path(base_path)
     if "*" not in path_parts:
-        return create_specific_path(base_path_obj, path_parts)
+        return create_specific_path(
+            base_path_obj,
+            path_parts,
+            dry_run=dry_run,
+        )
     else:
-        return expand_wildcards(base_path_obj, path_parts)
+        return expand_wildcards(
+            base_path_obj,
+            path_parts,
+            dry_run=dry_run,
+        )
 
 
 def copy_and_render_templates(
@@ -243,37 +296,16 @@ def copy_and_render_templates(
         template_path = Path(template_path_str)
         file_name = template_path.name.replace(".j2", "")
         path_parts = modified_path.strip("/").split("/")
-        dirs_to_render = find_dirs_to_render(base_path, path_parts[:-1])
+        dirs_to_render = find_dirs_to_render(
+            base_path,
+            path_parts[:-1],
+            dry_run=dry_run,
+        )
         for dir_path in dirs_to_render:
             render_jinja_template(
-                template_path=template_path,
-                destination_dir=dir_path,
-                file_name=file_name,
-                template_data=context_data,
+                template_path,
+                dir_path,
+                file_name,
+                context_data,
                 dry_run=dry_run,
             )
-
-
-def merge_templates(
-    src_dir: Path,
-    dest_dir: Path,
-    dry_run: bool = True,
-) -> None:
-    for item in src_dir.iterdir():
-        if item.is_dir():
-            if "{{" in item.name and "}}" in item.name:
-                for sub_dir in dest_dir.iterdir():
-                    if sub_dir.is_dir:
-                        merge_templates(item, sub_dir, dry_run)
-            else:
-                new_dest = dest_dir / item.name
-                new_dest.mkdir(exist_ok=True, parents=True)
-                merge_templates(item, new_dest, dry_run)
-        else:
-            if dry_run:
-                click.secho(
-                    f"[DRYRUN] Rending templates, would have copied: {item=} {item.name=}",
-                    fg="yellow",
-                )
-            else:
-                shutil.copy2(item, dest_dir / item.name)

@@ -51,9 +51,22 @@ def input_data_validation(input_data: dict) -> dict:
     return input_data
 
 
-def determine_existing_uuid(input_data: dict, path: Path) -> dict:
+def determine_existing_uuid(
+    input_data: dict,
+    path: Path,
+    force: bool = False,
+) -> dict:
     launch_config_path = Path(path).joinpath(LAUNCHCONFIG_NAME)
-    launch_config = json.loads(launch_config_path.read_text())
-    uuid_dict = extract_uuid_key(launch_config["platform"])
-    input_data = recursive_dictionary_merge(input_data, uuid_dict["platform"])
+
+    if not launch_config_path.exists() and not force:
+        click.secho(
+            f"No {LAUNCHCONFIG_NAME} found in local directory. Use --force to recreate when running this command.",
+            fg="red",
+        )
+        quit()
+    elif launch_config_path.exists() and force:
+        launch_config = json.loads(launch_config_path.read_text())
+        uuid_dict = extract_uuid_key(launch_config["platform"])
+        input_data = recursive_dictionary_merge(input_data, uuid_dict["platform"])
+
     return input_data
