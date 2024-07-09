@@ -50,6 +50,10 @@ def set_default(organization: str, repository_name: str, dry_run: bool):
     platform_admin_team = organization.get_team_by_slug(
         GITHUB_ORG_PLATFORM_TEAM_ADMINISTRATORS
     )
+    platform_team = organization.get_team_by_slug(GITHUB_ORG_PLATFORM_TEAM)
+    platform_admin_team = organization.get_team_by_slug(
+        GITHUB_ORG_PLATFORM_TEAM_ADMINISTRATORS
+    )
 
     repository = organization.get_repo(name=repository_name)
 
