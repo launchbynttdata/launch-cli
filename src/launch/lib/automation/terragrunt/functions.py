@@ -10,7 +10,6 @@ from launch.config.common import BUILD_TEMP_DIR_PATH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
 from launch.lib.automation.provider.aws.functions import assume_role
-from launch.lib.automation.provider.az.functions import callback_deploy_remote_state
 
 logger = logging.getLogger(__name__)
 

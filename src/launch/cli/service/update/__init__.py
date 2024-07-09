@@ -102,6 +102,7 @@ def update(
     """
 
     input_data, service_path, repository, g = prepare_service(
+        name=name,
         in_file=in_file,
         dry_run=dry_run,
     )

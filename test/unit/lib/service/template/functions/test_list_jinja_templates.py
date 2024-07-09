@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from launch.lib.service.common import list_jinja_templates
+from launch.lib.service.template.functions import list_jinja_templates
 
 
 def create_temp_jinja_file(directory: Path, sub_path: str, content: str = ""):

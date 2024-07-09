@@ -84,6 +84,7 @@ def generate(
     else:
         service_dir = Path.cwd().name
     build_path_service = f"{output_path}/{service_dir}"
+    Path(build_path_service).mkdir(parents=True, exist_ok=True)
 
     if url and Path(build_path_service).exists():
         click.secho(
@@ -148,7 +149,6 @@ def generate(
     )
 
     input_data[PLATFORM_SRC_DIR_PATH] = process_template(
-        src_base=Path(build_skeleton_path),
         dest_base=Path(build_path_service),
         config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
         skip_uuid=True,

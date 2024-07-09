@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from launch.lib.service.common import list_directories
+from launch.lib.service.template.functions import list_directories
 
 
 @pytest.fixture

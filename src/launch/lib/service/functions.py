@@ -2,6 +2,7 @@ import json
 import logging
 import shutil
 from pathlib import Path
+from typing import IO, Any
 
 import click
 from git import Repo
@@ -19,29 +20,28 @@ logger = logging.getLogger(__name__)
 
 
 def prepare_service(
-    in_file: Path = None,
+    name: str,
+    in_file: IO[Any],
     dry_run: bool = True,
 ) -> None:
     if dry_run:
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be created", fg="yellow"
         )
-
-    if in_file:
-        input_data = json.loads(in_file)
-    elif Path(LAUNCHCONFIG_NAME).exists():
+    input_data = json.loads(in_file.read())
+    service_path = f"{Path.cwd()}/{name}"
+    if not input_data and Path(LAUNCHCONFIG_NAME).exists():
         input_data = json.loads(Path(LAUNCHCONFIG_NAME).read_text())
-    else:
+        service_path = f"{Path.cwd()}"
+    elif not input_data:
         click.secho(
             f"No --in-file supplied and could not find {LAUNCHCONFIG_NAME} in the current directory. Exiting...",
             fg="red",
         )
         quit()
 
-    service_path = f"{Path.cwd()}"
     input_data = input_data_validation(input_data)
     repository = None
-
     g = get_github_instance()
 
     # Ensure we have a fresh build directory for our build files
@@ -100,17 +100,14 @@ def common_service_workflow(
             exclude_dir=PLATFORM_SRC_DIR_PATH,
             dry_run=dry_run,
         )
-    logger.info(f"{input_data=}")
     # Process the template files. This is the main logic that loops over the template and
     # creates the directories and files in the service directory.
     input_data[PLATFORM_SRC_DIR_PATH] = process_template(
-        src_base=skeleton_path,
         dest_base=Path(service_path),
         config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
         skip_uuid=not uuid,
         dry_run=dry_run,
     )[PLATFORM_SRC_DIR_PATH]
-    logger.info(f"{input_data=}")
 
     # Write the .launch_config file
     write_text(

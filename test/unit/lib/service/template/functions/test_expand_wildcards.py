@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from launch.lib.service.common import expand_wildcards
+from launch.lib.service.template.functions import expand_wildcards
 
 
 @pytest.fixture
@@ -25,7 +25,9 @@ def test_expand_wildcards_single_wildcard(current_path):
 
     list_directories_mock = MagicMock(return_value=[subdir1, subdir2])
 
-    with patch("launch.lib.service.common.list_directories", list_directories_mock):
+    with patch(
+        "launch.lib.service.template.functions.list_directories", list_directories_mock
+    ):
         result = expand_wildcards(current_path, ["*"])
         assert result == [subdir1, subdir2]
 

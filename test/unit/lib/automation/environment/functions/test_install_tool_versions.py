@@ -3,7 +3,7 @@ from unittest.mock import mock_open
 
 import pytest
 
-from launch.lib.automation.common.functions import install_tool_versions
+from launch.lib.automation.environment.functions import install_tool_versions
 
 
 def test_install_tool_versions_success(mocker):

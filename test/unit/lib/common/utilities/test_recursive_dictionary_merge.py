@@ -1,6 +1,6 @@
 import pytest
 
-from launch.lib.automation.common.functions import recursive_dictionary_merge
+from launch.lib.common.utilities import recursive_dictionary_merge
 
 
 def test_merge_shallow():

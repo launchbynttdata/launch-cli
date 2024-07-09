@@ -1,4 +1,4 @@
-from launch.constants.common import SERVICE_SKELETON, SKELETON_BRANCH
+from launch.config.launchconfig import SERVICE_SKELETON, SKELETON_BRANCH
 from launch.lib.service.common import input_data_validation
 
 

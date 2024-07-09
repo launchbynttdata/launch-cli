@@ -1,12 +1,12 @@
 from pathlib import Path
 from unittest.mock import MagicMock, mock_open, patch
 
-from launch.lib.service.common import render_jinja_template
+from launch.lib.service.template.functions import render_jinja_template
 
 
-@patch("launch.lib.service.common.Environment")
-@patch("launch.lib.service.common.logger")
-@patch("launch.lib.service.common.open", new_callable=mock_open)
+@patch("launch.lib.service.template.functions.Environment")
+@patch("launch.lib.service.template.functions.logger")
+@patch("launch.lib.service.template.functions.open", new_callable=mock_open)
 def test_render_jinja_template(mock_open, mock_logger, mock_Environment):
     template_path = Path("/path/to/template.j2")
     destination_dir = Path("/path/to/destination")
@@ -18,7 +18,9 @@ def test_render_jinja_template(mock_open, mock_logger, mock_Environment):
     mock_env_instance = mock_Environment.return_value
     mock_env_instance.get_template.return_value = mock_template
 
-    render_jinja_template(template_path, destination_dir, file_name, template_data)
+    render_jinja_template(
+        template_path, destination_dir, file_name, template_data, dry_run=False
+    )
 
     mock_Environment.assert_called_once()
     mock_env_instance.get_template.assert_called_once_with(template_path.name)

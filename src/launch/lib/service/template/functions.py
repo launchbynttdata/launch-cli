@@ -17,7 +17,6 @@ logger = logging.getLogger(__name__)
 
 
 def process_template(
-    src_base: Path,
     dest_base: Path,
     config: dict,
     parent_keys=[],
@@ -32,7 +31,6 @@ def process_template(
     based on specific keys defined in the structure.
 
     Args:
-        src_base (Path): The base path of the source directory containing the template files.
         dest_base (Path): The base path of the destination directory where the new structure will be created.
         structure (dict): A nested dictionary structure defining the directory structure and files to copy.
         parent_keys (list, optional): The keys represent directory names, and the values can be nested dictionaries or strings.
@@ -90,7 +88,6 @@ def process_template(
             if LAUNCHCONFIG_KEYS.UUID.value in value and not skip_uuid:
                 value[LAUNCHCONFIG_KEYS.UUID.value] = f"{str(uuid4())[:6]}"
             updated_config[key] = process_template(
-                src_base=src_base,
                 dest_base=dest_base,
                 config=value,
                 parent_keys=current_keys,

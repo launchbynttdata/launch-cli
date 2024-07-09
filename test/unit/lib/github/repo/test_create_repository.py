@@ -13,6 +13,7 @@ def repo_details():
         "description": "A test repository",
         "public": True,
         "visibility": "public",
+        "dry_run": False,
     }
 
 
@@ -29,6 +30,7 @@ def test_create_repository_success(mocker, repo_details):
             repo_details["description"],
             repo_details["public"],
             repo_details["visibility"],
+            repo_details["dry_run"],
         )
 
     mock_github.get_organization.assert_called_once_with(repo_details["organization"])
@@ -58,6 +60,7 @@ def test_create_repository_exception(mocker, repo_details):
             repo_details["description"],
             repo_details["public"],
             repo_details["visibility"],
+            repo_details["dry_run"],
         )
 
     assert (

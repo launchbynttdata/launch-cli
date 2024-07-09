@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from launch.cli.service.commands import create_no_git
+from launch.cli.service.create import create_dir_offline
 
 
 class TestTargetDirectoryStates:
@@ -12,7 +12,7 @@ class TestTargetDirectoryStates:
         service_vars_file: Path,
     ):
         result = cli_runner.invoke(
-            create_no_git,
+            create_dir_offline,
             ["--name", "acr_test", "--in-file", str(service_inputs_file.absolute())],
         )
         assert not result.exception
@@ -36,7 +36,7 @@ class TestTargetDirectoryStates:
     ):
         service_path.joinpath("acr_test").mkdir(exist_ok=False)
         result = cli_runner.invoke(
-            create_no_git,
+            create_dir_offline,
             ["--name", "acr_test", "--in-file", str(service_inputs_file.absolute())],
         )
         assert not result.exception
@@ -61,7 +61,7 @@ class TestTargetDirectoryStates:
         service_path.joinpath("acr_test").mkdir(exist_ok=False)
         service_path.joinpath("acr_test").joinpath(".git").mkdir(exist_ok=False)
         result = cli_runner.invoke(
-            create_no_git,
+            create_dir_offline,
             ["--name", "acr_test", "--in-file", str(service_inputs_file.absolute())],
         )
         assert not result.exception

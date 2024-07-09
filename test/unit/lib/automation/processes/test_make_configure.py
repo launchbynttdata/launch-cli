@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-from launch.lib.automation.common.functions import make_configure
+from launch.lib.automation.processes.functions import make_configure
 
 
 def test_make_configure_success():

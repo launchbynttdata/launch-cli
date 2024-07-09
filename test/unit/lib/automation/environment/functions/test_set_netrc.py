@@ -3,7 +3,7 @@ from unittest.mock import mock_open
 
 import pytest
 
-from launch.lib.automation.common.functions import set_netrc
+from launch.lib.automation.environment.functions import set_netrc
 
 
 def test_set_netrc_success(mocker):
