@@ -172,7 +172,7 @@ def render_jinja_template(
         with open(destination_path, "w") as f:
             if dry_run:
                 click.secho(
-                    f"[DRYRUN] Rending template, would have saved rendered file: {destination_path}",
+                    f"[DRYRUN] Rendering template, would have saved rendered file: {destination_path}",
                     fg="yellow",
                 )
             else:
