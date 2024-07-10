@@ -1,5 +1,7 @@
 from launch.env import override_default
 
+AWS_REGION = override_default(key_name="AWS_REGION", default="us-east-2")
+
 BUILD_DEPENDENCIES_DIR = override_default(
     key_name="BUILD_DEPENDENCIES_DIR", default=".launch"
 )
