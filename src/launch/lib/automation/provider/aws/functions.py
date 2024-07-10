@@ -5,9 +5,7 @@ import subprocess
 logger = logging.getLogger(__name__)
 
 
-def assume_role(
-    provider_config: dict, repository_name: str, target_environment: str
-) -> None:
+def assume_role(provider_config: dict) -> None:
     logger.info("Assuming the IAM deployment role")
 
     provider = provider_config["provider"]
