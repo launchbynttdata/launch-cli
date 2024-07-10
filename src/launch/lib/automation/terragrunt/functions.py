@@ -4,10 +4,9 @@ import os
 import subprocess
 from pathlib import Path
 
-from git import Repo
+import click
 
-from launch.config.common import BUILD_TEMP_DIR_PATH
-from launch.constants.launchconfig import LAUNCHCONFIG_NAME
+from launch.config.terragrunt import TERRAGRUNT_RUN_DIRS
 from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
 from launch.lib.automation.provider.aws.functions import assume_role
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 ## Terragrunt Specific Functions
-def terragrunt_init(run_all=True):
+def terragrunt_init(run_all=True, dry_run=True):
     logger.info("Running terragrunt init")
     if run_all:
         subprocess_args = [
@@ -28,12 +27,18 @@ def terragrunt_init(run_all=True):
         subprocess_args = ["terragrunt", "init", "--terragrunt-non-interactive"]
 
     try:
-        subprocess.run(subprocess_args, check=True)
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(subprocess_args, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def terragrunt_plan(file=None, run_all=True):
+def terragrunt_plan(file=None, run_all=True, dry_run=True):
     logger.info("Running terragrunt plan")
     if run_all:
         subprocess_args = ["terragrunt", "run-all", "plan"]
@@ -44,12 +49,18 @@ def terragrunt_plan(file=None, run_all=True):
         subprocess_args.append("-out")
         subprocess_args.append(file)
     try:
-        subprocess.run(subprocess_args, check=True)
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(subprocess_args, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def terragrunt_apply(file=None, run_all=True):
+def terragrunt_apply(file=None, run_all=True, dry_run=True):
     logger.info("Running terragrunt apply")
     if run_all:
         subprocess_args = [
@@ -71,12 +82,18 @@ def terragrunt_apply(file=None, run_all=True):
         subprocess_args.append("-var-file")
         subprocess_args.append(file)
     try:
-        subprocess.run(subprocess_args, check=True)
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(subprocess_args, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def terragrunt_destroy(file=None, run_all=True):
+def terragrunt_destroy(file=None, run_all=True, dry_run=True):
     logger.info("Running terragrunt destroy")
     if run_all:
         subprocess_args = [
@@ -98,39 +115,41 @@ def terragrunt_destroy(file=None, run_all=True):
         subprocess_args.append("-var-file")
         subprocess_args.append(file)
     try:
-        subprocess.run(subprocess_args, check=True)
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(subprocess_args, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-# This logic is used to get everything ready for terragrunt. This includes:
-# 1. Cloning the repository
-# 2. Checking out the commit sha
-# 3. Installing all asdf plugins under .tool-versions
-# 4. Setting ~/.netrc variables
-# 5. Copying files and directories from the properties repository to the terragrunt directory
-# 6. Assuming the role if the provider is AWS
-# 7. Changing the directory to the terragrunt directory
 def prepare_for_terragrunt(
-    repository: Repo,
-    name: str,
-    git_token: str,
-    commit_sha: str,
     target_environment: str,
     provider_config: dict,
+    platform_resource: str,
     skip_diff: bool,
-    pipeline_resource: str,
-    path: str,
-    override: dict,
-):
-    os.chdir(f"{BUILD_TEMP_DIR_PATH}/{name}")
-    with open(f"{BUILD_TEMP_DIR_PATH}/{name}/{LAUNCHCONFIG_NAME}", "r") as f:
-        launch_config = json.load(f)
+) -> dict[str]:
+    """
+    Prepares the environment for running terragrunt commands.
 
-    install_tool_versions(
-        file=override["tool_versions_file"],
-    )
-    set_netrc(password=git_token, machine=override["machine"], login=override["login"])
+    Args:
+
+    name: str: The name of the repository.
+    git_token: str: The github token.
+    target_environment: str: The target environment.
+    provider_config: dict: The provider configuration.
+    platform_resource: str: The platform resource to run terragrunt against.
+    override: dict: The override dictionary.
+
+    Returns:
+
+    """
+
+    install_tool_versions()
+    set_netrc()
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure
     # i.e. az login, or service principal is already applied to the environment.
@@ -138,33 +157,23 @@ def prepare_for_terragrunt(
     provider = provider_config["provider"]
     if provider_config:
         if provider == "aws":
-            assume_role(
-                provider_config=provider_config,
-                repository_name=name,
-                target_environment=target_environment,
-            )
-        # Commenting this out with the template refactor. This needs to be reworked to work with the new structure.
-        # if provider.startswith("az"):
-        #     make_configure()
-        #     traverse_with_callback(
-        #         dictionary=launch_config["platform"],
-        #         callback=callback_deploy_remote_state,
-        #         base_path=f"{path}/{name}{CODE_GENERATION_DIR_SUFFIX}/{BUILD_DEPENDENCIES_DIR}/",
-        #         naming_prefix=launch_config["naming_prefix"],
-        #         target_environment=target_environment,
-        #         provider_config=provider_config,
-        #     )
+            assume_role(provider_config=provider_config)
 
-    if pipeline_resource:
-        exec_dir = Path(
-            f"{override['infrastructure_dir']}/{pipeline_resource}-{provider}/{target_environment}"
-        )
-    else:
-        exec_dir = Path(f"{override['environment_dir']}/{target_environment}")
+    if platform_resource == "all":
+        run_dirs = [
+            Path(TERRAGRUNT_RUN_DIRS["service"]).joinpath(target_environment),
+            Path(TERRAGRUNT_RUN_DIRS["pipeline"]).joinpath(target_environment),
+            Path(TERRAGRUNT_RUN_DIRS["webhook"]).joinpath(target_environment),
+        ]
+    elif platform_resource in TERRAGRUNT_RUN_DIRS:
+        run_dirs = [
+            Path(TERRAGRUNT_RUN_DIRS[platform_resource]).joinpath(target_environment)
+        ]
 
-    if not (exec_dir).exists():
-        message = f"Error: Path {exec_dir} does not exist."
-        logger.error(message)
-        raise FileNotFoundError(message)
+    for run_dir in run_dirs:
+        if not (run_dir).exists():
+            message = f"Error: Path {run_dir.joinpath(run_dir)} does not exist."
+            click.secho(message, fg="red")
+            raise FileNotFoundError(message)
 
-    os.chdir(exec_dir)
+    return run_dirs
