@@ -14,7 +14,7 @@ class J2PropsTemplate:
 
     # Public methods
 
-    def generate_from_template(self, input_file, template_file):
+    def generate_from_template(self, input_file, template_file) -> str:
         """
         Performs a jinja2 template expansion from the given input and template files.  Adds functionality to
         replace secrets from AWS Secrets Manager using the awssecrets filter:
@@ -51,7 +51,7 @@ class J2PropsTemplate:
         rendered_data = template.render(input_data)
 
         # Write rendered data to stdout
-        print(rendered_data)
+        return rendered_data
 
     # Private methods
 

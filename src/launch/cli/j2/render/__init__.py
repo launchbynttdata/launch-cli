@@ -21,12 +21,17 @@ logger = logging.getLogger(__name__)
     help="Absolute or relative path to the template file.  Ex: templates/application.properties",
 )
 @click.option(
+    "--out-file",
+    help="(Optional) Path to the output file.  Ex: output/application.properties (default: stdout)",
+)
+@click.option(
     "--dry-run",
     help="(Optional) Perform a dry run that reports on what it would do.",
 )
 def render(
     values: str,
     template: str,
+    out_file: str,
     dry_run: bool,
 ):
     """
@@ -54,7 +59,18 @@ def render(
                 fg="red",
             )
             return
-        J2PropsTemplate(AWS_REGION).generate_from_template(values, template)
+        data = J2PropsTemplate(AWS_REGION).generate_from_template(values, template)
+        if out_file:
+            with open(out_file, "w") as f:
+                if dry_run:
+                    click.secho(
+                        f"[DRYRUN] Would have written to file: {out_file=}",
+                        fg="yellow",
+                    )
+                else:
+                    f.write(data)
+        else:
+            click.echo(data)
     except Exception:
         traceback.print_exception(*sys.exc_info())
         sys.exit(1)
