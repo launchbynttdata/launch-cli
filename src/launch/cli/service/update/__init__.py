@@ -123,6 +123,7 @@ def update(
         remote_repo = g.get_repo(f"{GITHUB_ORG_NAME}/{name}")
 
     if not skip_git and clone:
+        service_path = service_path.joinpath(name)
         if Path(service_path).exists():
             click.secho(
                 f"Directory with the name {service_path} already exists. Skipping cloning the repository.",
@@ -147,6 +148,7 @@ def update(
                 dry_run=dry_run,
             )
     else:
+        logger.info(f"Using existing repository at {service_path}")
         repository = Repo(service_path)
 
     input_data[PLATFORM_SRC_DIR_PATH] = determine_existing_uuid(

@@ -20,20 +20,18 @@ logger = logging.getLogger(__name__)
 
 
 def prepare_service(
-    name: str,
-    in_file: IO[Any],
+    in_file: IO[Any] = None,
     dry_run: bool = True,
 ) -> None:
     if dry_run:
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be created", fg="yellow"
         )
-    input_data = json.loads(in_file.read())
-    service_path = f"{Path.cwd()}/{name}"
-    if not input_data and Path(LAUNCHCONFIG_NAME).exists():
+    if in_file:
+        input_data = json.loads(in_file.read())
+    elif Path(LAUNCHCONFIG_NAME).exists():
         input_data = json.loads(Path(LAUNCHCONFIG_NAME).read_text())
-        service_path = f"{Path.cwd()}"
-    elif not input_data:
+    else:
         click.secho(
             f"No --in-file supplied and could not find {LAUNCHCONFIG_NAME} in the current directory. Exiting...",
             fg="red",
@@ -58,6 +56,7 @@ def prepare_service(
             f"Directory not found when trying to delete to clean the workspace: {BUILD_TEMP_DIR_PATH=}"
         )
 
+    service_path = f"{Path.cwd()}"
     return input_data, service_path, repository, g
 
 
