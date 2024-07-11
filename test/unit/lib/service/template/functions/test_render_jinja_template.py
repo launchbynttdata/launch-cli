@@ -33,9 +33,6 @@ def test_render_jinja_template(mock_open, mock_logger, mock_Environment):
             }
         }
     )
-    mock_logger.info.assert_called_once_with(
-        f"Rendered template saved to {destination_dir / file_name}"
-    )
 
     mock_open.assert_called_once_with(destination_dir / file_name, "w")
     mock_open.return_value.__enter__.return_value.write.assert_called_once_with(

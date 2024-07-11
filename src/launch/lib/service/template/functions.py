@@ -158,7 +158,7 @@ def render_jinja_template(
     if not template_data.get("data"):
         template_data["data"] = {}
 
-    env = Environment(loader=FileSystemLoader(template_path.parent))
+    env = Environment(loader=FileSystemLoader(template_path.parent), autoescape=False)
     template = env.get_template(template_path.name)
     template_data["data"]["path"] = str(destination_dir)
     template_data["data"]["config"]["dir_dict"] = get_value_by_path(
@@ -172,12 +172,14 @@ def render_jinja_template(
         with open(destination_path, "w") as f:
             if dry_run:
                 click.secho(
-                    f"[DRYRUN] Rending template, would have saved rendered file: {destination_path}",
+                    f"[DRYRUN] Rendering template, would have saved rendered file: {destination_path}",
                     fg="yellow",
                 )
             else:
                 f.write(output)
-                logger.info(f"Rendered template saved to {destination_path}")
+                click.secho(
+                    f"Rendered template saved to {destination_path}",
+                )
     else:
         click.secho(
             f"[WARNING] Template would have been empty; not rendering: {destination_path}",
@@ -193,7 +195,7 @@ def create_specific_path(
     specific_path = base_path.joinpath(*path_parts)
     if dry_run:
         click.secho(
-            f"[DRYRUN] Rending template, would have made dir: {specific_path}",
+            f"[DRYRUN] Rendering template, would have made dir: {specific_path}",
             fg="yellow",
         )
     else:
@@ -241,7 +243,7 @@ def expand_wildcards(
 
         if dry_run:
             click.secho(
-                f"[DRYRUN] Rending template, would have made dir: {next_path}",
+                f"[DRYRUN] Rendering template, would have made dir: {next_path}",
                 fg="yellow",
             )
         else:
