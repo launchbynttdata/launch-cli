@@ -2,17 +2,15 @@ import logging
 import os
 import re
 import shutil
-from fnmatch import fnmatch
 from pathlib import Path
 from typing import List
-from uuid import uuid4
 
 import click
 from jinja2 import Environment, FileSystemLoader
 
 from launch.config.common import PLATFORM_SRC_DIR_PATH
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
-from launch.lib.service.template.LaunchConfigTemplate import LaunchConfigTemplate
+from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
 logger = logging.getLogger(__name__)
 
