@@ -44,10 +44,10 @@ logger = logging.getLogger(__name__)
     help="If set, it will generate the terragrunt files.",
 )
 @click.option(
-    "--skip-diff",
+    "--check-diff",
     is_flag=True,
     default=False,
-    help="If set, it will ignore checking the diff between the pipeline and service changes.",
+    help="If set, it will check the diff between the pipeline and service changes.",
 )
 @click.option(
     "--platform-resource",
@@ -68,7 +68,7 @@ def apply(
     target_environment: str,
     provider_config: dict,
     generation: bool,
-    skip_diff: bool,
+    check_diff: bool,
     platform_resource: str,
     dry_run: bool,
 ) -> None:
@@ -81,7 +81,7 @@ def apply(
         target_environment (str): The target environment to run the terragrunt command against.
         provider_config (dict): Provider config as a string used for any specific config needed for certain providers.
         generation (bool): If set, it will generate the terragrunt files.
-        skip_diff (bool): If set, it will ignore checking the diff between the pipeline and service changes.
+        check_diff (bool): If set, it will check the diff between the pipeline and service changes.
         platform_resource (str): If set, this will set the specified pipeline resource to run terragrunt against.
         dry_run (bool): Perform a dry run that reports on what it would do, but does not perform any action.
 
@@ -115,11 +115,16 @@ def apply(
         target_environment=target_environment,
         provider_config=provider_config,
         platform_resource=platform_resource,
-        skip_diff=skip_diff,
+        check_diff=check_diff,
     )
 
     for run_dir in run_dirs:
-        os.chdir(build_path.joinpath(run_dir))
+        tg_dir = build_path.joinpath(run_dir)
+        if not (tg_dir).exists():
+            message = f"Error: Path {tg_dir} does not exist."
+            logger.error(message)
+            raise FileNotFoundError(message)
+        os.chdir(tg_dir)
         terragrunt_init(
             dry_run=dry_run,
         )

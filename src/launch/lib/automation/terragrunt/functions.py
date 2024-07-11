@@ -1,16 +1,12 @@
-import json
-import logging
-import os
 import subprocess
 from pathlib import Path
 
 import click
 
 from launch.config.terragrunt import TERRAGRUNT_RUN_DIRS
+from launch.lib.automation.common.functions import is_platform_git_changes
 from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
 from launch.lib.automation.provider.aws.functions import assume_role
-
-logger = logging.getLogger(__name__)
 
 
 ## Terragrunt Specific Functions
@@ -28,7 +24,8 @@ def terragrunt_init(run_all=True, dry_run=True) -> None:
     Returns:
         None
     """
-    logger.info("Running terragrunt init")
+
+    click.secho("Running terragrunt init")
     if run_all:
         subprocess_args = [
             "terragrunt",
@@ -42,7 +39,7 @@ def terragrunt_init(run_all=True, dry_run=True) -> None:
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
                 fg="yellow",
             )
         else:
@@ -66,7 +63,7 @@ def terragrunt_plan(file=None, run_all=True, dry_run=True) -> None:
     Returns:
         None
     """
-    logger.info("Running terragrunt plan")
+    click.secho("Running terragrunt plan")
     if run_all:
         subprocess_args = ["terragrunt", "run-all", "plan"]
     else:
@@ -78,7 +75,7 @@ def terragrunt_plan(file=None, run_all=True, dry_run=True) -> None:
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
                 fg="yellow",
             )
         else:
@@ -102,7 +99,7 @@ def terragrunt_apply(file=None, run_all=True, dry_run=True) -> None:
     Returns:
         None
     """
-    logger.info("Running terragrunt apply")
+    click.secho("Running terragrunt apply")
     if run_all:
         subprocess_args = [
             "terragrunt",
@@ -125,7 +122,7 @@ def terragrunt_apply(file=None, run_all=True, dry_run=True) -> None:
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
                 fg="yellow",
             )
         else:
@@ -146,7 +143,7 @@ def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
     Raises:
         RuntimeError: If an error occurs during the subprocess.
     """
-    logger.info("Running terragrunt destroy")
+    click.secho("Running terragrunt destroy")
     if run_all:
         subprocess_args = [
             "terragrunt",
@@ -169,7 +166,7 @@ def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess {subprocess_args=}",
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
                 fg="yellow",
             )
         else:
@@ -179,10 +176,11 @@ def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
 
 
 def prepare_for_terragrunt(
+    build_path: Path,
     target_environment: str,
     provider_config: dict,
     platform_resource: str,
-    skip_diff: bool,
+    check_diff: bool,
 ) -> dict[Path]:
     """
     Prepares the environment for running terragrunt commands.
@@ -191,7 +189,7 @@ def prepare_for_terragrunt(
         target_environment (str): The target environment to run the terragrunt command against.
         provider_config (dict): Provider config as a string used for any specific config needed for certain providers.
         platform_resource (str): If set, this will set the specified pipeline resource to run terragrunt against.
-        skip_diff (bool): If set, it will ignore checking the diff between the pipeline and service changes.
+        check_diff (bool): If set, it will check the diff between the pipeline and service changes.
 
     Raises:
         FileNotFoundError: If the path does not exist.
@@ -199,6 +197,15 @@ def prepare_for_terragrunt(
     Returns:
         dict[Path]: The directories to run terragrunt in.
     """
+
+    if check_diff:
+        # This will throw an error if there are changes in both
+        os.chdir(build_path)
+        # is_platform_git_changes(
+        #     repository=,
+        #     commit_id=,
+        #     directory=,
+        # )
 
     install_tool_versions()
     set_netrc()

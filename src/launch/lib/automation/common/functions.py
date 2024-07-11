@@ -3,23 +3,26 @@ import logging
 import pathlib
 import shutil
 
+import click
 from git import Repo
 from ruamel.yaml import YAML
 
+from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.common import DISCOVERY_FORBIDDEN_DIRECTORIES
 
 logger = logging.getLogger(__name__)
 
 
 ## Other Functions
-def check_git_changes(
+def is_platform_git_changes(
     repository: Repo,
     commit_id: str,
-    main_branch: str,
     directory: str,
+    main_branch: str = SERVICE_MAIN_BRANCH,
 ) -> bool:
-    logger.info(f"Checking if git changes are exclusive to: {directory}")
-
+    click.secho(
+        f"Checking if git changes are exclusive to: {directory}",
+    )
     origin = repository.remotes.origin
     origin.fetch()
 
@@ -27,18 +30,20 @@ def check_git_changes(
 
     # Check if the PR commit hash is the same as the commit sha of the main branch
     if commit_id == repository.rev_parse(f"origin/{main_branch}"):
-        logger.info(f"Commit hash is the same as origin/{main_branch}")
+        click.secho(
+            f"Commit hash is the same as origin/{main_branch}",
+        )
         commit_compare = repository.commit(f"origin/{main_branch}^")
     # PR commit sha is not the same as the commit sha of the main branch. Thus we want whats been changed since because
     # terragrunt will apply all changes.
     else:
         commit_compare = repository.commit(commit_id)
 
-    # Get the diff between of the last commit only inside the infrastructure directory
+    # Get the diff between of the last commit only inside the platform/pipline directory
     exclusive_dir_diff = commit_compare.diff(
         commit_main, paths=directory, name_only=True
     )
-    # Get the diff between of the last commit only outside the infrastructure directory
+    # Get the diff between of the last commit only outside the platform/pipline directory
     diff = commit_compare.diff(commit_main, name_only=True)
     excluding_dir_diff = [
         item.a_path for item in diff if not item.a_path.startswith(directory)
@@ -46,17 +51,24 @@ def check_git_changes(
 
     # If there are no git changes, return false.
     if not exclusive_dir_diff:
-        logger.info(f"No git changes found in dir: {directory}")
+        click.secho(
+            f"No changes found in {directory}",
+        )
         return False
     else:
         # If both are true, we want to throw to prevent simultaneous infrastructure and service changes.
         if excluding_dir_diff:
-            raise RuntimeError(
-                f"Changes found in both inside and outside dir: {directory}"
+            message = f"Changes found in both inside and outside dir: {directory}"
+            click.secho(
+                message,
+                fg="red",
             )
+            raise RuntimeError(message)
         # If only the infrastructure directory has changes, return true.
         else:
-            logger.info(f"Git changes only found in folder: {directory}")
+            click.secho(
+                f"Git changes only found in folder: {directory}",
+            )
             return True
 
 

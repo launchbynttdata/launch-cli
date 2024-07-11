@@ -26,7 +26,7 @@ def test_terragrunt_init_no_run_all(mock_run):
 
 
 @patch("subprocess.run")
-def test_terragrunt_init_exception(mock_run, dry_run=False):
+def test_terragrunt_init_exception(mock_run):
     mock_run.side_effect = subprocess.CalledProcessError(1, "cmd")
     with pytest.raises(RuntimeError):
         terragrunt_init(dry_run=False)
