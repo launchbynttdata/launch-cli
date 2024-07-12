@@ -2,9 +2,11 @@ import os
 from pathlib import Path
 
 import boto3
-import yaml
 from botocore.exceptions import ClientError
 from jinja2 import Environment, FileSystemLoader, Template
+from ruamel.yaml import YAML
+
+from launch.lib.automation.common.functions import load_yaml
 
 
 class J2PropsTemplate:
@@ -41,8 +43,7 @@ class J2PropsTemplate:
         jinja_env.filters["awssecretarn"] = self.__lookup_aws_secret_arn_filter
 
         # Load YAML input
-        with open(input_file, "r") as file:
-            input_data = yaml.safe_load(file)
+        input_data = load_yaml(Path(input_file))
 
         # Load Jinja2 template
         template = jinja_env.get_template(template_file)
