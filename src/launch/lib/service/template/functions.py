@@ -142,7 +142,7 @@ def render_jinja_template(
     if not template_data.get("data"):
         template_data["data"] = {}
 
-    env = Environment(loader=FileSystemLoader(template_path.parent), autoescape=False)
+    env = Environment(loader=FileSystemLoader(template_path.parent), autoescape=True)
     template = env.get_template(template_path.name)
     template_data["data"]["path"] = str(destination_dir)
     template_data["data"]["config"]["dir_dict"] = get_value_by_path(

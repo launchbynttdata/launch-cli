@@ -36,7 +36,7 @@ class J2PropsTemplate:
 
         template_dir = Path(template_file).parent
         template_file = Path(template_file).name
-        jinja_env = Environment(loader=FileSystemLoader(template_dir))
+        jinja_env = Environment(loader=FileSystemLoader(template_dir), autoescape=True)
         jinja_env.filters["awssecret"] = self.__lookup_aws_secret_filter
         jinja_env.filters["awssecretarn"] = self.__lookup_aws_secret_arn_filter
 
