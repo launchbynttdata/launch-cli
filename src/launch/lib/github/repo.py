@@ -1,5 +1,6 @@
 import logging
 
+import click
 from git.repo import Repo
 from github import Github
 from github.AuthenticatedUser import AuthenticatedUser
@@ -25,8 +26,16 @@ def create_repository(
     description: str,
     public: bool,
     visibility: str,
+    dry_run: True,
 ) -> Repo:
     try:
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have created a repo with the following, {name=} {description=} {public=} {visibility=} {organization=}",
+                fg="yellow",
+            )
+            return
+
         return g.get_organization(organization).create_repo(
             name=name,
             description=description,

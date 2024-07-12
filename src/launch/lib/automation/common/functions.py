@@ -1,13 +1,7 @@
 import itertools
-import json
 import logging
-import os
 import pathlib
 import shutil
-import string
-import subprocess
-from pathlib import Path
-from typing import Callable
 
 from git import Repo
 from ruamel.yaml import YAML
@@ -64,104 +58,6 @@ def check_git_changes(
         else:
             logger.info(f"Git changes only found in folder: {directory}")
             return True
-
-
-def read_key_value_from_file(file: str, key: str) -> string:
-    try:
-        with open(file) as blob:
-            data = json.load(blob)
-            value = data.get(key)
-            if value:
-                logger.info(f"Found key, value: {key}, {value}")
-                return value
-            else:
-                raise KeyError(f"No key found: {key}")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {file}")
-
-
-def install_tool_versions(file: str) -> None:
-    logger.info("Installing all asdf plugins under .tool-versions")
-    try:
-        with open(file, "r") as file:
-            lines = file.readlines()
-
-        for line in lines:
-            plugin = line.split()[0]
-            subprocess.run(["asdf", "plugin", "add", plugin])
-
-        subprocess.run(["asdf", "install"])
-    except Exception as e:
-        raise RuntimeError(
-            f"An error occurred with asdf install {file}: {str(e)}"
-        ) from e
-
-
-def set_netrc(password: str, machine: str, login: str) -> None:
-    logger.info("Setting ~/.netrc variables")
-    try:
-        with open(os.path.expanduser("~/.netrc"), "a") as file:
-            file.write(f"machine {machine}\n")
-            file.write(f"login {login}\n")
-            file.write(f"password {password}\n")
-
-        os.chmod(os.path.expanduser("~/.netrc"), 0o600)
-    except Exception as e:
-        raise RuntimeError(f"An error occurred: {str(e)}")
-
-
-def make_configure() -> None:
-    logger.info(f"Running make configure")
-    try:
-        subprocess.run(["make", "configure"], check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"An error occurred: {str(e)}") from e
-
-
-def traverse_with_callback(
-    dictionary: dict,
-    callback: Callable,
-    current_path: Path = Path("platform"),
-    **kwargs,
-) -> dict:
-    """
-    Recursively traverses a dictionary and applies a callback function. The callback function is expected to return a dictionary, which will replace the current dictionary. If the callback function returns None, the current dictionary will be used. The callback function is expected to accept the following keyword arguments:
-    - key: The current key in the dictionary
-    - value: The current value in the dictionary
-    - dictionary: The current dictionary being traversed
-    - current_path: The current path in the dictionary
-    - **kwargs: Additional keyword arguments to pass to the callback function
-
-    Args:
-        dictionary (dict): The dictionary to traverse.
-        callback (Callable): The callback function to apply to each key-value pair.
-        current_path (Path, optional): The current path in the dictionary. Defaults to Path("platform").
-        **kwargs: Additional keyword arguments to pass to the callback function.
-
-    Returns:
-        dict: The modified dictionary after applying the callback function.
-    """
-    data = None
-    if isinstance(dictionary, dict):
-        for key, value in list(dictionary.items()):
-            kwargs["nested_dict"] = dictionary
-            data = callback(
-                key=key,
-                value=value,
-                dictionary=dictionary,
-                current_path=current_path,
-                **kwargs,
-            )
-            if not data:
-                traverse_with_callback(
-                    dictionary=value,
-                    callback=callback,
-                    current_path=current_path / Path(key),
-                    **kwargs,
-                )
-    elif isinstance(dict, list):
-        pass
-    return data or dictionary
 
 
 def discover_files(
@@ -301,47 +197,3 @@ def unpack_archive(
         shutil.unpack_archive(
             filename=archive_path, extract_dir=destination, format=format_override
         )
-
-
-def recursive_dictionary_merge(a: dict, b: dict, path=[]) -> dict:
-    """Merges dictionary 'b' into dictionary 'a', will halt upon encountering a difference in the two dictionaries' values.
-
-    Args:
-        a (dict): Dictionary of arbitrary depth
-        b (dict): Dictionary of arbitrary depth
-        path (list, optional): Mechanism to report on where conflicts arise, no need to set this for external callers. Defaults to [].
-
-    Raises:
-        ValueError: Raised when both dictionaries contain a common key with a differing value.
-
-    Returns:
-        dict: Modified 'a' dictionary with keys and values merged from 'b'
-    """
-    for key in b:
-        if key in a:
-            if isinstance(a[key], dict) and isinstance(b[key], dict):
-                recursive_dictionary_merge(a[key], b[key], path + [str(key)])
-            elif a[key] != b[key]:
-                raise ValueError(f"Conflict at {'.'.join(path + [str(key)])}")
-        else:
-            a[key] = b[key]
-    return a
-
-
-def extract_uuid_key(source_data: dict) -> dict:
-    """Given a 'source_data' dictionary of arbitrary depth, find and return any 'uuid' keys while retaining the structure
-    of the dictionary. If there is not 'uuid' key, an dictionary matching the structure will be returned with no keys other
-    than the ones required to give it that structure.
-
-    Args:
-        source_data (dict): Nested dictionary
-
-    Returns:
-        dict: Nested dictionary with all keys excepting 'uuid' removed. The nesting structure of the input will be otherwise maintained.
-    """
-    for key in source_data:
-        if isinstance(source_data[key], dict):
-            return {key: extract_uuid_key(source_data=source_data[key])}
-        elif key == "uuid":
-            return {key: source_data[key]}
-    return {}

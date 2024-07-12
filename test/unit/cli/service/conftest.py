@@ -7,7 +7,7 @@ from typing import Generator
 import pytest
 from faker import Faker
 
-from launch.cli.service.commands import create_no_git
+from launch.cli.service.create import create_dir_offline
 
 fake = Faker()
 
@@ -83,7 +83,7 @@ def initialized_repo(
     cli_runner, service_path, service_inputs_file, service_vars_file
 ) -> Generator[Path, None, None]:
     cli_runner.invoke(
-        create_no_git,
+        create_dir_offline,
         ["--name", "acr_test", "--in-file", str(service_inputs_file.absolute())],
     )
     yield service_path

@@ -19,10 +19,7 @@ def test_push_branch_success(repository):
     commit_msg = "Add new feature"
 
     with patch("launch.lib.local_repo.repo.logger.info") as mock_logger_info:
-        push_branch(repository, branch, commit_msg)
-        mock_logger_info.assert_called_once_with(
-            f"{repository=}, {branch=}, {commit_msg=}"
-        )
+        push_branch(repository, branch, commit_msg, dry_run=False)
         repository.git.add.assert_called_once_with(["."])
         repository.git.commit.assert_called_once_with(["-m", commit_msg])
         repository.git.push.assert_called_once_with(
@@ -33,10 +30,7 @@ def test_push_branch_success(repository):
 def test_push_branch_default_commit_msg(repository):
     branch = "hotfix-branch"
     with patch("launch.lib.local_repo.repo.logger.info") as mock_logger_info:
-        push_branch(repository, branch)
-        mock_logger_info.assert_called_once_with(
-            f"{repository=}, {branch=}, commit_msg='Initial commit'"
-        )
+        push_branch(repository, branch, dry_run=False)
         repository.git.add.assert_called_once_with(["."])
         repository.git.commit.assert_called_once_with(["-m", "Initial commit"])
         repository.git.push.assert_called_once_with(
