@@ -2,16 +2,15 @@ import logging
 import os
 import re
 import shutil
-from fnmatch import fnmatch
 from pathlib import Path
 from typing import List
-from uuid import uuid4
 
 import click
 from jinja2 import Environment, FileSystemLoader
 
 from launch.config.common import PLATFORM_SRC_DIR_PATH
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
+from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -55,38 +54,23 @@ def process_template(
                 current_path.mkdir(parents=True, exist_ok=True)
 
             if LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value in value:
-                file_path = Path(
-                    value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value]
-                ).resolve()
-                relative_path = current_path.joinpath(file_path.name)
-                value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value] = str(
-                    f"./{relative_path.relative_to(dest_base)}"
+                LaunchConfigTemplate(dry_run).properties_file(
+                    value=value,
+                    current_path=current_path,
+                    dest_base=dest_base,
                 )
-                if dry_run:
-                    click.secho(
-                        f"[DRYRUN] Processing template, would have copied: {file_path} to {relative_path}",
-                        fg="yellow",
-                    )
-                else:
-                    try:
-                        shutil.copy(file_path, relative_path)
-                    except shutil.SameFileError:
-                        pass
-            if LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value in value:
-                updated_files = []
-                for file in value[LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value]:
-                    file_path = Path(file).resolve()
-                    relative_path = current_path.joinpath(file_path.name)
-                    updated_files.append(str(relative_path.relative_to(dest_base)))
-                    if dry_run:
-                        click.secho(
-                            f"[DRYRUN] Processing template, would have copied: {file_path} to {relative_path}",
-                            fg="yellow",
-                        )
-                    else:
-                        shutil.copy(file_path, relative_path)
             if LAUNCHCONFIG_KEYS.UUID.value in value and not skip_uuid:
-                value[LAUNCHCONFIG_KEYS.UUID.value] = f"{str(uuid4())[:6]}"
+                LaunchConfigTemplate(dry_run).uuid(value=value)
+            if LAUNCHCONFIG_KEYS.TEMPLATES.value in value:
+                LaunchConfigTemplate(dry_run).templates(
+                    value=value, current_path=current_path, dest_base=dest_base
+                )
+            if LAUNCHCONFIG_KEYS.TEMPLATE_PROPERTIES.value in value:
+                LaunchConfigTemplate(dry_run).template_properties(
+                    value=value,
+                    current_path=current_path,
+                    dest_base=dest_base,
+                )
             updated_config[key] = process_template(
                 dest_base=dest_base,
                 config=value,
@@ -158,7 +142,7 @@ def render_jinja_template(
     if not template_data.get("data"):
         template_data["data"] = {}
 
-    env = Environment(loader=FileSystemLoader(template_path.parent), autoescape=False)
+    env = Environment(loader=FileSystemLoader(template_path.parent), autoescape=True)
     template = env.get_template(template_path.name)
     template_data["data"]["path"] = str(destination_dir)
     template_data["data"]["config"]["dir_dict"] = get_value_by_path(
