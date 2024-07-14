@@ -209,3 +209,17 @@ def unpack_archive(
         shutil.unpack_archive(
             filename=archive_path, extract_dir=destination, format=format_override
         )
+
+
+def single_true(list) -> bool:
+    """
+    Returns True if one and only one item in the list is True, otherwise returns False.
+
+    Args:
+        list (list): List of boolean values
+
+    Returns:
+        bool: True if one and only one item in the list is True, otherwise False.
+    """
+    i = iter(list)
+    return any(i) and not any(i)

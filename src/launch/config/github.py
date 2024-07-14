@@ -11,3 +11,11 @@ GITHUB_ORG_PLATFORM_TEAM_ADMINISTRATORS = override_default(
     key_name="GITHUB_ORG_PLATFORM_TEAM_ADMINISTRATORS",
     default="platform-administrators",
 )
+
+GIT_SCM_ENDPOINT = override_default(
+    key_name="GIT_SCM_ENDPOINT", default="https://github.com"
+)
+
+GIT_MACHINE_USER = override_default(
+    key_name="GIT_MACHINE_USER", default="launch-cli-user"
+)

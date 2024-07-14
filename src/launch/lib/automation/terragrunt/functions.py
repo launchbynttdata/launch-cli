@@ -1,16 +1,15 @@
+import logging
 import os
 import subprocess
 from pathlib import Path
 
 import click
 
-from launch.cli.service.generate import generate
-from launch.config.common import BUILD_TEMP_DIR_PATH
-from launch.config.terragrunt import TERRAGRUNT_RUN_DIRS
-from launch.lib.automation.common.functions import is_platform_git_changes
-from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
-from launch.lib.automation.provider.aws.functions import assume_role
-from launch.lib.common.utilities import extract_repo_name_from_url
+from launch.cli.j2.render import render
+from launch.config.common import NON_SECRET_J2_TEMPLATE_NAME, SECRET_J2_TEMPLATE_NAME
+from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
+
+logger = logging.getLogger(__name__)
 
 
 ## Terragrunt Specific Functions
@@ -179,90 +178,52 @@ def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def prepare_for_terragrunt(
+def find_app_templates(
+    context: click.Context, base_dir: Path, template_dir: Path, dry_run: bool
+) -> None:
+    for instance_path, dirs, files in os.walk(base_dir):
+        if LAUNCHCONFIG_KEYS.TEMPLATE_PROPERTIES.value in dirs:
+            process_app_templates(
+                context=context,
+                instance_path=instance_path,
+                properties_path=Path(instance_path).joinpath(
+                    LAUNCHCONFIG_KEYS.TEMPLATE_PROPERTIES.value
+                ),
+                template_dir=template_dir,
+                dry_run=dry_run,
+            )
+
+
+def process_app_templates(
     context: click.Context,
-    build_path: Path,
-    url: str,
-    tag: str,
-    generation: bool,
-    target_environment: str,
-    provider_config: dict,
-    platform_resource: str,
-    check_diff: bool,
+    instance_path: Path,
+    properties_path: Path,
+    template_dir: Path,
     dry_run: bool,
-) -> dict[Path]:
-    """
-    Prepares the environment for running terragrunt commands.
-
-    Args:
-        context (click.Context): The click context.
-        build_path (Path): The path to build the terragrunt files in.
-        url (str): The URL of the repository to clone.
-        tag (str): The tag of the repository to clone.
-        generation (bool): If set, it will generate the terragrunt files.
-        target_environment (str): The target environment to run the terragrunt command against.
-        provider_config (dict): Provider config as a string used for any specific config needed for certain providers.
-        platform_resource (str): If set, this will set the specified pipeline resource to run terragrunt against.
-        check_diff (bool): If set, it will check the diff between the pipeline and service changes.
-
-    Raises:
-        FileNotFoundError: If the path does not exist.
-
-    Returns:
-        dict[Path]: The directories to run terragrunt in.
-    """
-
-    if url or generation:
-        build_path = (
-            Path()
-            .cwd()
-            .joinpath(f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(url)}")
+) -> None:
+    for file_name in os.listdir(properties_path):
+        file_path = Path(properties_path).joinpath(file_name)
+        folder_name = file_name.split(".")[0]
+        secret_template = template_dir.joinpath(
+            Path(f"{folder_name}/{SECRET_J2_TEMPLATE_NAME}")
         )
-    else:
-        build_path = Path().cwd()
-
-    if generation:
-        context.invoke(
-            generate,
-            url=url,
-            tag=tag,
-            dry_run=dry_run,
+        non_secret_template = template_dir.joinpath(
+            Path(f"{folder_name}/{NON_SECRET_J2_TEMPLATE_NAME}")
         )
-
-    if check_diff:
-        os.chdir(build_path)
-        # TODO: Implement this function. Requires to pass the commit_id which comes
-        # from set_vars.sh. Need to implement a way to pass this value to the function.
-        # is_platform_git_changes(
-        #     repository= Repo(build_path),
-        #     commit_id=,
-        #     directory=build_path,
-        # )
-
-    install_tool_versions()
-    set_netrc()
-
-    # If the Provider is AZURE there is a prequisite requirement of logging into azure
-    # i.e. az login, or service principal is already applied to the environment.
-    # If the provider is AWS, we need to assume the role for deployment.
-    provider = provider_config["provider"]
-    if provider_config:
-        if provider == "aws":
-            assume_role(provider_config=provider_config)
-
-    if platform_resource == "all":
-        run_dirs = [
-            TERRAGRUNT_RUN_DIRS["service"].joinpath(target_environment),
-            TERRAGRUNT_RUN_DIRS["pipeline"].joinpath(target_environment),
-            TERRAGRUNT_RUN_DIRS["webhook"].joinpath(target_environment),
-        ]
-    elif platform_resource in TERRAGRUNT_RUN_DIRS:
-        run_dirs = [TERRAGRUNT_RUN_DIRS[platform_resource].joinpath(target_environment)]
-
-    for run_dir in run_dirs:
-        if not (run_dir).exists():
-            message = f"Error: Path {run_dir.joinpath(run_dir)} does not exist."
-            click.secho(message, fg="red")
-            raise FileNotFoundError(message)
-
-    return build_path, run_dirs
+        # if secret_template.exists():
+        #     context.invoke(
+        #         render,
+        #         values=file_path,
+        #         template=secret_template,
+        #         out_file=f"{instance_path}/{folder_name}.secret.auto.tfvars",
+        #         dry_run=dry_run,
+        #     )
+        logger.info(f"non Secret Template: {non_secret_template}")
+        if non_secret_template.exists():
+            context.invoke(
+                render,
+                values=file_path,
+                template=non_secret_template,
+                out_file=f"{instance_path}/{folder_name}.non-secret.auto.tfvars",
+                dry_run=dry_run,
+            )

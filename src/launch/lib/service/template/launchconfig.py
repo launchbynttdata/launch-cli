@@ -20,7 +20,7 @@ class LaunchConfigTemplate:
         file_path = Path(value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value]).resolve()
         relative_path = current_path.joinpath(file_path.name)
         value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value] = str(
-            f"./{relative_path.relative_to(dest_base)}"
+            f"./{relative_path.relative_to(dest_base).with_name(TERRAFORM_VAR_FILE)}"
         )
         if self.dry_run:
             click.secho(
@@ -56,7 +56,10 @@ class LaunchConfigTemplate:
                         ),
                         exist_ok=True,
                     )
-                    shutil.copy(file_path, relative_path)
+                    try:
+                        shutil.copy(file_path, relative_path)
+                    except shutil.SameFileError:
+                        pass
 
     def template_properties(
         self,

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 
-from launch.config.common import AWS_REGION
+from launch.config.aws import AWS_REGION
 from launch.lib.j2props.j2props_utils import J2PropsTemplate
 
 logger = logging.getLogger(__name__)

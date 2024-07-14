@@ -49,7 +49,11 @@ def get_bool_env_var(env_var_name: str, default_value: bool) -> bool:
     return strtobool(os.environ.get(env_var_name, default=default_value))
 
 
-def override_default(key_name: str, default: str) -> str:
+def override_default(
+    key_name: str,
+    default: str = None,
+    required: bool = False,
+) -> str:
     """
     Override the default value of a key in the launchconfig file. It will first check if the key is present in the environment
     variables. If it is present, it will return the value of the key. If it is not present, it will check the local launchconfig
@@ -78,7 +82,13 @@ def override_default(key_name: str, default: str) -> str:
             global_config = json.load(f)
             if key_name in global_config["override"]:
                 return global_config["override"][key_name]
-    return default
+
+    if required and default is None:
+        raise RuntimeError(
+            f"ERROR: The {key_name} environment variable is not set. You must set this environment variable before running this command."
+        )
+    else:
+        return default
 
 
 UPDATE_CHECK = get_bool_env_var("LAUNCH_CLI_UPDATE_CHECK", False)
