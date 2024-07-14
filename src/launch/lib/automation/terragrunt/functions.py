@@ -1,12 +1,16 @@
+import os
 import subprocess
 from pathlib import Path
 
 import click
 
+from launch.cli.service.generate import generate
+from launch.config.common import BUILD_TEMP_DIR_PATH
 from launch.config.terragrunt import TERRAGRUNT_RUN_DIRS
 from launch.lib.automation.common.functions import is_platform_git_changes
 from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
 from launch.lib.automation.provider.aws.functions import assume_role
+from launch.lib.common.utilities import extract_repo_name_from_url
 
 
 ## Terragrunt Specific Functions
@@ -176,16 +180,26 @@ def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
 
 
 def prepare_for_terragrunt(
+    context: click.Context,
     build_path: Path,
+    url: str,
+    tag: str,
+    generation: bool,
     target_environment: str,
     provider_config: dict,
     platform_resource: str,
     check_diff: bool,
+    dry_run: bool,
 ) -> dict[Path]:
     """
     Prepares the environment for running terragrunt commands.
 
     Args:
+        context (click.Context): The click context.
+        build_path (Path): The path to build the terragrunt files in.
+        url (str): The URL of the repository to clone.
+        tag (str): The tag of the repository to clone.
+        generation (bool): If set, it will generate the terragrunt files.
         target_environment (str): The target environment to run the terragrunt command against.
         provider_config (dict): Provider config as a string used for any specific config needed for certain providers.
         platform_resource (str): If set, this will set the specified pipeline resource to run terragrunt against.
@@ -198,13 +212,31 @@ def prepare_for_terragrunt(
         dict[Path]: The directories to run terragrunt in.
     """
 
+    if url or generation:
+        build_path = (
+            Path()
+            .cwd()
+            .joinpath(f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(url)}")
+        )
+    else:
+        build_path = Path().cwd()
+
+    if generation:
+        context.invoke(
+            generate,
+            url=url,
+            tag=tag,
+            dry_run=dry_run,
+        )
+
     if check_diff:
-        # This will throw an error if there are changes in both
         os.chdir(build_path)
+        # TODO: Implement this function. Requires to pass the commit_id which comes
+        # from set_vars.sh. Need to implement a way to pass this value to the function.
         # is_platform_git_changes(
-        #     repository=,
+        #     repository= Repo(build_path),
         #     commit_id=,
-        #     directory=,
+        #     directory=build_path,
         # )
 
     install_tool_versions()
@@ -233,4 +265,4 @@ def prepare_for_terragrunt(
             click.secho(message, fg="red")
             raise FileNotFoundError(message)
 
-    return run_dirs
+    return build_path, run_dirs

@@ -91,27 +91,9 @@ def destroy(
 
     if dry_run:
         click.secho("Performing a dry run, nothing will be updated", fg="yellow")
-        # TODO: add a dry run for terragrunt destroy
-        return
 
-    if url or generation:
-        build_path = (
-            Path()
-            .cwd()
-            .joinpath(f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(url)}")
-        )
-    else:
-        build_path = Path().cwd()
-
-    if generation:
-        context.invoke(
-            generate,
-            url=url,
-            tag=tag,
-            dry_run=dry_run,
-        )
-
-    run_dirs = prepare_for_terragrunt(
+    build_path, run_dirs = prepare_for_terragrunt(
+        build_path=build_path,
         target_environment=target_environment,
         provider_config=provider_config,
         platform_resource=platform_resource,
