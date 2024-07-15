@@ -21,6 +21,7 @@ from launch.lib.automation.terragrunt.functions import (
     terragrunt_plan,
 )
 from launch.lib.common.utilities import extract_repo_name_from_url
+from launch.lib.github.auth import read_github_token
 
 
 @click.command()
@@ -176,7 +177,9 @@ def terragrunt(
         # )
 
     install_tool_versions()
-    set_netrc()
+    set_netrc(
+        password=read_github_token(),
+    )
 
     if generation:
         context.invoke(

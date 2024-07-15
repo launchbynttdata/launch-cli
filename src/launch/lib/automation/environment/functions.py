@@ -4,7 +4,6 @@ import subprocess
 
 from launch.config.common import TOOL_VERSION_FILE
 from launch.config.github import GIT_MACHINE_USER, GIT_SCM_ENDPOINT
-from launch.lib.github.auth import read_github_token
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ def install_tool_versions(file: str = TOOL_VERSION_FILE) -> None:
 
 
 def set_netrc(
-    password: str = read_github_token(),
+    password: str,
     machine: str = GIT_SCM_ENDPOINT,
     login: str = GIT_MACHINE_USER,
 ) -> None:

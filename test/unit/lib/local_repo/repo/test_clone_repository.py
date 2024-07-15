@@ -29,8 +29,8 @@ def test_clone_repository_success(test_fakedata):
             test_fakedata["branch"],
         )
         mock_clone_from.assert_called_once_with(
-            test_fakedata["repository_url"],
-            test_fakedata["target"],
+            url=test_fakedata["repository_url"],
+            to_path=test_fakedata["target"],
             branch=test_fakedata["branch"],
         )
         assert result == test_fakedata["mock_repo"]
