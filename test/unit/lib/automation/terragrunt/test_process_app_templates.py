@@ -2,5 +2,5 @@ import pytest
 
 
 @pytest.mark.skip("TODO: Ticket: tbd XXXXX")
-def test_prepare_for_terragrunt():
+def test_process_app_templates():
     pass

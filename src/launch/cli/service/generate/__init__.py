@@ -1,5 +1,6 @@
 import json
 import logging
+import shutil
 from pathlib import Path
 
 import click
@@ -59,8 +60,18 @@ def generate(
     dry_run: bool,
 ):
     """
-    Dynamically generates terragrunt files based off a service.
+    Dynamically generates terragrunt files. This command will clone the service repository and the skeleton repository,
+    copy the skeleton files to the service repository, and render the Jinja templates.
 
+    Args:
+        in_file (str): The exact path to the launchconfig file. Defaults to LAUNCHCONFIG_PATH_LOCAL.
+        output_path (str): The default output path for the build files. Defaults to BUILD_TEMP_DIR_PATH.
+        url (str): The URL of the repository to clone.
+        tag (str): The tag of the repository to clone. Defaults to SERVICE_MAIN_BRANCH.
+        dry_run (bool): Perform a dry run that reports on what it would do.
+
+    Returns:
+        None
     """
     context.invoke(
         clean,
@@ -84,7 +95,7 @@ def generate(
     else:
         service_dir = Path.cwd().name
     build_path_service = f"{output_path}/{service_dir}"
-    Path(build_path_service).mkdir(parents=True, exist_ok=True)
+    Path(output_path).mkdir(parents=True, exist_ok=True)
 
     if url and Path(build_path_service).exists():
         click.secho(
@@ -103,6 +114,10 @@ def generate(
                 target=build_path_service,
                 branch=tag,
             )
+    elif not url:
+        shutil.copytree(
+            Path.cwd().joinpath(".git"), Path(build_path_service).joinpath(".git")
+        )
 
     if Path(LAUNCHCONFIG_PATH_LOCAL).exists():
         with open(LAUNCHCONFIG_PATH_LOCAL, "r") as f:

@@ -1,4 +1,3 @@
-import logging
 import os
 import subprocess
 from pathlib import Path
@@ -8,8 +7,6 @@ import click
 from launch.cli.j2.render import render
 from launch.config.common import NON_SECRET_J2_TEMPLATE_NAME, SECRET_J2_TEMPLATE_NAME
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
-
-logger = logging.getLogger(__name__)
 
 
 ## Terragrunt Specific Functions
@@ -181,6 +178,18 @@ def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
 def find_app_templates(
     context: click.Context, base_dir: Path, template_dir: Path, dry_run: bool
 ) -> None:
+    """
+    Finds app templates in the base_dir and processes them.
+
+    Args:
+        context (click.Context): The click context.
+        base_dir (Path): The base directory to search for app templates.
+        template_dir (Path): The directory where the templates are located.
+        dry_run (bool): If set, it will perform a dry run that reports on what it would do, but does not perform any action.
+
+    Returns:
+        None
+    """
     for instance_path, dirs, files in os.walk(base_dir):
         if LAUNCHCONFIG_KEYS.TEMPLATE_PROPERTIES.value in dirs:
             process_app_templates(
@@ -201,6 +210,20 @@ def process_app_templates(
     template_dir: Path,
     dry_run: bool,
 ) -> None:
+    """
+    Processes app templates in the properties_path. It will render the secret and non-secret templates for each
+    application running the render command on them.
+
+    Args:
+        context (click.Context): The click context.
+        instance_path (Path): The instance path.
+        properties_path (Path): The properties path.
+        template_dir (Path): The template directory.
+        dry_run (bool): If set, it will perform a dry run that reports on what it would do, but does not perform any action.
+
+    Returns:
+        None
+    """
     for file_name in os.listdir(properties_path):
         file_path = Path(properties_path).joinpath(file_name)
         folder_name = file_name.split(".")[0]
@@ -210,15 +233,14 @@ def process_app_templates(
         non_secret_template = template_dir.joinpath(
             Path(f"{folder_name}/{NON_SECRET_J2_TEMPLATE_NAME}")
         )
-        # if secret_template.exists():
-        #     context.invoke(
-        #         render,
-        #         values=file_path,
-        #         template=secret_template,
-        #         out_file=f"{instance_path}/{folder_name}.secret.auto.tfvars",
-        #         dry_run=dry_run,
-        #     )
-        logger.info(f"non Secret Template: {non_secret_template}")
+        if secret_template.exists():
+            context.invoke(
+                render,
+                values=file_path,
+                template=secret_template,
+                out_file=f"{instance_path}/{folder_name}.secret.auto.tfvars",
+                dry_run=dry_run,
+            )
         if non_secret_template.exists():
             context.invoke(
                 render,
