@@ -40,7 +40,8 @@ def assume_role(
                 "set",
                 f"profile.{aws_deployment_role}.aws_access_key_id",
                 access_key,
-            ]
+            ],
+            check=True
         )
         subprocess.run(
             [
@@ -49,7 +50,8 @@ def assume_role(
                 "set",
                 f"profile.{aws_deployment_role}.aws_secret_access_key",
                 secret_access_key,
-            ]
+            ],
+            check=True
         )
         subprocess.run(
             [
@@ -58,7 +60,8 @@ def assume_role(
                 "set",
                 f"profile.{aws_deployment_role}.aws_session_token",
                 session_token,
-            ]
+            ],
+            check=True
         )
         subprocess.run(
             [
@@ -67,7 +70,8 @@ def assume_role(
                 "set",
                 f"profile.{aws_deployment_role}.region",
                 aws_deployment_region,
-            ]
+            ],
+            check=True
         )
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Failed set aws configure: {str(e)}")
