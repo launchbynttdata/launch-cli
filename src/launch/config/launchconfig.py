@@ -6,6 +6,6 @@ SERVICE_REMOTE_BRANCH = override_default(
 )
 SERVICE_SKELETON = override_default(
     key_name="SERVICE_SKELETON",
-    default='"https://github.com/launchbynttdata/lcaf-template-terragrunt.git"',
+    default="https://github.com/launchbynttdata/lcaf-template-terragrunt.git",
 )
 SKELETON_BRANCH = override_default(key_name="SKELETON_BRANCH", default="main")

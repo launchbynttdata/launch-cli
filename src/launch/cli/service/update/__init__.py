@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.option("--name", required=True, help="Name of the service to be updated.")
+@click.option(
+    "--name", default=Path.cwd().name, help="Name of the service to be updated."
+)
 @click.option(
     "--in-file",
     required=None,

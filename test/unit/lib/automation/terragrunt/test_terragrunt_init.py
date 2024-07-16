@@ -10,7 +10,7 @@ from launch.lib.automation.terragrunt.functions import terragrunt_init
 @patch("subprocess.run")
 def test_terragrunt_init_run_all(mock_run):
     mock_run.return_value = MagicMock()
-    terragrunt_init(run_all=True)
+    terragrunt_init(run_all=True, dry_run=False)
     mock_run.assert_called_once_with(
         ["terragrunt", "run_all", "init", "--terragrunt-non-interactive"], check=True
     )
@@ -19,7 +19,7 @@ def test_terragrunt_init_run_all(mock_run):
 @patch("subprocess.run")
 def test_terragrunt_init_no_run_all(mock_run):
     mock_run.return_value = MagicMock()
-    terragrunt_init(run_all=False)
+    terragrunt_init(run_all=False, dry_run=False)
     mock_run.assert_called_once_with(
         ["terragrunt", "init", "--terragrunt-non-interactive"], check=True
     )
@@ -29,4 +29,4 @@ def test_terragrunt_init_no_run_all(mock_run):
 def test_terragrunt_init_exception(mock_run):
     mock_run.side_effect = subprocess.CalledProcessError(1, "cmd")
     with pytest.raises(RuntimeError):
-        terragrunt_init()
+        terragrunt_init(dry_run=False)

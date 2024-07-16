@@ -6,12 +6,10 @@ logger = logging.getLogger(__name__)
 
 
 def assume_role(
-    provider_config: dict, repository_name: str, target_environment: str
+    aws_deployment_role: str,
+    aws_deployment_region: str,
 ) -> None:
     logger.info("Assuming the IAM deployment role")
-
-    provider = provider_config["provider"]
-    profile = provider_config[provider]["role_arn"]
 
     try:
         sts_credentials = json.loads(
@@ -21,7 +19,7 @@ def assume_role(
                     "sts",
                     "assume-role",
                     "--role-arn",
-                    provider_config[provider]["role_arn"],
+                    aws_deployment_role,
                     "--role-session-name",
                     "caf-build-agent",
                 ]
@@ -40,7 +38,7 @@ def assume_role(
                 "aws",
                 "configure",
                 "set",
-                f"profile.{profile}.aws_access_key_id",
+                f"profile.{aws_deployment_role}.aws_access_key_id",
                 access_key,
             ]
         )
@@ -49,7 +47,7 @@ def assume_role(
                 "aws",
                 "configure",
                 "set",
-                f"profile.{profile}.aws_secret_access_key",
+                f"profile.{aws_deployment_role}.aws_secret_access_key",
                 secret_access_key,
             ]
         )
@@ -58,7 +56,7 @@ def assume_role(
                 "aws",
                 "configure",
                 "set",
-                f"profile.{profile}.aws_session_token",
+                f"profile.{aws_deployment_role}.aws_session_token",
                 session_token,
             ]
         )
@@ -67,8 +65,8 @@ def assume_role(
                 "aws",
                 "configure",
                 "set",
-                f"profile.{profile}.region",
-                provider_config[provider]["region"],
+                f"profile.{aws_deployment_role}.region",
+                aws_deployment_region,
             ]
         )
     except subprocess.CalledProcessError as e:

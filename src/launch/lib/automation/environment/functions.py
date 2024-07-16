@@ -2,10 +2,13 @@ import logging
 import os
 import subprocess
 
+from launch.config.common import TOOL_VERSION_FILE
+from launch.config.github import GIT_MACHINE_USER, GIT_SCM_ENDPOINT
+
 logger = logging.getLogger(__name__)
 
 
-def install_tool_versions(file: str) -> None:
+def install_tool_versions(file: str = TOOL_VERSION_FILE) -> None:
     logger.info("Installing all asdf plugins under .tool-versions")
     try:
         with open(file, "r") as file:
@@ -22,7 +25,11 @@ def install_tool_versions(file: str) -> None:
         ) from e
 
 
-def set_netrc(password: str, machine: str, login: str) -> None:
+def set_netrc(
+    password: str,
+    machine: str = GIT_SCM_ENDPOINT,
+    login: str = GIT_MACHINE_USER,
+) -> None:
     logger.info("Setting ~/.netrc variables")
     try:
         with open(os.path.expanduser("~/.netrc"), "a") as file:

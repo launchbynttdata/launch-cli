@@ -1,22 +1,31 @@
-import json
-import logging
 import os
 import subprocess
 from pathlib import Path
 
-from git import Repo
+import click
 
-from launch.config.common import BUILD_TEMP_DIR_PATH
-from launch.constants.launchconfig import LAUNCHCONFIG_NAME
-from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
-from launch.lib.automation.provider.aws.functions import assume_role
-
-logger = logging.getLogger(__name__)
+from launch.cli.j2.render import render
+from launch.config.common import NON_SECRET_J2_TEMPLATE_NAME, SECRET_J2_TEMPLATE_NAME
+from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
 
 
 ## Terragrunt Specific Functions
-def terragrunt_init(run_all=True):
-    logger.info("Running terragrunt init")
+def terragrunt_init(run_all=True, dry_run=True) -> None:
+    """
+    Runs terragrunt init subprocess in the current directory.
+
+    Args:
+        run_all (bool, optional): If set, it will run terragrunt init on all directories. Defaults to True.
+        dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
+
+    Raises:
+        RuntimeError: If an error occurs during the subprocess.
+
+    Returns:
+        None
+    """
+
+    click.secho("Running terragrunt init")
     if run_all:
         subprocess_args = [
             "terragrunt",
@@ -28,143 +37,215 @@ def terragrunt_init(run_all=True):
         subprocess_args = ["terragrunt", "init", "--terragrunt-non-interactive"]
 
     try:
-        subprocess.run(subprocess_args, check=True)
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(subprocess_args, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def terragrunt_plan(file=None, run_all=True):
-    logger.info("Running terragrunt plan")
+def terragrunt_plan(out_file=None, run_all=True, dry_run=True) -> None:
+    """
+    Runs terragrunt plan subprocess in the current directory.
+
+    Args:
+        out_file (str, optional): The output file from running terragrunt plan. Defaults to None.
+        run_all (bool, optional): If set, it will run terragrunt plan on all directories. Defaults to True.
+        dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
+
+    Raises:
+        RuntimeError: If an error occurs during the subprocess.
+
+    Returns:
+        None
+    """
+    click.secho("Running terragrunt plan")
     if run_all:
         subprocess_args = ["terragrunt", "run-all", "plan"]
     else:
         subprocess_args = ["terragrunt", "plan"]
 
-    if file:
+    if out_file:
         subprocess_args.append("-out")
-        subprocess_args.append(file)
+        subprocess_args.append(out_file)
     try:
-        subprocess.run(subprocess_args, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"An error occurred: {str(e)}")
-
-
-def terragrunt_apply(file=None, run_all=True):
-    logger.info("Running terragrunt apply")
-    if run_all:
-        subprocess_args = [
-            "terragrunt",
-            "run-all",
-            "apply",
-            "-auto-approve",
-            "--terragrunt-non-interactive",
-        ]
-    else:
-        subprocess_args = [
-            "terragrunt",
-            "apply",
-            "-auto-approve",
-            "--terragrunt-non-interactive",
-        ]
-
-    if file:
-        subprocess_args.append("-var-file")
-        subprocess_args.append(file)
-    try:
-        subprocess.run(subprocess_args, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"An error occurred: {str(e)}")
-
-
-def terragrunt_destroy(file=None, run_all=True):
-    logger.info("Running terragrunt destroy")
-    if run_all:
-        subprocess_args = [
-            "terragrunt",
-            "run-all",
-            "destroy",
-            "-auto-approve",
-            "--terragrunt-non-interactive",
-        ]
-    else:
-        subprocess_args = [
-            "terragrunt",
-            "destroy",
-            "-auto-approve",
-            "--terragrunt-non-interactive",
-        ]
-
-    if file:
-        subprocess_args.append("-var-file")
-        subprocess_args.append(file)
-    try:
-        subprocess.run(subprocess_args, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"An error occurred: {str(e)}")
-
-
-# This logic is used to get everything ready for terragrunt. This includes:
-# 1. Cloning the repository
-# 2. Checking out the commit sha
-# 3. Installing all asdf plugins under .tool-versions
-# 4. Setting ~/.netrc variables
-# 5. Copying files and directories from the properties repository to the terragrunt directory
-# 6. Assuming the role if the provider is AWS
-# 7. Changing the directory to the terragrunt directory
-def prepare_for_terragrunt(
-    repository: Repo,
-    name: str,
-    git_token: str,
-    commit_sha: str,
-    target_environment: str,
-    provider_config: dict,
-    skip_diff: bool,
-    pipeline_resource: str,
-    path: str,
-    override: dict,
-):
-    os.chdir(f"{BUILD_TEMP_DIR_PATH}/{name}")
-    with open(f"{BUILD_TEMP_DIR_PATH}/{name}/{LAUNCHCONFIG_NAME}", "r") as f:
-        launch_config = json.load(f)
-
-    install_tool_versions(
-        file=override["tool_versions_file"],
-    )
-    set_netrc(password=git_token, machine=override["machine"], login=override["login"])
-
-    # If the Provider is AZURE there is a prequisite requirement of logging into azure
-    # i.e. az login, or service principal is already applied to the environment.
-    # If the provider is AWS, we need to assume the role for deployment.
-    provider = provider_config["provider"]
-    if provider_config:
-        if provider == "aws":
-            assume_role(
-                provider_config=provider_config,
-                repository_name=name,
-                target_environment=target_environment,
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
+                fg="yellow",
             )
-        # Commenting this out with the template refactor. This needs to be reworked to work with the new structure.
-        # if provider.startswith("az"):
-        #     make_configure()
-        #     traverse_with_callback(
-        #         dictionary=launch_config["platform"],
-        #         callback=callback_deploy_remote_state,
-        #         base_path=f"{path}/{name}{CODE_GENERATION_DIR_SUFFIX}/{BUILD_DEPENDENCIES_DIR}/",
-        #         naming_prefix=launch_config["naming_prefix"],
-        #         target_environment=target_environment,
-        #         provider_config=provider_config,
-        #     )
+        else:
+            subprocess.run(subprocess_args, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"An error occurred: {str(e)}")
 
-    if pipeline_resource:
-        exec_dir = Path(
-            f"{override['infrastructure_dir']}/{pipeline_resource}-{provider}/{target_environment}"
-        )
+
+def terragrunt_apply(var_file=None, run_all=True, dry_run=True) -> None:
+    """
+    Runs terragrunt apply subprocess in the current directory.
+
+    Args:
+        var_file (str, optional): The var file with inputs to pass to terragrunt. Defaults to None.
+        run_all (bool, optional): If set, it will run terragrunt apply on all directories. Defaults to True.
+        dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
+
+    Raises:
+        RuntimeError: If an error occurs during the subprocess.
+
+    Returns:
+        None
+    """
+    click.secho("Running terragrunt apply")
+    if run_all:
+        subprocess_args = [
+            "terragrunt",
+            "run-all",
+            "apply",
+            "-auto-approve",
+            "--terragrunt-non-interactive",
+        ]
     else:
-        exec_dir = Path(f"{override['environment_dir']}/{target_environment}")
+        subprocess_args = [
+            "terragrunt",
+            "apply",
+            "-auto-approve",
+            "--terragrunt-non-interactive",
+        ]
 
-    if not (exec_dir).exists():
-        message = f"Error: Path {exec_dir} does not exist."
-        logger.error(message)
-        raise FileNotFoundError(message)
+    if var_file:
+        subprocess_args.append("-var-file")
+        subprocess_args.append(var_file)
+    try:
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(subprocess_args, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"An error occurred: {str(e)}")
 
-    os.chdir(exec_dir)
+
+def terragrunt_destroy(var_file=None, run_all=True, dry_run=True) -> None:
+    """
+    Runs terragrunt destroy subprocess in the current directory.
+
+    Args:
+        var_file (str, optional): The var file with inputs to pass to terragrunt. Defaults to None.
+        run_all (bool, optional): If set, it will run terragrunt destroy on all directories. Defaults to True.
+        dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
+
+    Raises:
+        RuntimeError: If an error occurs during the subprocess.
+    """
+    click.secho("Running terragrunt destroy")
+    if run_all:
+        subprocess_args = [
+            "terragrunt",
+            "run-all",
+            "destroy",
+            "-auto-approve",
+            "--terragrunt-non-interactive",
+        ]
+    else:
+        subprocess_args = [
+            "terragrunt",
+            "destroy",
+            "-auto-approve",
+            "--terragrunt-non-interactive",
+        ]
+
+    if var_file:
+        subprocess_args.append("-var-file")
+        subprocess_args.append(var_file)
+    try:
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: {subprocess_args=}",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(subprocess_args, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"An error occurred: {str(e)}")
+
+
+def find_app_templates(
+    context: click.Context, base_dir: Path, template_dir: Path, dry_run: bool
+) -> None:
+    """
+    Finds app templates in the base_dir and processes them.
+
+    Args:
+        context (click.Context): The click context.
+        base_dir (Path): The base directory to search for app templates.
+        template_dir (Path): The directory where the templates are located.
+        dry_run (bool): If set, it will perform a dry run that reports on what it would do, but does not perform any action.
+
+    Returns:
+        None
+    """
+    for instance_path, dirs, files in os.walk(base_dir):
+        if LAUNCHCONFIG_KEYS.TEMPLATE_PROPERTIES.value in dirs:
+            process_app_templates(
+                context=context,
+                instance_path=instance_path,
+                properties_path=Path(instance_path).joinpath(
+                    LAUNCHCONFIG_KEYS.TEMPLATE_PROPERTIES.value
+                ),
+                template_dir=template_dir,
+                dry_run=dry_run,
+            )
+
+
+def process_app_templates(
+    context: click.Context,
+    instance_path: Path,
+    properties_path: Path,
+    template_dir: Path,
+    dry_run: bool,
+) -> None:
+    """
+    Processes app templates in the properties_path. It will render the secret and non-secret templates for each
+    application running the render command on them.
+
+    Args:
+        context (click.Context): The click context.
+        instance_path (Path): The instance path.
+        properties_path (Path): The properties path.
+        template_dir (Path): The template directory.
+        dry_run (bool): If set, it will perform a dry run that reports on what it would do, but does not perform any action.
+
+    Returns:
+        None
+    """
+    for file_name in os.listdir(properties_path):
+        file_path = Path(properties_path).joinpath(file_name)
+        folder_name = file_name.split(".")[0]
+        secret_template = template_dir.joinpath(
+            Path(f"{folder_name}/{SECRET_J2_TEMPLATE_NAME}")
+        )
+        non_secret_template = template_dir.joinpath(
+            Path(f"{folder_name}/{NON_SECRET_J2_TEMPLATE_NAME}")
+        )
+        if secret_template.exists():
+            context.invoke(
+                render,
+                values=file_path,
+                template=secret_template,
+                out_file=f"{instance_path}/{folder_name}.secret.auto.tfvars",
+                dry_run=dry_run,
+            )
+        if non_secret_template.exists():
+            context.invoke(
+                render,
+                values=file_path,
+                template=non_secret_template,
+                out_file=f"{instance_path}/{folder_name}.non-secret.auto.tfvars",
+                dry_run=dry_run,
+            )
