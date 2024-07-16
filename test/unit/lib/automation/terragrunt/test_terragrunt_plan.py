@@ -11,7 +11,7 @@ from launch.lib.automation.terragrunt.functions import terragrunt_plan
 def test_terragrunt_plan_run_all(mock_run):
     mock_run.return_value = MagicMock()
     terragrunt_plan(
-        file=None,
+        out_file=None,
         run_all=False,
         dry_run=False,
     )
@@ -22,7 +22,7 @@ def test_terragrunt_plan_run_all(mock_run):
 def test_terragrunt_plan_no_run_all(mock_run):
     mock_run.return_value = MagicMock()
     terragrunt_plan(
-        file=None,
+        out_file=None,
         run_all=False,
         dry_run=False,
     )
@@ -33,7 +33,7 @@ def test_terragrunt_plan_no_run_all(mock_run):
 def test_terragrunt_plan_with_file(mock_run):
     mock_run.return_value = MagicMock()
     terragrunt_plan(
-        file="plan.out",
+        out_file="plan.out",
         run_all=False,
         dry_run=False,
     )

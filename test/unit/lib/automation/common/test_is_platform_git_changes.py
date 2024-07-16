@@ -16,7 +16,7 @@ def test_commit_hash_same_as_main_branch():
         mock_repo, "same_commit_hash", "main", "infrastructure"
     )
 
-    assert result or not result
+    assert result
 
 
 # Test when the commit hash is different from the main branch
@@ -35,7 +35,7 @@ def test_commit_hash_different_from_main_branch():
         mock_repo, "different_commit_hash", "infrastructure"
     )
 
-    assert result or not result  # Update this line based on expected behavior
+    assert result
 
 
 # Test when there are no git changes in the specified directory

@@ -11,7 +11,7 @@ from launch.lib.automation.terragrunt.functions import terragrunt_apply
 def test_terragrunt_apply_run_all(mock_run):
     mock_run.return_value = MagicMock()
     terragrunt_apply(
-        file=None,
+        var_file=None,
         run_all=True,
         dry_run=False,
     )
@@ -31,7 +31,7 @@ def test_terragrunt_apply_run_all(mock_run):
 def test_terragrunt_apply_no_run_all(mock_run):
     mock_run.return_value = MagicMock()
     terragrunt_apply(
-        file=None,
+        var_file=None,
         run_all=False,
         dry_run=False,
     )
@@ -45,7 +45,7 @@ def test_terragrunt_apply_no_run_all(mock_run):
 def test_terragrunt_apply_with_file(mock_run):
     mock_run.return_value = MagicMock()
     terragrunt_apply(
-        file="vars.tfvars",
+        var_file="vars.tfvars",
         run_all=False,
         dry_run=False,
     )

@@ -48,12 +48,12 @@ def terragrunt_init(run_all=True, dry_run=True) -> None:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def terragrunt_plan(file=None, run_all=True, dry_run=True) -> None:
+def terragrunt_plan(out_file=None, run_all=True, dry_run=True) -> None:
     """
     Runs terragrunt plan subprocess in the current directory.
 
     Args:
-        file (str, optional): The file to pass to terragrunt. Defaults to None.
+        out_file (str, optional): The output file from running terragrunt plan. Defaults to None.
         run_all (bool, optional): If set, it will run terragrunt plan on all directories. Defaults to True.
         dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
 
@@ -69,9 +69,9 @@ def terragrunt_plan(file=None, run_all=True, dry_run=True) -> None:
     else:
         subprocess_args = ["terragrunt", "plan"]
 
-    if file:
+    if out_file:
         subprocess_args.append("-out")
-        subprocess_args.append(file)
+        subprocess_args.append(out_file)
     try:
         if dry_run:
             click.secho(
@@ -84,12 +84,12 @@ def terragrunt_plan(file=None, run_all=True, dry_run=True) -> None:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def terragrunt_apply(file=None, run_all=True, dry_run=True) -> None:
+def terragrunt_apply(var_file=None, run_all=True, dry_run=True) -> None:
     """
     Runs terragrunt apply subprocess in the current directory.
 
     Args:
-        file (str, optional): The file to pass to terragrunt. Defaults to None.
+        var_file (str, optional): The var file with inputs to pass to terragrunt. Defaults to None.
         run_all (bool, optional): If set, it will run terragrunt apply on all directories. Defaults to True.
         dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
 
@@ -116,9 +116,9 @@ def terragrunt_apply(file=None, run_all=True, dry_run=True) -> None:
             "--terragrunt-non-interactive",
         ]
 
-    if file:
+    if var_file:
         subprocess_args.append("-var-file")
-        subprocess_args.append(file)
+        subprocess_args.append(var_file)
     try:
         if dry_run:
             click.secho(
@@ -131,12 +131,12 @@ def terragrunt_apply(file=None, run_all=True, dry_run=True) -> None:
         raise RuntimeError(f"An error occurred: {str(e)}")
 
 
-def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
+def terragrunt_destroy(var_file=None, run_all=True, dry_run=True) -> None:
     """
     Runs terragrunt destroy subprocess in the current directory.
 
     Args:
-        file (str, optional): The file to pass to terragrunt. Defaults to None.
+        var_file (str, optional): The var file with inputs to pass to terragrunt. Defaults to None.
         run_all (bool, optional): If set, it will run terragrunt destroy on all directories. Defaults to True.
         dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
 
@@ -160,9 +160,9 @@ def terragrunt_destroy(file=None, run_all=True, dry_run=True) -> None:
             "--terragrunt-non-interactive",
         ]
 
-    if file:
+    if var_file:
         subprocess_args.append("-var-file")
-        subprocess_args.append(file)
+        subprocess_args.append(var_file)
     try:
         if dry_run:
             click.secho(
