@@ -32,10 +32,10 @@ def set_netrc(
     password: str,
     machine: str = GIT_SCM_ENDPOINT,
     login: str = GIT_MACHINE_USER,
+    netrc_path=Path.home().joinpath(".netrc"),
     dry_run: bool = True,
 ) -> None:
-    logger.info("Setting ~/.netrc variables")
-    netrc_path = Path.home().joinpath(".netrc")
+    click.secho(f"Setting {netrc_path} variables")
     if netrc_path.exists():
         click.secho(
             f"{netrc_path} already exists, skipping...",
