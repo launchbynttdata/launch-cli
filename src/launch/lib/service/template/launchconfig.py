@@ -87,4 +87,7 @@ class LaunchConfigTemplate:
                     ),
                     exist_ok=True,
                 )
-                shutil.copy(file_path, relative_path)
+                try:
+                    shutil.copy(file_path, relative_path)
+                except shutil.SameFileError:
+                    pass

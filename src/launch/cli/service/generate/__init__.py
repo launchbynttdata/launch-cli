@@ -103,17 +103,12 @@ def generate(
             fg="red",
         )
     elif url and not Path(build_path_service).exists():
-        if dry_run:
-            click.secho(
-                f"[DRYRUN] Would have cloned a repo with the following, {url=} {build_path_service=} {tag=}",
-                fg="yellow",
-            )
-        else:
-            clone_repository(
-                repository_url=url,
-                target=build_path_service,
-                branch=tag,
-            )
+        clone_repository(
+            repository_url=url,
+            target=build_path_service,
+            branch=tag,
+            dry_run=dry_run,
+        )
     elif not url:
         shutil.copytree(
             Path.cwd().joinpath(".git"), Path(build_path_service).joinpath(".git")
@@ -144,17 +139,12 @@ def generate(
     skeleton_tag = input_data["skeleton"]["tag"]
     build_skeleton_path = f"{output_path}/{extract_repo_name_from_url(skeleton_url)}"
 
-    if dry_run:
-        click.secho(
-            f"[DRYRUN] Would have cloned a repo with the following, {skeleton_url=} {build_skeleton_path=} {skeleton_tag=}",
-            fg="yellow",
-        )
-    else:
-        clone_repository(
-            repository_url=skeleton_url,
-            target=build_skeleton_path,
-            branch=skeleton_tag,
-        )
+    clone_repository(
+        repository_url=skeleton_url,
+        target=build_skeleton_path,
+        branch=skeleton_tag,
+        dry_run=dry_run,
+    )
 
     copy_template_files(
         src_dir=Path(build_skeleton_path),

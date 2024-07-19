@@ -6,12 +6,18 @@ from git import Repo
 
 from launch.cli.common.options.aws import aws_deployment_region, aws_deployment_role
 from launch.cli.service.generate import generate
+from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIRS
+from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
 from launch.lib.automation.common.functions import single_true
-from launch.lib.automation.environment.functions import install_tool_versions, set_netrc
+from launch.lib.automation.environment.functions import (
+    install_tool_versions,
+    set_netrc,
+    set_vars_from_bash_Var_file,
+)
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.terragrunt.functions import (
     find_app_templates,
@@ -151,6 +157,27 @@ def terragrunt(
         click.secho(message, fg="red")
         raise RuntimeError(message)
 
+    set_netrc(
+        password=read_github_token(),
+        dry_run=dry_run,
+    )
+
+    if not url:
+        if not Path(LAUNCHCONFIG_NAME).exists():
+            if not Path(AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE).exists():
+                click.secho(
+                    f"No {LAUNCHCONFIG_NAME} found or a {AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE}. Please rerun command with appropriate {LAUNCHCONFIG_NAME},{AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE}, --in-file, or --url",
+                    fg="red",
+                )
+                return
+            else:
+                set_vars_from_bash_Var_file(AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE)
+                temp_url = os.environ.get("GIT_SERVER_URL")
+                temp_org = os.environ.get("GIT_ORG")
+                temp_repo = os.environ.get("GIT_REPO")
+                url = f"{temp_url}/{temp_org}/{temp_repo}.git"
+                tag = os.environ.get("MERGE_COMMIT_ID")
+
     if url:
         build_path = (
             Path()
@@ -177,9 +204,6 @@ def terragrunt(
         # )
 
     install_tool_versions()
-    set_netrc(
-        password=read_github_token(),
-    )
 
     if generation:
         context.invoke(
