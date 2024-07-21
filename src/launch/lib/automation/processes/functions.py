@@ -57,14 +57,14 @@ def make_docker_push(
 def make_docker_aws_ecr_login(
     dry_run: bool = True,
 ) -> None:
-    logger.info(f"Running make docker/aws-ecr-login")
+    logger.info(f"Running make docker/aws_ecr_login")
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess: make docker/aws-ecr-login",
+                f"[DRYRUN] Would have ran subprocess: make docker/aws_ecr_login",
                 fg="yellow",
             )
         else:
-            subprocess.run(["make", "docker/aws-ecr-login"], check=True)
+            subprocess.run(["make", "docker/aws_ecr_login"], check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e

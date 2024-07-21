@@ -4,7 +4,6 @@ import json
 import logging
 from pathlib import Path
 
-from launch.cli.common.options.aws import aws_deployment_region, aws_deployment_role
 from launch.cli.common.options import provider
 from launch.cli.service.clean import clean
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
@@ -28,8 +27,6 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@aws_deployment_role
-@aws_deployment_region
 @provider
 @click.option(
     "--url",
@@ -78,8 +75,6 @@ logger = logging.getLogger(__name__)
 def build(
     context: click.Context,
     provider: str,
-    aws_deployment_role: str,
-    aws_deployment_region: str,
     url: str,
     tag: str,
     container_registry: str,
@@ -208,8 +203,6 @@ def build(
 
     execute_build(
         service_dir=service_dir,
-        aws_deployment_role=aws_deployment_role,
-        aws_deployment_region=aws_deployment_region,
         provider=provider,
         push=push,
         dry_run=dry_run,

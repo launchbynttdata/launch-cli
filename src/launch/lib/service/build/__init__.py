@@ -16,8 +16,6 @@ from launch.lib.local_repo.repo import clone_repository, checkout_branch
 
 def execute_build(
     service_dir: Path,
-    aws_deployment_role: str,
-    aws_deployment_region: str,
     provider: str = "aws",
     push: bool = False,
     dry_run: bool = True,
@@ -28,10 +26,6 @@ def execute_build(
 
     if push:
         if provider == "aws":
-            assume_role(
-                aws_deployment_role=aws_deployment_role,
-                aws_deployment_region=aws_deployment_region,
-            )
             make_docker_aws_ecr_login(dry_run=dry_run)
         os.environ["CONTAINER_IMAGE_VERSION"] = override_default(
             key_name="MERGE_COMMIT_ID", default=DEFAULT_CONTAINER_TAG
