@@ -159,6 +159,7 @@ def create(
                 repository_url=service_repo.clone_url,
                 target=name,
                 branch=SERVICE_MAIN_BRANCH,
+                dry_run=dry_run,
             )
     else:
         needs_create = not Path(service_path).exists()
