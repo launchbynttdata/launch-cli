@@ -100,7 +100,6 @@ def common_service_workflow(
         copy_template_files(
             src_dir=skeleton_path,
             target_dir=Path(service_path),
-            exclude_dir=PLATFORM_SRC_DIR_PATH,
             dry_run=dry_run,
         )
     # Process the template files. This is the main logic that loops over the template and

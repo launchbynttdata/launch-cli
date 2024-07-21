@@ -149,7 +149,6 @@ def generate(
     copy_template_files(
         src_dir=Path(build_skeleton_path),
         target_dir=Path(build_path_service),
-        exclude_dir=PLATFORM_SRC_DIR_PATH,
         dry_run=dry_run,
     )
 

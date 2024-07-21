@@ -6,4 +6,5 @@ DISCOVERY_FORBIDDEN_DIRECTORIES = [
     ".venv",
     ".terraform",
     ".terragrunt-cache",
+    ".examples",
 ]

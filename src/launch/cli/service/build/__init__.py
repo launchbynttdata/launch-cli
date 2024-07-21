@@ -90,8 +90,6 @@ def build(
     Ars:
         context: click.Context: The context of the click command.
         provider (str): The cloud provider to use.
-        aws_deployment_role (str): The AWS deployment role to assume.
-        aws_deployment_region (str): The AWS deployment region to assume.
         url: str: The URL of the repository to clone.
         tag: str: The tag of the repository to clone.
         container_registry: str: The registry to push the built image to.
@@ -124,8 +122,6 @@ def build(
     if Path(DOCKER_FILE_NAME).exists():
         execute_build(
             service_dir=Path.cwd(),
-            aws_deployment_role=aws_deployment_role,
-            aws_deployment_region=aws_deployment_region,
             provider=provider,
             push=push,
             dry_run=dry_run,

@@ -45,7 +45,7 @@ def set_netrc(
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have written to{netrc_path}: {machine=} {login=}",
+                f"[DRYRUN] Would have written to {netrc_path}: {machine=} {login=}",
                 fg="yellow",
             )
         else:
