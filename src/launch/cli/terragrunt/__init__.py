@@ -1,4 +1,6 @@
 import os
+import shutil
+import subprocess
 from pathlib import Path
 
 import click
@@ -10,6 +12,7 @@ from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIRS
+from launch.config.webhook import WEBHOOK_GIT_REPO_URL
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
 from launch.lib.automation.common.functions import single_true
@@ -20,6 +23,7 @@ from launch.lib.automation.environment.functions import (
 )
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.terragrunt.functions import (
+    copy_webhook,
     find_app_templates,
     terragrunt_apply,
     terragrunt_destroy,
@@ -193,6 +197,14 @@ def terragrunt(
             )
         )
 
+    webhooks_path = (
+        Path()
+        .cwd()
+        .joinpath(
+            f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(WEBHOOK_GIT_REPO_URL)}"
+        )
+    )
+
     if check_diff:
         os.chdir(build_path)
         # TODO: Implement this function. Requires to pass the commit_id which comes
@@ -250,6 +262,14 @@ def terragrunt(
             template_dir=build_path.joinpath(
                 f"{PLATFORM_SRC_DIR_PATH}/{LAUNCHCONFIG_KEYS.TEMPLATES.value}"
             ),
+            dry_run=dry_run,
+        )
+
+    if TERRAGRUNT_RUN_DIRS["webhook"].joinpath(target_environment) in run_dirs:
+        copy_webhook(
+            webhooks_path=webhooks_path,
+            build_path=build_path,
+            target_environment=target_environment,
             dry_run=dry_run,
         )
 

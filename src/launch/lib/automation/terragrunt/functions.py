@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -6,7 +7,15 @@ import click
 
 from launch.cli.j2.render import render
 from launch.config.common import NON_SECRET_J2_TEMPLATE_NAME, SECRET_J2_TEMPLATE_NAME
+from launch.config.terragrunt import TERRAGRUNT_RUN_DIRS
+from launch.config.webhook import (
+    WEBHOOK_BUILD_SCRIPT,
+    WEBHOOK_GIT_REPO_TAG,
+    WEBHOOK_GIT_REPO_URL,
+    WEBHOOK_ZIP,
+)
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
+from launch.lib.local_repo.repo import clone_repository
 
 
 ## Terragrunt Specific Functions
@@ -249,3 +258,36 @@ def process_app_templates(
                 out_file=f"{instance_path}/{folder_name}.non-secret.auto.tfvars",
                 dry_run=dry_run,
             )
+
+
+def copy_webhook(
+    webhooks_path: str,
+    build_path: str,
+    target_environment: str,
+    dry_run: bool = True,
+) -> None:
+    clone_repository(
+        repository_url=WEBHOOK_GIT_REPO_URL,
+        target=webhooks_path,
+        branch=WEBHOOK_GIT_REPO_TAG,
+        dry_run=dry_run,
+    )
+    cur_dir = Path.cwd()
+    os.chdir(webhooks_path)
+    os.chmod(webhooks_path.joinpath(WEBHOOK_BUILD_SCRIPT), 0o755)
+    subprocess.run([webhooks_path.joinpath(WEBHOOK_BUILD_SCRIPT)], check=True)
+    os.chdir(cur_dir)
+    for root, dirs, files in os.walk(
+        build_path.joinpath(TERRAGRUNT_RUN_DIRS["webhook"].joinpath(target_environment))
+    ):
+        relative_depth = len(
+            os.path.relpath(
+                root,
+                build_path.joinpath(
+                    TERRAGRUNT_RUN_DIRS["webhook"].joinpath(target_environment)
+                ),
+            ).split(os.sep)
+        )
+        if relative_depth == 2:
+            shutil.copy(webhooks_path.joinpath(WEBHOOK_ZIP), root)
+            print(f"Copied {webhooks_path.joinpath(WEBHOOK_BUILD_SCRIPT)} to {root}")
