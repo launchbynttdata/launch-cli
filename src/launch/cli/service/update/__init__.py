@@ -9,7 +9,6 @@ from launch.config.common import PLATFORM_SRC_DIR_PATH
 from launch.config.github import GITHUB_ORG_NAME
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH, SERVICE_REMOTE_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
-from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.github.repo import repo_exist
 from launch.lib.local_repo.repo import checkout_branch, clone_repository
 from launch.lib.service.common import determine_existing_uuid
@@ -132,17 +131,12 @@ def update(
             )
             repository = Repo(service_path)
         else:
-            if dry_run:
-                click.secho(
-                    f"[DRYRUN] Would have cloned a repo into a dir with the following, {service_path=} {SERVICE_REMOTE_BRANCH=}",
-                    fg="yellow",
-                )
-            else:
-                repository = clone_repository(
-                    repository_url=remote_repo.clone_url,
-                    target=service_path,
-                    branch=SERVICE_MAIN_BRANCH,
-                )
+            repository = clone_repository(
+                repository_url=remote_repo.clone_url,
+                target=service_path,
+                branch=SERVICE_MAIN_BRANCH,
+                dry_run=dry_run,
+            )
             checkout_branch(
                 repository=repository,
                 target_branch=SERVICE_REMOTE_BRANCH,

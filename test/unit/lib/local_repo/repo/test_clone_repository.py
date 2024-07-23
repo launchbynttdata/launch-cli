@@ -27,6 +27,7 @@ def test_clone_repository_success(test_fakedata):
             test_fakedata["repository_url"],
             test_fakedata["target"],
             test_fakedata["branch"],
+            dry_run=False,
         )
         mock_clone_from.assert_called_once_with(
             url=test_fakedata["repository_url"],
@@ -48,6 +49,7 @@ def test_clone_repository_error(mocker, test_fakedata):
             test_fakedata["repository_url"],
             test_fakedata["target"],
             test_fakedata["branch"],
+            dry_run=False,
         )
 
     url = test_fakedata["repository_url"]

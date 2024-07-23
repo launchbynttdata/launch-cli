@@ -9,6 +9,7 @@ import click
 from jinja2 import Environment, FileSystemLoader
 
 from launch.config.common import PLATFORM_SRC_DIR_PATH
+from launch.constants.common import DISCOVERY_FORBIDDEN_DIRECTORIES
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
 from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
@@ -84,23 +85,21 @@ def process_template(
     return updated_config
 
 
-def copy_template_files(
-    src_dir: Path, target_dir: Path, exclude_dir: str, dry_run: bool = True
-) -> None:
+def copy_template_files(src_dir: Path, target_dir: Path, dry_run: bool = True) -> None:
     """
     Copies files from a source directory to a target directory, excluding a specific directory.
 
     Args:
         src_dir (Path): The source directory containing the files to be copied.
         target_dir (Path): The target directory where the files will be copied.
-        exclude_dir (str): The directory to exclude from the copy operation.
+        dry_run (bool, optional): A flag to indicate whether to perform a dry run.
 
     Returns:
         None
     """
     if dry_run:
         click.secho(
-            f"[DRYRUN] Processing template, would have copied files: {src_dir=} {target_dir=} {exclude_dir=}",
+            f"[DRYRUN] Processing template, would have copied files: {src_dir=} {target_dir=}",
             fg="yellow",
         )
         return
@@ -110,7 +109,10 @@ def copy_template_files(
         src_item = os.path.join(src_dir, item)
         target_item = os.path.join(target_dir, item)
         if os.path.isdir(src_item):
-            if item != exclude_dir and item != ".git":
+            if (
+                item != PLATFORM_SRC_DIR_PATH
+                and item not in DISCOVERY_FORBIDDEN_DIRECTORIES
+            ):
                 shutil.copytree(src_item, target_item, dirs_exist_ok=True)
         else:
             shutil.copy2(src_item, target_item)

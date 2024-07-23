@@ -47,11 +47,19 @@ def clone_repository(
     repository_url: str,
     target: str,
     branch: str,
+    dry_run: bool = True,
 ) -> Repo:
     try:
-        logger.info(f"Attempting to clone repository: {repository_url=} {target=}")
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have cloned repository: {repository_url=} {target=} {branch=}",
+                fg="yellow",
+            )
+            return
+        logger.info(
+            f"Attempting to clone repository: {repository_url=} {target=} {branch=}"
+        )
         repository = Repo.clone_from(url=repository_url, to_path=target, branch=branch)
-        logger.info(f"Repository {repository_url} cloned successfully to {target}")
     except GitCommandError as e:
         message = f"Error occurred while cloning the repository from {repository_url}"
         logger.exception(message)
