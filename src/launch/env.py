@@ -67,8 +67,8 @@ def override_default(
     Returns:
         str: The value of the key in the launchconfig file or the default value
     """
-    if get_bool_env_var(key_name, False):
-        return os.environ.get(key_name, default=default)
+    if os.environ.get(key_name):
+        return os.environ.get(key_name)
 
     if Path(LAUNCHCONFIG_PATH_LOCAL).exists():
         with open(LAUNCHCONFIG_PATH_LOCAL, "r") as f:
