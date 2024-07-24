@@ -44,7 +44,6 @@ def test_get_token_success(mock_dependencies):
         "installation_id",
         "signing_cert_secret",
         "token_expiration_seconds",
-        "aws_profile",
     )
 
     # Assert that the token returned is as expected
@@ -53,15 +52,9 @@ def test_get_token_success(mock_dependencies):
     ), "The token returned by get_token did not match the expected value."
 
     # Assert that each mock was called as expected
-    mock_dependencies["get_ssm_parameter"].assert_any_call(
-        "application_id", "aws_profile", False
-    )
-    mock_dependencies["get_ssm_parameter"].assert_any_call(
-        "installation_id", "aws_profile", False
-    )
-    mock_dependencies["get_ssm_parameter"].assert_any_call(
-        "signing_cert_secret", "aws_profile", False
-    )
+    mock_dependencies["get_ssm_parameter"].assert_any_call("application_id", False)
+    mock_dependencies["get_ssm_parameter"].assert_any_call("installation_id", False)
+    mock_dependencies["get_ssm_parameter"].assert_any_call("signing_cert_secret", False)
     mock_dependencies["create_jwt"].assert_called_once()
     mock_dependencies["post"].assert_called_once()
 
@@ -78,12 +71,9 @@ def test_get_token_failure(mock_dependencies):
             "installation_id",
             "signing_cert_secret",
             "token_expiration_seconds",
-            "aws_profile",
         )
 
-    mock_dependencies["get_ssm_parameter"].assert_any_call(
-        "application_id", "aws_profile", False
-    )
+    mock_dependencies["get_ssm_parameter"].assert_any_call("application_id", False)
     mock_dependencies["create_jwt"].assert_not_called()
     mock_dependencies["post"].assert_not_called()
 
@@ -107,7 +97,7 @@ def mock_ssm_parameter():
 
 
 def test_get_ssm_parameter_success(mock_ssm_parameter):
-    parameter_value = get_ssm_parameter("parameter_name", "aws_profile", False)
+    parameter_value = get_ssm_parameter("parameter_name", False)
 
     assert (
         parameter_value == "test_value"
@@ -122,7 +112,7 @@ def test_get_ssm_parameter_exception(mock_ssm_parameter):
     )
 
     with pytest.raises(ClientError):
-        get_ssm_parameter("parameter_name", "aws-profile", False)
+        get_ssm_parameter("parameter_name", False)
 
     mock_ssm_parameter.assert_called_once_with("ssm")
 
@@ -146,7 +136,7 @@ def mock_secret_value():
 
 
 def test_get_secret_value_success(mock_secret_value):
-    secret_value = get_secret_value("secret_name", "aws_profile")
+    secret_value = get_secret_value("secret_name")
 
     assert (
         secret_value == "secret_value"  # pragma: allowlist secret
@@ -161,6 +151,6 @@ def test_get_secret_value_exception(mock_secret_value):
     )
 
     with pytest.raises(ClientError):
-        get_secret_value("secret_name", "aws_profile")
+        get_secret_value("secret_name")
 
     mock_secret_value.assert_called_once_with("secretsmanager")

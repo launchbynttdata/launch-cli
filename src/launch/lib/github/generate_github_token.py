@@ -1,9 +1,6 @@
 import logging
-import sys
 import time
-from pathlib import Path
 
-import boto3
 import requests
 from boto3.session import Session
 from botocore.exceptions import ClientError
@@ -38,23 +35,16 @@ def get_token(
     installation_id_parameter_name: str,
     signing_cert_secret_name: str,
     token_expiration_seconds: int,
-    aws_profile: str,
 ) -> str:
     try:
-        application_id = get_ssm_parameter(
-            application_id_parameter_name, aws_profile, False
-        )
-        installation_id = get_ssm_parameter(
-            installation_id_parameter_name, aws_profile, False
-        )
-        signing_cert_secret_cm_name = get_ssm_parameter(
-            signing_cert_secret_name, aws_profile, False
-        )
+        application_id = get_ssm_parameter(application_id_parameter_name, False)
+        installation_id = get_ssm_parameter(installation_id_parameter_name, False)
+        signing_cert_secret_cm_name = get_ssm_parameter(signing_cert_secret_name, False)
 
         signing_jwt = create_jwt(
             application_id=application_id,
             token_expiration_seconds=token_expiration_seconds,
-            private_key=get_secret_value(signing_cert_secret_cm_name, aws_profile),
+            private_key=get_secret_value(signing_cert_secret_cm_name),
         )
         headers = {"Authorization": f"Bearer {signing_jwt}"}
         response = requests.post(
@@ -69,22 +59,19 @@ def get_token(
         raise e
 
 
-def get_ssm_parameter(
-    parameter_name: str, aws_profile: str, with_decryption: bool = True
-) -> str:
+def get_ssm_parameter(parameter_name: str, with_decryption: bool = True) -> str:
     """
     Retrieves the value of an SSM parameter by its name.
 
     Parameters:
     - parameter_name (str): The name of the SSM parameter.
-    - aws_profile (str): The name of the AWS profile to use.
     - with_decryption (bool): Whether to decrypt the parameter value.
 
     Returns:
     - str: The value of the SSM parameter.
     """
     # Create a session with the specified AWS profile
-    session = Session(profile_name=aws_profile)
+    session = Session()
 
     # Create a session using AWS SDK
     ssm = session.client("ssm")
@@ -104,19 +91,18 @@ def get_ssm_parameter(
         raise e
 
 
-def get_secret_value(secret_name: str, aws_profile: str) -> str:
+def get_secret_value(secret_name: str) -> str:
     """
     Retrieves the value of a secret from AWS Secrets Manager by its name.
 
     Parameters:
     - secret_name (str): The name of the secret.
-    - aws_profile (str): The name of the AWS profile to use.
 
     Returns:
     - str: The value of the secret.
     """
     # Create a session with the specified AWS profile
-    session = Session(profile_name=aws_profile)
+    session = Session()
 
     # Create a session using AWS SDK
     secretsmanager = session.client("secretsmanager")
