@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import shutil
 from pathlib import Path
 
@@ -10,7 +11,7 @@ from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME, LAUNCHCONFIG_PATH_LOCAL
 from launch.lib.common.utilities import extract_repo_name_from_url
-from launch.lib.local_repo.repo import clone_repository
+from launch.lib.local_repo.repo import checkout_branch, clone_repository
 from launch.lib.service.common import input_data_validation
 from launch.lib.service.template.functions import (
     copy_and_render_templates,
@@ -30,8 +31,8 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--output-path",
-    default=f"{Path().cwd()}/{BUILD_TEMP_DIR_PATH}",
-    help=f"(Optional) The default output path for the build files. Defaults {BUILD_TEMP_DIR_PATH}",
+    default=Path().cwd(),
+    help=f"(Optional) The default output path for the build files. Defaults to current working directory.",
 )
 @click.option(
     "--url",
@@ -92,27 +93,35 @@ def generate(
 
     if url:
         service_dir = extract_repo_name_from_url(url)
+        output_path = f"{output_path}/{service_dir}"
+        Path(output_path).mkdir(parents=True, exist_ok=True)
     else:
         service_dir = Path.cwd().name
-    build_path_service = f"{output_path}/{service_dir}"
+    build_path_service = f"{output_path}/{BUILD_TEMP_DIR_PATH}/{service_dir}"
     Path(output_path).mkdir(parents=True, exist_ok=True)
 
-    if url and Path(build_path_service).exists():
+    if url and Path(output_path).joinpath(".git").exists():
         click.secho(
-            f"Service repo {build_path_service} exist locally but you have set the --url flag. Please remove the local build repo or remove the --url flag. Skipping cloning the respository.",
+            f"Service repo {output_path} exist locally but you have set the --url flag. Please remove the local build repo or remove the --url flag. Skipping cloning the respository.",
             fg="red",
         )
     elif url and not Path(build_path_service).exists():
-        clone_repository(
+        repository = clone_repository(
             repository_url=url,
-            target=build_path_service,
-            branch=tag,
+            target=output_path,
+            branch=SERVICE_MAIN_BRANCH,
             dry_run=dry_run,
         )
-    elif not url:
-        shutil.copytree(
-            Path.cwd().joinpath(".git"), Path(build_path_service).joinpath(".git")
+        checkout_branch(
+            repository=repository,
+            target_branch=tag,
+            dry_run=dry_run,
         )
+        os.chdir(output_path)
+
+    shutil.copytree(
+        Path.cwd().joinpath(".git"), Path(build_path_service).joinpath(".git")
+    )
 
     if Path(LAUNCHCONFIG_PATH_LOCAL).exists():
         with open(LAUNCHCONFIG_PATH_LOCAL, "r") as f:
@@ -137,7 +146,7 @@ def generate(
 
     skeleton_url = input_data["skeleton"]["url"]
     skeleton_tag = input_data["skeleton"]["tag"]
-    build_skeleton_path = f"{output_path}/{extract_repo_name_from_url(skeleton_url)}"
+    build_skeleton_path = f"{output_path}/{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(skeleton_url)}"
 
     clone_repository(
         repository_url=skeleton_url,

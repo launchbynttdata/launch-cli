@@ -206,7 +206,9 @@ def terragrunt(
         build_path = (
             Path()
             .cwd()
-            .joinpath(f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(url)}")
+            .joinpath(
+                f"{extract_repo_name_from_url(url)}/{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(url)}"
+            )
         )
     else:
         build_path = (
