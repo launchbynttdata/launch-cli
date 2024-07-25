@@ -1,15 +1,20 @@
 import os
-import shutil
-import subprocess
 from pathlib import Path
 
 import click
 from git import Repo
 
 from launch.cli.common.options.aws import aws_deployment_region, aws_deployment_role
+from launch.cli.github.auth.commands import application
 from launch.cli.service.generate import generate
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
+from launch.config.github import (
+    APPLICATION_ID_PARAMETER_NAME,
+    DEFAULT_TOKEN_EXPIRATION_SECONDS,
+    INSTALLATION_ID_PARAMETER_NAME,
+    SIGNING_CERT_SECRET_NAME,
+)
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIRS
 from launch.config.webhook import WEBHOOK_GIT_REPO_URL
@@ -161,8 +166,23 @@ def terragrunt(
         click.secho(message, fg="red")
         raise RuntimeError(message)
 
+    if (
+        APPLICATION_ID_PARAMETER_NAME
+        and INSTALLATION_ID_PARAMETER_NAME
+        and SIGNING_CERT_SECRET_NAME
+    ):
+        token = context.invoke(
+            application,
+            application_id_parameter_name=APPLICATION_ID_PARAMETER_NAME,
+            installation_id_parameter_name=INSTALLATION_ID_PARAMETER_NAME,
+            signing_cert_secret_name=SIGNING_CERT_SECRET_NAME,
+            token_expiration_seconds=DEFAULT_TOKEN_EXPIRATION_SECONDS,
+        )
+    else:
+        token = read_github_token()
+
     set_netrc(
-        password=read_github_token(),
+        password=token,
         dry_run=dry_run,
     )
 

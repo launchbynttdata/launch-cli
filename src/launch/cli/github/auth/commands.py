@@ -51,3 +51,4 @@ def application(
         token_expiration_seconds=token_expiration_seconds,
     )
     print(token)
+    return token

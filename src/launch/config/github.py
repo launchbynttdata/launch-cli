@@ -17,3 +17,19 @@ GIT_SCM_ENDPOINT = override_default(key_name="GIT_SCM_ENDPOINT", default="github
 GIT_MACHINE_USER = override_default(
     key_name="GIT_MACHINE_USER", default="launch-cli-user"
 )
+
+APPLICATION_ID_PARAMETER_NAME = override_default(
+    key_name="APPLICATION_ID_PARAMETER_NAME", default=None
+)
+
+INSTALLATION_ID_PARAMETER_NAME = override_default(
+    key_name="INSTALLATION_ID_PARAMETER_NAME", default=None
+)
+
+SIGNING_CERT_SECRET_NAME = override_default(
+    key_name="SIGNING_CERT_SECRET_NAME", default=None
+)
+
+DEFAULT_TOKEN_EXPIRATION_SECONDS = override_default(
+    key_name="DEFAULT_TOKEN_EXPIRATION_SECONDS", default=600
+)
