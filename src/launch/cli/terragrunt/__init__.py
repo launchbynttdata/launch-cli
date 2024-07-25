@@ -235,8 +235,6 @@ def terragrunt(
         #     directory=build_path,
         # )
 
-    install_tool_versions()
-
     if generation:
         context.invoke(
             generate,
@@ -244,6 +242,9 @@ def terragrunt(
             tag=tag,
             dry_run=dry_run,
         )
+
+    os.chdir(build_path)
+    install_tool_versions()
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure
     # i.e. az login, or service principal is already applied to the environment.

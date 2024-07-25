@@ -1,5 +1,3 @@
-import time
-
 from launch.env import override_default
 
 CONTAINER_IMAGE_NAME = override_default(key_name="CONTAINER_IMAGE_NAME", default=None)
