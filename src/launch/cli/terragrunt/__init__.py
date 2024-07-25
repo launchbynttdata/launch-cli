@@ -238,7 +238,7 @@ def terragrunt(
         # )
 
     if generation:
-        context.invoke(
+        input_data = context.invoke(
             generate,
             url=url,
             tag=tag,
@@ -254,6 +254,7 @@ def terragrunt(
         assume_role(
             aws_deployment_role=aws_deployment_role,
             aws_deployment_region=aws_deployment_region,
+            profile=input_data["accounts"][target_environment],
         )
 
     run_dirs = []

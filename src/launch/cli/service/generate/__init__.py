@@ -179,3 +179,5 @@ def generate(
         context_data={"data": {"config": input_data}},
         dry_run=dry_run,
     )
+
+    return input_data

@@ -4,7 +4,6 @@ from pathlib import Path
 from launch.env import override_default
 from launch.config.common import DEFAULT_CONTAINER_TAG, DOCKER_FILE_NAME
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
-from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.processes.functions import (
     make_configure,
     make_docker_aws_ecr_login,
