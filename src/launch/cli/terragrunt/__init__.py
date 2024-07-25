@@ -243,7 +243,6 @@ def terragrunt(
             dry_run=dry_run,
         )
 
-    os.chdir(build_path)
     install_tool_versions()
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure
