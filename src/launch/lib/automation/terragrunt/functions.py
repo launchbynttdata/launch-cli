@@ -248,6 +248,7 @@ def process_app_templates(
                 values=file_path,
                 template=secret_template,
                 out_file=f"{instance_path}/{folder_name}.secret.auto.tfvars",
+                type="secret",
                 dry_run=dry_run,
             )
         if non_secret_template.exists():

@@ -1,5 +1,6 @@
 import logging
 import sys
+import time
 import traceback
 from pathlib import Path
 
@@ -25,6 +26,11 @@ logger = logging.getLogger(__name__)
     help="(Optional) Path to the output file.  Ex: output/application.properties (default: stdout)",
 )
 @click.option(
+    "--type",
+    default="non-secret",
+    help="Type of template. Requires secret, non-secret. Default is non-secret.",
+)
+@click.option(
     "--dry-run",
     help="(Optional) Perform a dry run that reports on what it would do.",
 )
@@ -32,6 +38,7 @@ def render(
     values: str,
     template: str,
     out_file: str,
+    type: str,
     dry_run: bool,
 ):
     """
@@ -68,7 +75,21 @@ def render(
                         fg="yellow",
                     )
                 else:
-                    f.write(data)
+                    if type == "secret":
+                        out_var = f"""
+app_environment = {{
+timestamp={int(time.time())}
+{data}
+}}
+"""
+                        f.write(out_var)
+                    else:
+                        out_var = f"""
+app_secrets = {{
+{data}
+}}
+"""
+                        f.write(out_var)
         else:
             click.echo(data)
     except Exception:

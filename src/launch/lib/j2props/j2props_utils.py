@@ -3,8 +3,7 @@ from pathlib import Path
 
 import boto3
 from botocore.exceptions import ClientError
-from jinja2 import Environment, FileSystemLoader, Template
-from ruamel.yaml import YAML
+from jinja2 import Environment, FileSystemLoader
 
 from launch.lib.automation.common.functions import load_yaml
 
@@ -70,10 +69,10 @@ class J2PropsTemplate:
         """
         if self._aws_client is None:
             # Create a Secrets Manager client
-            session = boto3.session.Session()
-            self._aws_client = session.client(
-                service_name="secretsmanager", region_name=self.region
+            session = boto3.session.Session(
+                region_name=self.region, profile_name="default"
             )
+            self._aws_client = session.client(service_name="secretsmanager")
         return self._aws_client
 
     def __lookup_aws_secret_filter(self, secret_name):
