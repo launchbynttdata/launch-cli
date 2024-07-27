@@ -10,6 +10,7 @@ from launch.lib.automation.processes.functions import (
     make_docker_build,
     make_docker_push,
     make_git_config,
+    start_docker,
 )
 from launch.lib.local_repo.repo import clone_repository, checkout_branch
 
@@ -21,8 +22,9 @@ def execute_build(
     dry_run: bool = True,
 ) -> None:
     os.chdir(service_dir)
-    make_git_config(dry_run=dry_run)
+    start_docker(dry_run=dry_run)
     make_configure(dry_run=dry_run)
+    make_git_config(dry_run=dry_run)
     make_docker_build(dry_run=dry_run)
 
     if push:
