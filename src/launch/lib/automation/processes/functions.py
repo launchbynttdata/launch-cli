@@ -68,3 +68,19 @@ def make_docker_aws_ecr_login(
             subprocess.run(["make", "docker/aws_ecr_login"], check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
+
+
+def make_git_config(
+    dry_run: bool = True,
+) -> None:
+    logger.info(f"Running make git-config")
+    try:
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: make git-config",
+                fg="yellow",
+            )
+        else:
+            subprocess.run(["make", "git-config"], check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"An error occurred: {str(e)}") from e
