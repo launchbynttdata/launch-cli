@@ -23,8 +23,8 @@ def execute_build(
 ) -> None:
     os.chdir(service_dir)
     start_docker(dry_run=dry_run)
-    make_configure(dry_run=dry_run)
     git_config(dry_run=dry_run)
+    make_configure(dry_run=dry_run)
     make_docker_build(dry_run=dry_run)
 
     if push:
