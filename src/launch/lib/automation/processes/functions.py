@@ -80,6 +80,13 @@ def make_git_config(
             )
         else:
             subprocess.run(["make", "git-config"], check=True)
+            subprocess.run(
+                ["git", "config", "--global", "user.name", "nobody"], check=True
+            )
+            subprocess.run(
+                ["git", "config", "--global", "user.name", "nobody@nttdata.com"],
+                check=True,
+            )
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
