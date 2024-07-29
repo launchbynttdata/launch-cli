@@ -77,7 +77,7 @@ def render(
                 else:
                     if type == "secret":
                         out_var = f"""
-app_environment = {{
+app_secrets = {{
 timestamp={int(time.time())}
 {data}
 }}
@@ -85,7 +85,7 @@ timestamp={int(time.time())}
                         f.write(out_var)
                     else:
                         out_var = f"""
-app_secrets = {{
+app_environment = {{
 {data}
 }}
 """

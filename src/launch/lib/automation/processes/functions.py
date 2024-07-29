@@ -71,7 +71,7 @@ def make_docker_aws_ecr_login(
 def git_config(
     dry_run: bool = True,
 ) -> None:
-    click.secho(f"Running git config")
+    click.secho(f"Running make git config")
     try:
         if dry_run:
             click.secho(
