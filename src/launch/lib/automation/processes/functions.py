@@ -83,7 +83,7 @@ def git_config(
                 ["git", "config", "--global", "user.name", "nobody"], check=True
             )
             subprocess.run(
-                ["git", "config", "--global", "user.name", "nobody@nttdata.com"],
+                ["git", "config", "--global", "user.email", "nobody@nttdata.com"],
                 check=True,
             )
     except subprocess.CalledProcessError as e:
