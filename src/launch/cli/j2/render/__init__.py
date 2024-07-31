@@ -6,13 +6,15 @@ from pathlib import Path
 
 import click
 
-from launch.config.aws import AWS_REGION
+from launch.cli.common.options.aws import aws_secrets_profile, aws_secrets_region
 from launch.lib.j2props.j2props_utils import J2PropsTemplate
 
 logger = logging.getLogger(__name__)
 
 
 @click.command()
+@aws_secrets_region
+@aws_secrets_profile
 @click.option(
     "--values",
     help="Path to the input yaml values file.  Ex: uat/application/input.yml",
@@ -39,6 +41,8 @@ def render(
     template: str,
     out_file: str,
     type: str,
+    aws_secrets_profile: str,
+    aws_secrets_region: str,
     dry_run: bool,
 ):
     """
@@ -47,6 +51,8 @@ def render(
     Args:
         values: Path to the input yaml values file.  Ex: uat/application/input.yml
         template: Absolute or relative path to the template file.  Ex: templates/application.properties
+        aws_secrets_profile: AWS profile to use for secrets lookup.
+        aws_secrets_region: AWS region to use for secrets lookup.
         dry_run: (Optional) Perform a dry run that reports on what it would do.
 
     Returns:
@@ -66,7 +72,9 @@ def render(
                 fg="red",
             )
             return
-        data = J2PropsTemplate(AWS_REGION).generate_from_template(values, template)
+        data = J2PropsTemplate(
+            region=aws_secrets_region, profile=aws_secrets_profile
+        ).generate_from_template(values, template)
         if out_file:
             with open(out_file, "w") as f:
                 if dry_run:

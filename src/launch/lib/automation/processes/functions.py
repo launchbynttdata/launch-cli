@@ -103,7 +103,10 @@ def start_docker(
                 )
             else:
                 subprocess.Popen(
-                    ["dockerd"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                    ["dockerd"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    close_fds=True,
                 )
                 time.sleep(5)  # Docker daemon takes a few seconds to start
     except subprocess.CalledProcessError as e:

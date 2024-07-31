@@ -9,8 +9,9 @@ from launch.lib.automation.common.functions import load_yaml
 
 
 class J2PropsTemplate:
-    def __init__(self, region="us-east-2"):
+    def __init__(self, region="us-east-2", profile="default"):
         self.region = region
+        self.profile = profile
         self._aws_client = None
 
     # Public methods
@@ -70,7 +71,7 @@ class J2PropsTemplate:
         if self._aws_client is None:
             # Create a Secrets Manager client
             session = boto3.session.Session(
-                region_name=self.region, profile_name="default"
+                region_name=self.region, profile_name=self.profile
             )
             self._aws_client = session.client(service_name="secretsmanager")
         return self._aws_client

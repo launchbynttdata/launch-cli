@@ -185,7 +185,12 @@ def terragrunt_destroy(var_file=None, run_all=True, dry_run=True) -> None:
 
 
 def find_app_templates(
-    context: click.Context, base_dir: Path, template_dir: Path, dry_run: bool
+    context: click.Context,
+    base_dir: Path,
+    template_dir: Path,
+    aws_profile: str,
+    aws_region: str,
+    dry_run: bool,
 ) -> None:
     """
     Finds app templates in the base_dir and processes them.
@@ -194,6 +199,8 @@ def find_app_templates(
         context (click.Context): The click context.
         base_dir (Path): The base directory to search for app templates.
         template_dir (Path): The directory where the templates are located.
+        aws_profile (str): The AWS profile to use.
+        aws_region (str): The AWS region to use.
         dry_run (bool): If set, it will perform a dry run that reports on what it would do, but does not perform any action.
 
     Returns:
@@ -208,6 +215,8 @@ def find_app_templates(
                     LAUNCHCONFIG_KEYS.TEMPLATE_PROPERTIES.value
                 ),
                 template_dir=template_dir,
+                aws_profile=aws_profile,
+                aws_region=aws_region,
                 dry_run=dry_run,
             )
 
@@ -217,6 +226,8 @@ def process_app_templates(
     instance_path: Path,
     properties_path: Path,
     template_dir: Path,
+    aws_profile: str,
+    aws_region: str,
     dry_run: bool,
 ) -> None:
     """
@@ -228,6 +239,8 @@ def process_app_templates(
         instance_path (Path): The instance path.
         properties_path (Path): The properties path.
         template_dir (Path): The template directory.
+        aws_profile (str): The AWS profile to use.
+        aws_region (str): The AWS region to use.
         dry_run (bool): If set, it will perform a dry run that reports on what it would do, but does not perform any action.
 
     Returns:
@@ -249,6 +262,8 @@ def process_app_templates(
                 template=secret_template,
                 out_file=f"{instance_path}/{folder_name}.secret.auto.tfvars",
                 type="secret",
+                aws_secrets_profile=aws_profile,
+                aws_secrets_region=aws_region,
                 dry_run=dry_run,
             )
         if non_secret_template.exists():
@@ -257,6 +272,8 @@ def process_app_templates(
                 values=file_path,
                 template=non_secret_template,
                 out_file=f"{instance_path}/{folder_name}.non-secret.auto.tfvars",
+                aws_secrets_profile=aws_profile,
+                aws_secrets_region=aws_region,
                 dry_run=dry_run,
             )
 

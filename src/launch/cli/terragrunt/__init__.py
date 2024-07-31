@@ -4,7 +4,12 @@ from pathlib import Path
 import click
 from git import Repo
 
-from launch.cli.common.options.aws import aws_deployment_region, aws_deployment_role
+from launch.cli.common.options.aws import (
+    aws_deployment_region,
+    aws_deployment_role,
+    aws_secrets_profile,
+    aws_secrets_region,
+)
 from launch.cli.github.auth.commands import application
 from launch.cli.service.generate import generate
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
@@ -42,6 +47,8 @@ from launch.lib.github.auth import read_github_token
 @click.command()
 @aws_deployment_role
 @aws_deployment_region
+@aws_secrets_region
+@aws_secrets_profile
 @click.option(
     "--url",
     help="(Optional) The URL of the repository to clone.",
@@ -113,6 +120,8 @@ def terragrunt(
     context: click.Context,
     aws_deployment_role: str,
     aws_deployment_region: str,
+    aws_secrets_region: str,
+    aws_secrets_profile: str,
     url: str,
     tag: str,
     target_environment: str,
@@ -133,6 +142,8 @@ def terragrunt(
         context (click.Context): The context object passed from click.
         aws_deployment_role (str): The AWS deployment role to assume.
         aws_deployment_region (str): The AWS deployment region to assume.
+        aws_secrets_region (str): The AWS region to use for secrets retrieval.
+        aws_secrets_profile (str): The AWS profile to use for secrets retrieval.
         url (str): The URL of the repository to clone.
         tag (str): The tag of the repository to clone.
         target_environment (str): The target environment to run the terragrunt command against.
@@ -285,6 +296,8 @@ def terragrunt(
             template_dir=build_path.joinpath(
                 f"{PLATFORM_SRC_DIR_PATH}/{LAUNCHCONFIG_KEYS.TEMPLATES.value}"
             ),
+            aws_profile=aws_secrets_profile,
+            aws_region=aws_secrets_region,
             dry_run=dry_run,
         )
 
