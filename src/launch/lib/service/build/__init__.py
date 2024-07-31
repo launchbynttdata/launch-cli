@@ -4,12 +4,13 @@ from pathlib import Path
 from launch.env import override_default
 from launch.config.common import DEFAULT_CONTAINER_TAG, DOCKER_FILE_NAME
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
-from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.processes.functions import (
+    git_config,
     make_configure,
     make_docker_aws_ecr_login,
     make_docker_build,
     make_docker_push,
+    start_docker,
 )
 from launch.lib.local_repo.repo import clone_repository, checkout_branch
 
@@ -21,6 +22,8 @@ def execute_build(
     dry_run: bool = True,
 ) -> None:
     os.chdir(service_dir)
+    start_docker(dry_run=dry_run)
+    git_config(dry_run=dry_run)
     make_configure(dry_run=dry_run)
     make_docker_build(dry_run=dry_run)
 

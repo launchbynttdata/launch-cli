@@ -1,15 +1,25 @@
 import os
-import shutil
-import subprocess
 from pathlib import Path
 
 import click
 from git import Repo
 
-from launch.cli.common.options.aws import aws_deployment_region, aws_deployment_role
+from launch.cli.common.options.aws import (
+    aws_deployment_region,
+    aws_deployment_role,
+    aws_secrets_profile,
+    aws_secrets_region,
+)
+from launch.cli.github.auth.commands import application
 from launch.cli.service.generate import generate
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
+from launch.config.github import (
+    APPLICATION_ID_PARAMETER_NAME,
+    DEFAULT_TOKEN_EXPIRATION_SECONDS,
+    INSTALLATION_ID_PARAMETER_NAME,
+    SIGNING_CERT_SECRET_NAME,
+)
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIRS
 from launch.config.webhook import WEBHOOK_GIT_REPO_URL
@@ -37,6 +47,8 @@ from launch.lib.github.auth import read_github_token
 @click.command()
 @aws_deployment_role
 @aws_deployment_region
+@aws_secrets_region
+@aws_secrets_profile
 @click.option(
     "--url",
     help="(Optional) The URL of the repository to clone.",
@@ -108,6 +120,8 @@ def terragrunt(
     context: click.Context,
     aws_deployment_role: str,
     aws_deployment_region: str,
+    aws_secrets_region: str,
+    aws_secrets_profile: str,
     url: str,
     tag: str,
     target_environment: str,
@@ -128,6 +142,8 @@ def terragrunt(
         context (click.Context): The context object passed from click.
         aws_deployment_role (str): The AWS deployment role to assume.
         aws_deployment_region (str): The AWS deployment region to assume.
+        aws_secrets_region (str): The AWS region to use for secrets retrieval.
+        aws_secrets_profile (str): The AWS profile to use for secrets retrieval.
         url (str): The URL of the repository to clone.
         tag (str): The tag of the repository to clone.
         target_environment (str): The target environment to run the terragrunt command against.
@@ -161,8 +177,23 @@ def terragrunt(
         click.secho(message, fg="red")
         raise RuntimeError(message)
 
+    if (
+        APPLICATION_ID_PARAMETER_NAME
+        and INSTALLATION_ID_PARAMETER_NAME
+        and SIGNING_CERT_SECRET_NAME
+    ):
+        token = context.invoke(
+            application,
+            application_id_parameter_name=APPLICATION_ID_PARAMETER_NAME,
+            installation_id_parameter_name=INSTALLATION_ID_PARAMETER_NAME,
+            signing_cert_secret_name=SIGNING_CERT_SECRET_NAME,
+            token_expiration_seconds=DEFAULT_TOKEN_EXPIRATION_SECONDS,
+        )
+    else:
+        token = read_github_token()
+
     set_netrc(
-        password=read_github_token(),
+        password=token,
         dry_run=dry_run,
     )
 
@@ -186,7 +217,9 @@ def terragrunt(
         build_path = (
             Path()
             .cwd()
-            .joinpath(f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(url)}")
+            .joinpath(
+                f"{extract_repo_name_from_url(url)}/{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(url)}"
+            )
         )
     else:
         build_path = (
@@ -215,15 +248,15 @@ def terragrunt(
         #     directory=build_path,
         # )
 
-    install_tool_versions()
-
     if generation:
-        context.invoke(
+        input_data = context.invoke(
             generate,
             url=url,
             tag=tag,
             dry_run=dry_run,
         )
+
+    install_tool_versions()
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure
     # i.e. az login, or service principal is already applied to the environment.
@@ -232,6 +265,7 @@ def terragrunt(
         assume_role(
             aws_deployment_role=aws_deployment_role,
             aws_deployment_region=aws_deployment_region,
+            profile=input_data["accounts"][target_environment],
         )
 
     run_dirs = []
@@ -262,6 +296,8 @@ def terragrunt(
             template_dir=build_path.joinpath(
                 f"{PLATFORM_SRC_DIR_PATH}/{LAUNCHCONFIG_KEYS.TEMPLATES.value}"
             ),
+            aws_profile=aws_secrets_profile,
+            aws_region=aws_secrets_region,
             dry_run=dry_run,
         )
 

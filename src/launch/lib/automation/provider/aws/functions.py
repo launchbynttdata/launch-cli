@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 def assume_role(
     aws_deployment_role: str,
     aws_deployment_region: str,
+    profile: str,
 ) -> None:
     logger.info("Assuming the IAM deployment role")
 
@@ -38,40 +39,40 @@ def assume_role(
                 "aws",
                 "configure",
                 "set",
-                f"profile.{aws_deployment_role}.aws_access_key_id",
+                f"profile.{profile}.aws_access_key_id",
                 access_key,
             ],
-            check=True
+            check=True,
         )
         subprocess.run(
             [
                 "aws",
                 "configure",
                 "set",
-                f"profile.{aws_deployment_role}.aws_secret_access_key",
+                f"profile.{profile}.aws_secret_access_key",
                 secret_access_key,
             ],
-            check=True
+            check=True,
         )
         subprocess.run(
             [
                 "aws",
                 "configure",
                 "set",
-                f"profile.{aws_deployment_role}.aws_session_token",
+                f"profile.{profile}.aws_session_token",
                 session_token,
             ],
-            check=True
+            check=True,
         )
         subprocess.run(
             [
                 "aws",
                 "configure",
                 "set",
-                f"profile.{aws_deployment_role}.region",
+                f"profile.{profile}.region",
                 aws_deployment_region,
             ],
-            check=True
+            check=True,
         )
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Failed set aws configure: {str(e)}")

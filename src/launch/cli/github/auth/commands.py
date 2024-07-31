@@ -38,25 +38,17 @@ def validate_max_seconds(ctx, param, value):
     help="Number of seconds the token will be valid for. Default is 600 seconds.",
     callback=validate_max_seconds,
 )
-@click.option(
-    "--aws-profile",
-    required=False,
-    default="default",
-    type=str,
-    help="Name of the AWS profile to use. Default is 'default'.",
-)
 def application(
     application_id_parameter_name: str,
     installation_id_parameter_name: str,
     signing_cert_secret_name: str,
     token_expiration_seconds: int,
-    aws_profile: str,
 ):
     token = get_token(
         application_id_parameter_name=application_id_parameter_name,
         installation_id_parameter_name=installation_id_parameter_name,
         signing_cert_secret_name=signing_cert_secret_name,
         token_expiration_seconds=token_expiration_seconds,
-        aws_profile=aws_profile,
     )
     print(token)
+    return token

@@ -5,6 +5,7 @@ import logging
 from pathlib import Path
 
 from launch.cli.common.options import provider
+from launch.cli.github.auth.commands import application
 from launch.cli.service.clean import clean
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, DOCKER_FILE_NAME
@@ -12,6 +13,12 @@ from launch.config.container import (
     CONTAINER_IMAGE_NAME,
     CONTAINER_IMAGE_VERSION,
     CONTAINER_REGISTRY,
+)
+from launch.config.github import (
+    APPLICATION_ID_PARAMETER_NAME,
+    DEFAULT_TOKEN_EXPIRATION_SECONDS,
+    INSTALLATION_ID_PARAMETER_NAME,
+    SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
@@ -128,8 +135,23 @@ def build(
         )
         quit()
 
+    if (
+        APPLICATION_ID_PARAMETER_NAME
+        and INSTALLATION_ID_PARAMETER_NAME
+        and SIGNING_CERT_SECRET_NAME
+    ):
+        token = context.invoke(
+            application,
+            application_id_parameter_name=APPLICATION_ID_PARAMETER_NAME,
+            installation_id_parameter_name=INSTALLATION_ID_PARAMETER_NAME,
+            signing_cert_secret_name=SIGNING_CERT_SECRET_NAME,
+            token_expiration_seconds=DEFAULT_TOKEN_EXPIRATION_SECONDS,
+        )
+    else:
+        token = read_github_token()
+
     set_netrc(
-        password=read_github_token(),
+        password=token,
         dry_run=dry_run,
     )
 
