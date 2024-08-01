@@ -1,5 +1,3 @@
-import time
-
 from launch.env import override_default
 
 BUILD_DEPENDENCIES_PATH = override_default(
@@ -15,11 +13,6 @@ BUILD_TEMP_DIR_PATH = override_default(
 DEFAULT_CLOUD_PROVIDER = override_default(
     key_name="DEFAULT_CLOUD_PROVIDER",
     default="aws",
-)
-
-DEFAULT_CONTAINER_TAG = override_default(
-    key_name="DEFAULT_CONTAINER_TAG",
-    default=f"{int(time.time())}-dev",
 )
 
 DOCKER_FILE_NAME = override_default(
