@@ -1,5 +1,7 @@
 from semver import Version
 
-VERSION = "0.9.3"
+from launch import __version__
+
+VERSION = __version__
 
 SEMANTIC_VERSION = Version.parse(VERSION)

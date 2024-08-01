@@ -1,8 +1,7 @@
 import os
 from pathlib import Path
 
-from launch.env import override_default
-from launch.config.common import DEFAULT_CONTAINER_TAG, DOCKER_FILE_NAME
+from launch.config.common import DOCKER_FILE_NAME
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.lib.automation.processes.functions import (
     git_config,
@@ -30,9 +29,6 @@ def execute_build(
     if push:
         if provider == "aws":
             make_docker_aws_ecr_login(dry_run=dry_run)
-        os.environ["CONTAINER_IMAGE_VERSION"] = override_default(
-            key_name="MERGE_COMMIT_ID", default=DEFAULT_CONTAINER_TAG
-        )
         make_docker_push(dry_run=dry_run)
 
 
