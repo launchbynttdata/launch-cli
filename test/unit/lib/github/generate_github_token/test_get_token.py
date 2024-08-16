@@ -44,8 +44,8 @@ def test_get_token_success(mock_dependencies):
     mock_dependencies["post"].assert_called_once()
 
 
-def test_get_token_failure(mock_create_jwt, mock_dependencies):
-    mock_create_jwt.return_value.get_secret_value.side_effect = ClientError(
+def test_get_token_failure(mock_dependencies):
+    mock_dependencies["create_jwt"].return_value.side_effect = ClientError(
         {"Error": {"Code": "TestException"}}, "test_operation"
     )
 
