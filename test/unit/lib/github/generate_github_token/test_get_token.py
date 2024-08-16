@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from boto3.session import Session
 from botocore.exceptions import ClientError
 
 from launch.lib.github.generate_github_token import (
