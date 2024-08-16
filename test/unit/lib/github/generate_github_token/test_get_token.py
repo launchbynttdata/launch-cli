@@ -45,18 +45,16 @@ def test_get_token_success(mock_dependencies):
 
 
 def test_get_token_failure(mock_dependencies):
-    mock_dependencies["create_jwt"].return_value = ClientError(
-        {"Error": {"Code": "TestException"}}, "test_operation"
-    )
-
     with pytest.raises(ClientError):
+        mock_dependencies["create_jwt"].side_effect = ClientError(
+            {"Error": {"Code": "TestException"}}, "test_operation"
+        )
         get_token(
             "application_id",
             "installation_id",
             "signing_cert_secret_name",
             "token_expiration_seconds",
         )
-
     mock_dependencies["post"].assert_not_called()
 
 
