@@ -44,7 +44,11 @@ def test_get_token_success(mock_dependencies):
     mock_dependencies["post"].assert_called_once()
 
 
-def test_get_token_failure(mock_dependencies):
+def test_get_token_failure(mock_create_jwt, mock_dependencies):
+    mock_create_jwt.return_value.get_secret_value.side_effect = ClientError(
+        {"Error": {"Code": "TestException"}}, "test_operation"
+    )
+
     with pytest.raises(ClientError):
         get_token(
             "application_id",
@@ -53,7 +57,6 @@ def test_get_token_failure(mock_dependencies):
             "token_expiration_seconds",
         )
 
-    mock_dependencies["create_jwt"].assert_not_called()
     mock_dependencies["post"].assert_not_called()
 
 
