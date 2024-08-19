@@ -28,10 +28,10 @@ def mock_dependencies():
 
 def test_get_token_success(mock_dependencies):
     token = get_token(
-        "application_id",
-        "installation_id",
-        "signing_cert_secret_name",
-        "token_expiration_seconds",
+        application_id="application_id",
+        installation_id="installation_id",
+        signing_cert_secret_name="signing_cert_secret_name", # pragma: allowlist secret
+        token_expiration_seconds="token_expiration_seconds",
     )
 
     # Assert that the token returned is as expected
@@ -50,10 +50,10 @@ def test_get_token_failure(mock_dependencies):
             {"Error": {"Code": "TestException"}}, "test_operation"
         )
         get_token(
-            "application_id",
-            "installation_id",
-            "signing_cert_secret_name",
-            "token_expiration_seconds",
+            application_id="application_id",
+            installation_id="installation_id",
+            signing_cert_secret_name="signing_cert_secret_name", # pragma: allowlist secret
+            token_expiration_seconds="token_expiration_seconds",
         )
     mock_dependencies["post"].assert_not_called()
 
