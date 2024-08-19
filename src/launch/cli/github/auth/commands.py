@@ -43,8 +43,8 @@ def application(
     token_expiration_seconds: int,
 ):
     token = get_token(
-        application_id_parameter_name=application_id_parameter_name,
-        installation_id_parameter_name=installation_id_parameter_name,
+        application_id=application_id_parameter_name,
+        installation_id=installation_id_parameter_name,
         signing_cert_secret_name=signing_cert_secret_name,
         token_expiration_seconds=token_expiration_seconds,
     )
