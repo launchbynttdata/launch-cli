@@ -15,10 +15,10 @@ from launch.cli.service.generate import generate
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.github import (
-    APPLICATION_ID_PARAMETER_NAME,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
-    INSTALLATION_ID_PARAMETER_NAME,
-    SIGNING_CERT_SECRET_NAME,
+    GITHUB_APPLICATION_ID,
+    GITHUB_INSTALLATION_ID,
+    GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIRS
@@ -178,15 +178,15 @@ def terragrunt(
         raise RuntimeError(message)
 
     if (
-        APPLICATION_ID_PARAMETER_NAME
-        and INSTALLATION_ID_PARAMETER_NAME
-        and SIGNING_CERT_SECRET_NAME
+        GITHUB_APPLICATION_ID
+        and GITHUB_INSTALLATION_ID
+        and GITHUB_SIGNING_CERT_SECRET_NAME
     ):
         token = context.invoke(
             application,
-            application_id_parameter_name=APPLICATION_ID_PARAMETER_NAME,
-            installation_id_parameter_name=INSTALLATION_ID_PARAMETER_NAME,
-            signing_cert_secret_name=SIGNING_CERT_SECRET_NAME,
+            application_id_parameter_name=GITHUB_APPLICATION_ID,
+            installation_id_parameter_name=GITHUB_INSTALLATION_ID,
+            signing_cert_secret_name=GITHUB_SIGNING_CERT_SECRET_NAME,
             token_expiration_seconds=DEFAULT_TOKEN_EXPIRATION_SECONDS,
         )
     else:

@@ -28,18 +28,18 @@ GIT_MACHINE_USER = override_default(
     default="launch-cli-user",
 )
 
-APPLICATION_ID_PARAMETER_NAME = override_default(
-    key_name="APPLICATION_ID_PARAMETER_NAME",
+GITHUB_APPLICATION_ID = override_default(
+    key_name="GITHUB_APPLICATION_ID",
     default=None,
 )
 
-INSTALLATION_ID_PARAMETER_NAME = override_default(
-    key_name="INSTALLATION_ID_PARAMETER_NAME",
+GITHUB_INSTALLATION_ID = override_default(
+    key_name="GITHUB_INSTALLATION_ID",
     default=None,
 )
 
-SIGNING_CERT_SECRET_NAME = override_default(
-    key_name="SIGNING_CERT_SECRET_NAME",
+GITHUB_SIGNING_CERT_SECRET_NAME = override_default(
+    key_name="GITHUB_SIGNING_CERT_SECRET_NAME",
     default=None,
 )
 

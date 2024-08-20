@@ -15,10 +15,10 @@ from launch.config.container import (
     CONTAINER_REGISTRY,
 )
 from launch.config.github import (
-    APPLICATION_ID_PARAMETER_NAME,
+    GITHUB_APPLICATION_ID,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
-    INSTALLATION_ID_PARAMETER_NAME,
-    SIGNING_CERT_SECRET_NAME,
+    GITHUB_INSTALLATION_ID,
+    GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
@@ -136,15 +136,15 @@ def build(
         quit()
 
     if (
-        APPLICATION_ID_PARAMETER_NAME
-        and INSTALLATION_ID_PARAMETER_NAME
-        and SIGNING_CERT_SECRET_NAME
+        GITHUB_APPLICATION_ID
+        and GITHUB_INSTALLATION_ID
+        and GITHUB_SIGNING_CERT_SECRET_NAME
     ):
         token = context.invoke(
             application,
-            application_id_parameter_name=APPLICATION_ID_PARAMETER_NAME,
-            installation_id_parameter_name=INSTALLATION_ID_PARAMETER_NAME,
-            signing_cert_secret_name=SIGNING_CERT_SECRET_NAME,
+            application_id_parameter_name=GITHUB_APPLICATION_ID,
+            installation_id_parameter_name=GITHUB_INSTALLATION_ID,
+            signing_cert_secret_name=GITHUB_SIGNING_CERT_SECRET_NAME,
             token_expiration_seconds=DEFAULT_TOKEN_EXPIRATION_SECONDS,
         )
     else:
