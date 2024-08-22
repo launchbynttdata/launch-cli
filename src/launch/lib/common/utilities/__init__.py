@@ -1,4 +1,5 @@
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -58,3 +59,24 @@ def extract_repo_name_from_url(url: str) -> str:
         str: Repository name
     """
     return url.split("/")[-1].replace(".git", "")
+
+
+def read_toml_version():
+    """
+    Read the version from the pyproject.toml file.
+
+    Returns:
+        str: Version number
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    toml_path = os.path.join(script_dir, "./../../../../../pyproject.toml")
+    with open(toml_path, "r") as file:
+        lines = file.readlines()
+
+    version = None
+    for line in lines:
+        if line.startswith("version"):
+            version = line.split("=")[1].strip().strip('"')
+            break
+
+    return version

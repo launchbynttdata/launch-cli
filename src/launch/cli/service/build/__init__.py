@@ -136,7 +136,7 @@ def build(
         quit()
 
     if (
-        ++GITHUB_APPLICATION_ID
+        GITHUB_APPLICATION_ID
         and GITHUB_INSTALLATION_ID
         and GITHUB_SIGNING_CERT_SECRET_NAME
     ):
