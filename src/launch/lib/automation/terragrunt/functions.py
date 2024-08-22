@@ -309,3 +309,26 @@ def copy_webhook(
         if relative_depth == 2:
             shutil.copy(webhooks_path.joinpath(WEBHOOK_ZIP), root)
             print(f"Copied {webhooks_path.joinpath(WEBHOOK_BUILD_SCRIPT)} to {root}")
+
+
+def create_tf_auto_file(data: dict, out_file: str, dry_run: bool = True) -> None:
+    """
+    Creates a terraform auto file from the data dictionary.
+
+    Args:
+        data (dict): The data dictionary to write to the file.
+        out_file (str): The output file to write the data to.
+        dry_run (bool, optional): If set, it will perform a dry run that reports on what it would do, but does not perform any action. Defaults to True.
+
+    Returns:
+        None
+    """
+    with open(out_file, "w") as f:
+        for key, value in data.items():
+            f.write(f"{key} = {value}\n")
+    if dry_run:
+        click.secho(
+            f"[DRYRUN] Would have written to file: {out_file=}, {data=}", fg="yellow"
+        )
+    else:
+        click.secho(f"Wrote to file: {out_file=}", fg="green")

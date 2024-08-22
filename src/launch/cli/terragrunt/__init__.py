@@ -14,6 +14,11 @@ from launch.cli.github.auth.commands import application
 from launch.cli.service.generate import generate
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
+from launch.config.container import (
+    CONTAINER_IMAGE_NAME,
+    CONTAINER_IMAGE_VERSION,
+    CONTAINER_REGISTRY,
+)
 from launch.config.github import (
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
     GITHUB_APPLICATION_ID,
@@ -34,6 +39,7 @@ from launch.lib.automation.environment.functions import (
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.terragrunt.functions import (
     copy_webhook,
+    create_tf_auto_file,
     find_app_templates,
     terragrunt_apply,
     terragrunt_destroy,
@@ -316,6 +322,14 @@ def terragrunt(
             click.secho(message, fg="red")
             raise FileNotFoundError(message)
         os.chdir(tg_dir)
+        if render_app_vars:
+            create_tf_auto_file(
+                data={
+                    "app_image": f'{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{CONTAINER_IMAGE_VERSION}"'
+                },
+                out_file=tg_dir.joinpath("app_image.auto.tfvars"),
+                dry_run=dry_run,
+            )
         terragrunt_init(
             dry_run=dry_run,
         )
