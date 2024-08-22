@@ -119,11 +119,11 @@ def build(
             "[DRYRUN] Performing a dry run, nothing will be built.", fg="yellow"
         )
 
-    if container_image_name:
+    if not os.environ["CONTAINER_IMAGE_NAME"]:
         os.environ["CONTAINER_IMAGE_NAME"] = container_image_name
-    if container_image_version:
+    if not os.environ["CONTAINER_IMAGE_VERSION"]:
         os.environ["CONTAINER_IMAGE_VERSION"] = container_image_version
-    if container_registry:
+    if not os.environ["CONTAINER_REGISTRY"]:
         os.environ["CONTAINER_REGISTRY"] = container_registry
 
     if Path(DOCKER_FILE_NAME).exists():
@@ -136,7 +136,7 @@ def build(
         quit()
 
     if (
-        GITHUB_APPLICATION_ID
+        ++GITHUB_APPLICATION_ID
         and GITHUB_INSTALLATION_ID
         and GITHUB_SIGNING_CERT_SECRET_NAME
     ):
