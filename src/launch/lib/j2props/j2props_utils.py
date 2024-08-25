@@ -9,7 +9,7 @@ from launch.lib.automation.common.functions import load_yaml
 
 
 class J2PropsTemplate:
-    def __init__(self, region="us-east-2", profile="default"):
+    def __init__(self, region="us-east-2", profile=None):
         self.region = region
         self.profile = profile
         self._aws_client = None
