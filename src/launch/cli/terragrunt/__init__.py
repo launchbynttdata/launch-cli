@@ -316,20 +316,24 @@ def terragrunt(
         )
 
     for run_dir in run_dirs:
-        tg_dir = build_path.joinpath(run_dir)
+        tg_dir = build_path.joinpath(run_dir, aws_deployment_region)
         if not (tg_dir).exists():
             message = f"Error: Path {tg_dir} does not exist."
             click.secho(message, fg="red")
             raise FileNotFoundError(message)
         os.chdir(tg_dir)
         if render_app_vars:
-            create_tf_auto_file(
-                data={
-                    "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{CONTAINER_IMAGE_VERSION}"'
-                },
-                out_file=tg_dir.joinpath("app_image.auto.tfvars"),
-                dry_run=dry_run,
-            )
+            for instance in os.scandir(tg_dir):
+                print(instance)
+
+                if instance.is_dir():
+                    create_tf_auto_file(
+                        data={
+                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{CONTAINER_IMAGE_VERSION}"'
+                        },
+                        out_file=tg_dir.joinpath(instance, "app_image.auto.tfvars"),
+                        dry_run=dry_run,
+                    )
         terragrunt_init(
             dry_run=dry_run,
         )
