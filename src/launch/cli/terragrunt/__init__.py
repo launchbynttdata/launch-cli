@@ -215,6 +215,7 @@ def terragrunt(
                 temp_server_url = readFile("GIT_SERVER_URL")
                 temp_org = readFile("GIT_ORG")
                 temp_repo = readFile("GIT_REPO")
+                CONTAINER_IMAGE_VERSION = readFile("CONTAINER_IMAGE_VERSION")
                 url = f"{temp_server_url}/{temp_org}/{temp_repo}"
                 tag = readFile("MERGE_COMMIT_ID")
 
@@ -325,7 +326,7 @@ def terragrunt(
             for instance in os.scandir(tg_dir):
                 if instance.is_dir():
                     click.secho(
-                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {CONTAINER_IMAGE_VERSION=} {readFile("CONTAINER_IMAGE_VERSION")=}"
+                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {CONTAINER_IMAGE_VERSION=}"
                     )
                     create_tf_auto_file(
                         data={
