@@ -218,6 +218,7 @@ def terragrunt(
                 temp_repo = os.environ.get("GIT_REPO")
                 url = f"{temp_url}/{temp_org}/{temp_repo}.git"
                 tag = os.environ.get("MERGE_COMMIT_ID")
+                click.secho(f"{CONTAINER_IMAGE_VERSION=}")
 
     if url:
         build_path = (
@@ -327,6 +328,9 @@ def terragrunt(
                 print(instance)
 
                 if instance.is_dir():
+                    click.secho(
+                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {CONTAINER_IMAGE_VERSION=}"
+                    )
                     create_tf_auto_file(
                         data={
                             "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{CONTAINER_IMAGE_VERSION}"'
