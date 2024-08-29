@@ -323,11 +323,9 @@ def terragrunt(
         os.chdir(tg_dir)
         if render_app_vars:
             for instance in os.scandir(tg_dir):
-                print(instance)
-
                 if instance.is_dir():
                     click.secho(
-                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {CONTAINER_IMAGE_VERSION=}"
+                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {CONTAINER_IMAGE_VERSION=} {readFile("CONTAINER_IMAGE_VERSION")=}"
                     )
                     create_tf_auto_file(
                         data={
