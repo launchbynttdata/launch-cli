@@ -67,7 +67,7 @@ def set_vars_from_bash_Var_file(file_path: str) -> None:
             for line in file:
                 line = line.strip()
                 if line.startswith("export"):
-                    key_value = line[len("export ") :].split("=", 1)
+                    key_value = line[len("export") :].split("=", 1)
                     if len(key_value) == 2:
                         key, value = key_value
                         value = value.strip('"')
