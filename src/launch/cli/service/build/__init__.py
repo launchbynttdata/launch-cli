@@ -24,8 +24,8 @@ from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.lib.github.auth import read_github_token
 from launch.lib.automation.environment.functions import (
+    readFile,
     set_netrc,
-    set_vars_from_bash_Var_file,
 )
 from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.service.build import clone_if_no_dockerfile, execute_build
@@ -167,15 +167,13 @@ def build(
                 )
                 quit()
             else:
-                set_vars_from_bash_Var_file(AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE)
-                temp_url = os.environ.get("GIT_SERVER_URL")
-                temp_org = os.environ.get("GIT_ORG")
-                temp_repo = os.environ.get("GIT_REPO")
-                url = f"{temp_url}/{temp_org}/{temp_repo}.git"
                 if not skip_clone:
+                    temp_server_url = readFile("GIT_SERVER_URL")
+                    temp_org = readFile("GIT_ORG")
+                    temp_repo = readFile("GIT_REPO")
                     clone_if_no_dockerfile(
-                        url=url,
-                        tag=os.environ.get("MERGE_COMMIT_ID"),
+                        url=f"{temp_server_url}/{temp_org}/{temp_repo}",
+                        tag=readFile("MERGE_COMMIT_ID"),
                         clone_dir=service_dir.joinpath(os.environ.get("GIT_REPO")),
                         service_dir=service_dir.joinpath(os.environ.get("GIT_REPO")),
                         dry_run=dry_run,

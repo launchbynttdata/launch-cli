@@ -33,8 +33,8 @@ from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
 from launch.lib.automation.common.functions import single_true
 from launch.lib.automation.environment.functions import (
     install_tool_versions,
+    readFile,
     set_netrc,
-    set_vars_from_bash_Var_file,
 )
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.terragrunt.functions import (
@@ -212,13 +212,11 @@ def terragrunt(
                 )
                 return
             else:
-                set_vars_from_bash_Var_file(AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE)
-                temp_url = os.environ.get("GIT_SERVER_URL")
-                temp_org = os.environ.get("GIT_ORG")
-                temp_repo = os.environ.get("GIT_REPO")
-                url = f"{temp_url}/{temp_org}/{temp_repo}.git"
-                tag = os.environ.get("MERGE_COMMIT_ID")
-                click.secho(f"{CONTAINER_IMAGE_VERSION=}")
+                temp_server_url = readFile("GIT_SERVER_URL")
+                temp_org = readFile("GIT_ORG")
+                temp_repo = readFile("GIT_REPO")
+                url = f"{temp_server_url}/{temp_org}/{temp_repo}"
+                tag = readFile("MERGE_COMMIT_ID")
 
     if url:
         build_path = (
