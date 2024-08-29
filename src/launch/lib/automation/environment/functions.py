@@ -71,6 +71,7 @@ def set_vars_from_bash_Var_file(file_path: str) -> None:
                     if len(key_value) == 2:
                         key, value = key_value
                         value = value.strip('"')
+                        click.secho(f"Setting {key}={value}")
                         os.environ[key] = value
     except Exception as e:
         raise RuntimeError(
