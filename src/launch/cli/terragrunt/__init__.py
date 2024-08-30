@@ -30,7 +30,7 @@ from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIR
 from launch.config.webhook import WEBHOOK_GIT_REPO_URL
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
-from launch.lib.automation.common.functions import single_true
+from launch.lib.automation.common.functions import is_platform_git_changes, single_true
 from launch.lib.automation.environment.functions import (
     install_tool_versions,
     readFile,
@@ -76,8 +76,8 @@ from launch.lib.github.auth import read_github_token
 )
 @click.option(
     "--platform-resource",
-    default="all",
-    help="(Optional) If set, this will set the specified pipeline resource to run terragrunt against. Defaults to all.  accepted values are 'pipeline', 'webhooks', 'service', or 'all'",
+    default="service",
+    help="(Optional) If set, this will set the specified pipeline resource to run terragrunt against. Defaults to service.  accepted values are 'pipeline', 'webhooks', or 'service'",
 )
 @click.option(
     "--generation",
@@ -246,13 +246,11 @@ def terragrunt(
 
     if check_diff:
         os.chdir(build_path)
-        # TODO: Implement this function. Requires to pass the commit_id which comes
-        # from set_vars.sh. Need to implement a way to pass this value to the function.
-        # is_platform_git_changes(
-        #     repository= Repo(build_path),
-        #     commit_id=,
-        #     directory=build_path,
-        # )
+        is_platform_git_changes(
+            repository=Repo(build_path),
+            commit_id=tag,
+            directory=build_path,
+        )
 
     if generation:
         input_data = context.invoke(
@@ -275,13 +273,7 @@ def terragrunt(
         )
 
     run_dirs = []
-    if platform_resource == "all":
-        run_dirs = [
-            TERRAGRUNT_RUN_DIRS["service"].joinpath(target_environment),
-            TERRAGRUNT_RUN_DIRS["pipeline"].joinpath(platform_env),
-            TERRAGRUNT_RUN_DIRS["webhook"].joinpath(platform_env),
-        ]
-    elif platform_resource in TERRAGRUNT_RUN_DIRS:
+    if platform_resource in TERRAGRUNT_RUN_DIRS:
         run_dirs = [TERRAGRUNT_RUN_DIRS[platform_resource].joinpath(target_environment)]
 
     for run_dir in run_dirs:
