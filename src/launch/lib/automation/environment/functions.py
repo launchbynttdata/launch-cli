@@ -5,6 +5,7 @@ from pathlib import Path
 
 import click
 
+from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import TOOL_VERSION_FILE
 from launch.config.github import GIT_MACHINE_USER, GIT_SCM_ENDPOINT
 
@@ -60,19 +61,14 @@ def set_netrc(
 
 
 # This can be deprecated when we refactor the lambdas and no longer use shell scipts in the build process
-def set_vars_from_bash_Var_file(file_path: str) -> None:
-    """ """
+def readFile(key, file_path=AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE) -> str:
     try:
         with open(file_path, "r") as file:
             for line in file:
-                line = line.strip()
-                if line.startswith("export"):
-                    key_value = line[len("export ") :].split("=", 1)
-                    if len(key_value) == 2:
-                        key, value = key_value
-                        value = value.strip('"')
-                        os.environ[key] = value
-    except Exception as e:
-        raise RuntimeError(
-            f"An error occurred while setting environment variables: {str(e)}"
-        )
+                if line.startswith(f"export {key}="):
+                    value = line.split("=")[1].strip().strip('"')
+                    return value
+        return None
+    except FileNotFoundError:
+        click.secho(f"The file {file_path} does not exist.")
+        return None

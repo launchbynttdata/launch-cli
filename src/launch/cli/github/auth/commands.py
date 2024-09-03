@@ -1,5 +1,10 @@
 import click
 
+from launch.config.github import (
+    GITHUB_APPLICATION_ID,
+    GITHUB_INSTALLATION_ID,
+    GITHUB_SIGNING_CERT_SECRET_NAME,
+)
 from launch.lib.github.generate_github_token import get_token
 
 
@@ -13,18 +18,21 @@ def validate_max_seconds(ctx, param, value):
 @click.option(
     "--application-id-parameter-name",
     required=True,
+    default=GITHUB_APPLICATION_ID,
     type=str,
     help=f"Name of the parameter from AWS System Manager parameter store that contains the application id of the GitHub App.",
 )
 @click.option(
     "--installation-id-parameter-name",
     required=True,
+    default=GITHUB_INSTALLATION_ID,
     type=str,
     help="Name of the parameter from AWS System Manager parameter store that contains the installation id of the GitHub App.",
 )
 @click.option(
     "--signing-cert-secret-name",
     required=True,
+    default=GITHUB_SIGNING_CERT_SECRET_NAME,
     type=str,
     help="Name of the parameter from AWS System Manager parameter store that contains the name of the secret from AWS Secrets Manager that has the signing certificate of the GitHub App.",
 )

@@ -14,26 +14,32 @@ from launch.cli.github.auth.commands import application
 from launch.cli.service.generate import generate
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
+from launch.config.container import (
+    CONTAINER_IMAGE_NAME,
+    CONTAINER_IMAGE_VERSION,
+    CONTAINER_REGISTRY,
+)
 from launch.config.github import (
-    APPLICATION_ID_PARAMETER_NAME,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
-    INSTALLATION_ID_PARAMETER_NAME,
-    SIGNING_CERT_SECRET_NAME,
+    GITHUB_APPLICATION_ID,
+    GITHUB_INSTALLATION_ID,
+    GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIRS
 from launch.config.webhook import WEBHOOK_GIT_REPO_URL
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
-from launch.lib.automation.common.functions import single_true
+from launch.lib.automation.common.functions import is_platform_git_changes, single_true
 from launch.lib.automation.environment.functions import (
     install_tool_versions,
+    readFile,
     set_netrc,
-    set_vars_from_bash_Var_file,
 )
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.terragrunt.functions import (
     copy_webhook,
+    create_tf_auto_file,
     find_app_templates,
     terragrunt_apply,
     terragrunt_destroy,
@@ -70,8 +76,8 @@ from launch.lib.github.auth import read_github_token
 )
 @click.option(
     "--platform-resource",
-    default="all",
-    help="(Optional) If set, this will set the specified pipeline resource to run terragrunt against. Defaults to all.  accepted values are 'pipeline', 'webhooks', 'service', or 'all'",
+    default="service",
+    help="(Optional) If set, this will set the specified pipeline resource to run terragrunt against. Defaults to service.  accepted values are 'pipeline', 'webhooks', or 'service'",
 )
 @click.option(
     "--generation",
@@ -178,15 +184,15 @@ def terragrunt(
         raise RuntimeError(message)
 
     if (
-        APPLICATION_ID_PARAMETER_NAME
-        and INSTALLATION_ID_PARAMETER_NAME
-        and SIGNING_CERT_SECRET_NAME
+        GITHUB_APPLICATION_ID
+        and GITHUB_INSTALLATION_ID
+        and GITHUB_SIGNING_CERT_SECRET_NAME
     ):
         token = context.invoke(
             application,
-            application_id_parameter_name=APPLICATION_ID_PARAMETER_NAME,
-            installation_id_parameter_name=INSTALLATION_ID_PARAMETER_NAME,
-            signing_cert_secret_name=SIGNING_CERT_SECRET_NAME,
+            application_id_parameter_name=GITHUB_APPLICATION_ID,
+            installation_id_parameter_name=GITHUB_INSTALLATION_ID,
+            signing_cert_secret_name=GITHUB_SIGNING_CERT_SECRET_NAME,
             token_expiration_seconds=DEFAULT_TOKEN_EXPIRATION_SECONDS,
         )
     else:
@@ -206,12 +212,12 @@ def terragrunt(
                 )
                 return
             else:
-                set_vars_from_bash_Var_file(AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE)
-                temp_url = os.environ.get("GIT_SERVER_URL")
-                temp_org = os.environ.get("GIT_ORG")
-                temp_repo = os.environ.get("GIT_REPO")
-                url = f"{temp_url}/{temp_org}/{temp_repo}.git"
-                tag = os.environ.get("MERGE_COMMIT_ID")
+                temp_server_url = readFile("GIT_SERVER_URL")
+                temp_org = readFile("GIT_ORG")
+                temp_repo = readFile("GIT_REPO")
+                CONTAINER_IMAGE_VERSION = readFile("CONTAINER_IMAGE_VERSION")
+                url = f"{temp_server_url}/{temp_org}/{temp_repo}"
+                tag = readFile("MERGE_COMMIT_ID")
 
     if url:
         build_path = (
@@ -240,13 +246,11 @@ def terragrunt(
 
     if check_diff:
         os.chdir(build_path)
-        # TODO: Implement this function. Requires to pass the commit_id which comes
-        # from set_vars.sh. Need to implement a way to pass this value to the function.
-        # is_platform_git_changes(
-        #     repository= Repo(build_path),
-        #     commit_id=,
-        #     directory=build_path,
-        # )
+        is_platform_git_changes(
+            repository=Repo(build_path),
+            commit_id=tag,
+            directory=build_path,
+        )
 
     if generation:
         input_data = context.invoke(
@@ -269,13 +273,7 @@ def terragrunt(
         )
 
     run_dirs = []
-    if platform_resource == "all":
-        run_dirs = [
-            TERRAGRUNT_RUN_DIRS["service"].joinpath(target_environment),
-            TERRAGRUNT_RUN_DIRS["pipeline"].joinpath(platform_env),
-            TERRAGRUNT_RUN_DIRS["webhook"].joinpath(platform_env),
-        ]
-    elif platform_resource in TERRAGRUNT_RUN_DIRS:
+    if platform_resource in TERRAGRUNT_RUN_DIRS:
         run_dirs = [TERRAGRUNT_RUN_DIRS[platform_resource].joinpath(target_environment)]
 
     for run_dir in run_dirs:
@@ -310,12 +308,25 @@ def terragrunt(
         )
 
     for run_dir in run_dirs:
-        tg_dir = build_path.joinpath(run_dir)
+        tg_dir = build_path.joinpath(run_dir, aws_deployment_region)
         if not (tg_dir).exists():
             message = f"Error: Path {tg_dir} does not exist."
             click.secho(message, fg="red")
             raise FileNotFoundError(message)
         os.chdir(tg_dir)
+        if render_app_vars:
+            for instance in os.scandir(tg_dir):
+                if instance.is_dir():
+                    click.secho(
+                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {CONTAINER_IMAGE_VERSION=}"
+                    )
+                    create_tf_auto_file(
+                        data={
+                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{CONTAINER_IMAGE_VERSION}"'
+                        },
+                        out_file=tg_dir.joinpath(instance, "app_image.auto.tfvars"),
+                        dry_run=dry_run,
+                    )
         terragrunt_init(
             dry_run=dry_run,
         )

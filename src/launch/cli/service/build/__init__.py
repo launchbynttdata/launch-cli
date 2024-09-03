@@ -15,17 +15,17 @@ from launch.config.container import (
     CONTAINER_REGISTRY,
 )
 from launch.config.github import (
-    APPLICATION_ID_PARAMETER_NAME,
+    GITHUB_APPLICATION_ID,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
-    INSTALLATION_ID_PARAMETER_NAME,
-    SIGNING_CERT_SECRET_NAME,
+    GITHUB_INSTALLATION_ID,
+    GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.lib.github.auth import read_github_token
 from launch.lib.automation.environment.functions import (
+    readFile,
     set_netrc,
-    set_vars_from_bash_Var_file,
 )
 from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.service.build import clone_if_no_dockerfile, execute_build
@@ -119,11 +119,11 @@ def build(
             "[DRYRUN] Performing a dry run, nothing will be built.", fg="yellow"
         )
 
-    if container_image_name:
+    if not os.environ["CONTAINER_IMAGE_NAME"]:
         os.environ["CONTAINER_IMAGE_NAME"] = container_image_name
-    if container_image_version:
+    if not os.environ["CONTAINER_IMAGE_VERSION"]:
         os.environ["CONTAINER_IMAGE_VERSION"] = container_image_version
-    if container_registry:
+    if not os.environ["CONTAINER_REGISTRY"]:
         os.environ["CONTAINER_REGISTRY"] = container_registry
 
     if Path(DOCKER_FILE_NAME).exists():
@@ -136,15 +136,15 @@ def build(
         quit()
 
     if (
-        APPLICATION_ID_PARAMETER_NAME
-        and INSTALLATION_ID_PARAMETER_NAME
-        and SIGNING_CERT_SECRET_NAME
+        GITHUB_APPLICATION_ID
+        and GITHUB_INSTALLATION_ID
+        and GITHUB_SIGNING_CERT_SECRET_NAME
     ):
         token = context.invoke(
             application,
-            application_id_parameter_name=APPLICATION_ID_PARAMETER_NAME,
-            installation_id_parameter_name=INSTALLATION_ID_PARAMETER_NAME,
-            signing_cert_secret_name=SIGNING_CERT_SECRET_NAME,
+            application_id_parameter_name=GITHUB_APPLICATION_ID,
+            installation_id_parameter_name=GITHUB_INSTALLATION_ID,
+            signing_cert_secret_name=GITHUB_SIGNING_CERT_SECRET_NAME,
             token_expiration_seconds=DEFAULT_TOKEN_EXPIRATION_SECONDS,
         )
     else:
@@ -167,15 +167,13 @@ def build(
                 )
                 quit()
             else:
-                set_vars_from_bash_Var_file(AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE)
-                temp_url = os.environ.get("GIT_SERVER_URL")
-                temp_org = os.environ.get("GIT_ORG")
-                temp_repo = os.environ.get("GIT_REPO")
-                url = f"{temp_url}/{temp_org}/{temp_repo}.git"
                 if not skip_clone:
+                    temp_server_url = readFile("GIT_SERVER_URL")
+                    temp_org = readFile("GIT_ORG")
+                    temp_repo = readFile("GIT_REPO")
                     clone_if_no_dockerfile(
-                        url=url,
-                        tag=os.environ.get("MERGE_COMMIT_ID"),
+                        url=f"{temp_server_url}/{temp_org}/{temp_repo}",
+                        tag=readFile("MERGE_COMMIT_ID"),
                         clone_dir=service_dir.joinpath(os.environ.get("GIT_REPO")),
                         service_dir=service_dir.joinpath(os.environ.get("GIT_REPO")),
                         dry_run=dry_run,
