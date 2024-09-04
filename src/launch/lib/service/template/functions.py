@@ -117,7 +117,7 @@ def copy_template_files(
             ) and item not in DISCOVERY_FORBIDDEN_DIRECTORIES:
                 shutil.copytree(src_item, target_item, dirs_exist_ok=True)
         else:
-            shutil.copy2(src_item, target_item, follow_symlinks=False)
+            shutil.copy2(src_item, target_item)
 
 
 def list_jinja_templates(base_dir: str) -> tuple:
