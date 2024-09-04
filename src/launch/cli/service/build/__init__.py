@@ -139,6 +139,7 @@ def build(
                 temp_repo = readFile("GIT_REPO")
                 url = f"{temp_server_url}/{temp_org}/{temp_repo}"
                 tag = readFile("MERGE_COMMIT_ID")
+                service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
         else:
             with open(LAUNCHCONFIG_NAME, "r") as f:
                 input_data = json.load(f)
@@ -149,7 +150,7 @@ def build(
     if not skip_clone:
         repository = clone_repository(
             repository_url=url,
-            target=service_dir.joinpath(extract_repo_name_from_url(url)),
+            target=service_dir,
             branch=SERVICE_MAIN_BRANCH,
             dry_run=dry_run,
         )
