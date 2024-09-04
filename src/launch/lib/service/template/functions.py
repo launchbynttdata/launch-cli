@@ -85,13 +85,16 @@ def process_template(
     return updated_config
 
 
-def copy_template_files(src_dir: Path, target_dir: Path, dry_run: bool = True) -> None:
+def copy_template_files(
+    src_dir: Path, target_dir: Path, not_platform: bool = False, dry_run: bool = True
+) -> None:
     """
     Copies files from a source directory to a target directory, excluding a specific directory.
 
     Args:
         src_dir (Path): The source directory containing the files to be copied.
         target_dir (Path): The target directory where the files will be copied.
+        not_platform (bool, optional): A flag to indicate whether to copy only platform files.
         dry_run (bool, optional): A flag to indicate whether to perform a dry run.
 
     Returns:
@@ -110,12 +113,11 @@ def copy_template_files(src_dir: Path, target_dir: Path, dry_run: bool = True) -
         target_item = os.path.join(target_dir, item)
         if os.path.isdir(src_item):
             if (
-                item != PLATFORM_SRC_DIR_PATH
-                and item not in DISCOVERY_FORBIDDEN_DIRECTORIES
-            ):
+                item != PLATFORM_SRC_DIR_PATH or not_platform
+            ) and item not in DISCOVERY_FORBIDDEN_DIRECTORIES:
                 shutil.copytree(src_item, target_item, dirs_exist_ok=True)
         else:
-            shutil.copy2(src_item, target_item)
+            shutil.copy2(src_item, target_item, follow_symlinks=False)
 
 
 def list_jinja_templates(base_dir: str) -> tuple:

@@ -20,18 +20,18 @@ def make_configure(
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
 
-def make_docker_build(
+def make_build(
     dry_run: bool = True,
 ) -> None:
-    click.secho(f"Running make docker/build")
+    click.secho(f"Running make build")
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess: make docker/build",
+                f"[DRYRUN] Would have ran subprocess: make build",
                 fg="yellow",
             )
         else:
-            subprocess.run(["make", "docker/build"], check=True)
+            subprocess.run(["make", "build"], check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 

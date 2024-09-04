@@ -1,5 +1,4 @@
 import click
-import os
 import json
 import logging
 from pathlib import Path
@@ -9,11 +8,6 @@ from launch.cli.github.auth.commands import application
 from launch.cli.service.clean import clean
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, DOCKER_FILE_NAME
-from launch.config.container import (
-    CONTAINER_IMAGE_NAME,
-    CONTAINER_IMAGE_VERSION,
-    CONTAINER_REGISTRY,
-)
 from launch.config.github import (
     GITHUB_APPLICATION_ID,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
@@ -28,7 +22,8 @@ from launch.lib.automation.environment.functions import (
     set_netrc,
 )
 from launch.lib.common.utilities import extract_repo_name_from_url
-from launch.lib.service.build import clone_if_no_dockerfile, execute_build
+from launch.lib.local_repo.repo import clone_repository, checkout_branch
+from launch.lib.service.build import execute_build
 
 logger = logging.getLogger(__name__)
 
@@ -44,21 +39,6 @@ logger = logging.getLogger(__name__)
     "--tag",
     default=SERVICE_MAIN_BRANCH,
     help=f"(Optional) The tag of the repository to clone. Defaults to None",
-)
-@click.option(
-    "--container-registry",
-    default=CONTAINER_REGISTRY,
-    help=f"(Optional) The registry to push the built image to. Defaults to {CONTAINER_REGISTRY}",
-)
-@click.option(
-    "--container-image-name",
-    default=CONTAINER_IMAGE_NAME,
-    help=f"(Optional) The name of the repository to clone. Defaults to {CONTAINER_IMAGE_NAME}",
-)
-@click.option(
-    "--container-image-version",
-    default=CONTAINER_IMAGE_VERSION,
-    help=f"(Optional) The version of the repository to clone. Defaults to {CONTAINER_IMAGE_VERSION}",
 )
 @click.option(
     "--push",
@@ -84,9 +64,6 @@ def build(
     provider: str,
     url: str,
     tag: str,
-    container_registry: str,
-    container_image_name: str,
-    container_image_version: str,
     push: bool,
     skip_clone: bool,
     dry_run: bool,
@@ -99,9 +76,6 @@ def build(
         provider (str): The cloud provider to use.
         url: str: The URL of the repository to clone.
         tag: str: The tag of the repository to clone.
-        container_registry: str: The registry to push the built image to.
-        container_image_name: str: The name of the repository to clone.
-        container_image_version: str: The version of the repository to clone.
         push: bool: Will push the built image to the repository.
         skip_clone: bool: Skip cloning the application files.
         dry_run: bool: Perform a dry run that reports on what it would do.
@@ -118,13 +92,6 @@ def build(
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be built.", fg="yellow"
         )
-
-    if not os.environ["CONTAINER_IMAGE_NAME"]:
-        os.environ["CONTAINER_IMAGE_NAME"] = container_image_name
-    if not os.environ["CONTAINER_IMAGE_VERSION"]:
-        os.environ["CONTAINER_IMAGE_VERSION"] = container_image_version
-    if not os.environ["CONTAINER_REGISTRY"]:
-        os.environ["CONTAINER_REGISTRY"] = container_registry
 
     if Path(DOCKER_FILE_NAME).exists():
         execute_build(
@@ -167,53 +134,28 @@ def build(
                 )
                 quit()
             else:
-                if not skip_clone:
-                    temp_server_url = readFile("GIT_SERVER_URL")
-                    temp_org = readFile("GIT_ORG")
-                    temp_repo = readFile("GIT_REPO")
-                    clone_if_no_dockerfile(
-                        url=f"{temp_server_url}/{temp_org}/{temp_repo}",
-                        tag=readFile("MERGE_COMMIT_ID"),
-                        clone_dir=service_dir.joinpath(os.environ.get("GIT_REPO")),
-                        service_dir=service_dir.joinpath(os.environ.get("GIT_REPO")),
-                        dry_run=dry_run,
-                    )
+                temp_server_url = readFile("GIT_SERVER_URL")
+                temp_org = readFile("GIT_ORG")
+                temp_repo = readFile("GIT_REPO")
+                url = f"{temp_server_url}/{temp_org}/{temp_repo}"
+                tag = readFile("MERGE_COMMIT_ID")
         else:
             with open(LAUNCHCONFIG_NAME, "r") as f:
                 input_data = json.load(f)
                 url = input_data["sources"]["application"]["url"]
                 tag = input_data["sources"]["application"]["tag"]
                 service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
-    else:
-        if not skip_clone:
-            clone_if_no_dockerfile(
-                url=url,
-                tag=tag,
-                clone_dir=service_dir.joinpath(extract_repo_name_from_url(url)),
-                service_dir=service_dir.joinpath(extract_repo_name_from_url(url)),
-                dry_run=dry_run,
-            )
-
-    if service_dir.joinpath(
-        f"{extract_repo_name_from_url(url)}/{LAUNCHCONFIG_NAME}"
-    ).exists():
-        with open(
-            service_dir.joinpath(
-                f"{extract_repo_name_from_url(url)}/{LAUNCHCONFIG_NAME}"
-            ),
-            "r",
-        ) as f:
-            input_data = json.load(f)
-            url = input_data["sources"]["application"]["url"]
-            tag = input_data["sources"]["application"]["tag"]
-            service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
 
     if not skip_clone:
-        service_dir = clone_if_no_dockerfile(
-            url=url,
-            tag=tag,
-            clone_dir=service_dir.joinpath(extract_repo_name_from_url(url)),
-            service_dir=service_dir,
+        repository = clone_repository(
+            repository_url=url,
+            target=service_dir.joinpath(extract_repo_name_from_url(url)),
+            branch=SERVICE_MAIN_BRANCH,
+            dry_run=dry_run,
+        )
+        checkout_branch(
+            repository=repository,
+            target_branch=tag,
             dry_run=dry_run,
         )
 

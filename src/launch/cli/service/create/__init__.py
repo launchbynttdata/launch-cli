@@ -57,7 +57,13 @@ logger = logging.getLogger(__name__)
     "--skip-commit",
     is_flag=True,
     default=False,
-    help="(Optional) If set, it will skip commiting the local changes.",
+    help="(Optional) If set, it will skip committing the local changes.",
+)
+@click.option(
+    "--skip-git-permissions",
+    is_flag=True,
+    default=False,
+    help="(Optional) If set, it will skip setting the default access permissions on the repository.",
 )
 @click.option(
     "--skip-uuid",
@@ -84,6 +90,7 @@ def create(
     git_message: str,
     skip_git: bool,
     skip_commit: bool,
+    skip_git_permissions: bool,
     skip_uuid: bool,
     dry_run: bool,
 ):
@@ -101,6 +108,7 @@ def create(
         git_message (str): The git commit message to use when creating a commit. Defaults to 'Initial commit'.
         skip_git (bool): If set, it will skip all actions with git. Overrides --skip-commit.
         skip_commit (bool): If set, it will skip commiting the local changes.
+        skip_git_permissions (bool): If set, it will skip setting the default access permissions on the repository.
         skip_uuid (bool): If set, it will not generate a UUID to be used in skeleton files.
         dry_run (bool): Perform a dry run that reports on what it would do, but does not create webhooks.
     """
@@ -137,7 +145,7 @@ def create(
             dry_run=dry_run,
         )
     # Set the default access permissions on the repository
-    if not skip_git:
+    if not skip_git and not skip_git_permissions:
         context.invoke(
             set_default,
             organization=GITHUB_ORG_NAME,
