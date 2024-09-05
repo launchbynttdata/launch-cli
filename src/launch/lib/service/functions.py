@@ -77,6 +77,10 @@ def common_service_workflow(
     skeleton_path = Path(
         f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(input_data['skeleton']['url'])}"
     )
+    if "application" in input_data["sources"]:
+        application_path = Path(
+            f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(input_data['sources']['application']['url'])}"
+        )
 
     # Clone the skeleton repository. We need this to copy dir structure and any global repo files.
     # This is a temporary directory that will be deleted after the service is created.
@@ -94,6 +98,13 @@ def common_service_workflow(
             branch=input_data["skeleton"]["tag"],
             dry_run=dry_run,
         )
+        if "application" in input_data["sources"]:
+            clone_repository(
+                repository_url=input_data["sources"]["application"]["url"],
+                target=application_path,
+                branch=input_data["sources"]["application"]["tag"],
+                dry_run=dry_run,
+            )
 
     # Copy all the files from the skeleton repo to the service directory unless flag is set.
     if not skip_sync:
@@ -102,6 +113,14 @@ def common_service_workflow(
             target_dir=Path(service_path),
             dry_run=dry_run,
         )
+        if "application" in input_data["sources"]:
+            copy_template_files(
+                src_dir=application_path,
+                target_dir=Path(service_path),
+                not_platform=True,
+                dry_run=dry_run,
+            )
+
     # Process the template files. This is the main logic that loops over the template and
     # creates the directories and files in the service directory.
     input_data[PLATFORM_SRC_DIR_PATH] = process_template(
