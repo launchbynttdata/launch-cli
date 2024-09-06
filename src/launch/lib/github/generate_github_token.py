@@ -30,17 +30,46 @@ def create_jwt(
     return encoded_jwt
 
 
-def get_token(
+def get_token_with_secret_name(
     application_id: str,
     installation_id: str,
     signing_cert_secret_name: str,
+    token_expiration_seconds: int,
+) -> str:
+    private_key=get_secret_value(signing_cert_secret_name)
+    return get_token(
+        application_id=application_id,
+        installation_id=installation_id,
+        private_key=private_key,
+        token_expiration_seconds=token_expiration_seconds,
+    )
+
+def get_token_with_file(
+    application_id: str,
+    installation_id: str,
+    signing_cert_file: str,
+    token_expiration_seconds: int,
+) -> str:
+    with open(signing_cert_file, "r") as f:
+        private_key = f.read()
+    return get_token(
+        application_id=application_id,
+        installation_id=installation_id,
+        private_key=private_key,
+        token_expiration_seconds=token_expiration_seconds,
+    )
+    
+def get_token(
+    application_id: str,
+    installation_id: str,
+    private_key: str,
     token_expiration_seconds: int,
 ) -> str:
     try:
         signing_jwt = create_jwt(
             application_id=application_id,
             token_expiration_seconds=token_expiration_seconds,
-            private_key=get_secret_value(signing_cert_secret_name),
+            private_key=private_key,
         )
         headers = {"Authorization": f"Bearer {signing_jwt}"}
         response = requests.post(
