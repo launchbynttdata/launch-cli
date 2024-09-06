@@ -38,6 +38,11 @@ GITHUB_INSTALLATION_ID = override_default(
     default=None,
 )
 
+GITHUB_SIGNING_CERT_FILE = override_default(
+    key_name="GITHUB_SIGNING_CERT_FILE",
+    default=None,
+)
+
 GITHUB_SIGNING_CERT_SECRET_NAME = override_default(
     key_name="GITHUB_SIGNING_CERT_SECRET_NAME",
     default=None,
