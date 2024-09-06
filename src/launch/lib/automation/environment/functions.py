@@ -12,15 +12,32 @@ from launch.config.github import GIT_MACHINE_USER, GIT_SCM_ENDPOINT
 logger = logging.getLogger(__name__)
 
 
+def parse_plugin_line(line: str) -> tuple[str, str, str | None]:
+    split_line = line.split()
+    plugin_name = split_line[0]
+    plugin_version = split_line[1]
+    plugin_url = (
+        split_line[-1].strip("#").strip()
+        if split_line[-1].strip("#").startswith("http")
+        else None
+    )
+    return plugin_name, plugin_version, plugin_url
+
+
 def install_tool_versions(file: str = TOOL_VERSION_FILE) -> None:
     logger.info("Installing all asdf plugins under .tool-versions")
     try:
-        with open(file, "r") as file:
-            lines = file.readlines()
+        with open(file, "r") as fh:
+            lines = fh.readlines()
 
         for line in lines:
-            plugin = line.split()[0]
-            subprocess.run(["asdf", "plugin", "add", plugin])
+            line = line.strip()
+            if line:
+                plugin_name, _, plugin_url = parse_plugin_line(line)
+                if plugin_url:
+                    subprocess.run(["asdf", "plugin", "add", plugin_name, plugin_url])
+                else:
+                    subprocess.run(["asdf", "plugin", "add", plugin_name])
 
         subprocess.run(["asdf", "install"])
     except Exception as e:
