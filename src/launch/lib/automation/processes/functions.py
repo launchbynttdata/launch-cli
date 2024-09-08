@@ -36,18 +36,18 @@ def make_build(
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
 
-def make_docker_push(
+def make_push(
     dry_run: bool = True,
 ) -> None:
-    click.secho(f"Running make docker/push")
+    click.secho(f"Running make push")
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess: make docker/push",
+                f"[DRYRUN] Would have ran subprocess: make push",
                 fg="yellow",
             )
         else:
-            subprocess.run(["make", "docker/push"], check=True)
+            subprocess.run(["make", "push"], check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
