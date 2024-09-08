@@ -18,7 +18,6 @@ def execute_build(
     dry_run: bool = True,
 ) -> None:
     os.chdir(service_dir)
-    print(f"Building service in {service_dir}")
     start_docker(dry_run=dry_run)
     git_config(dry_run=dry_run)
     make_configure(dry_run=dry_run)
