@@ -1,7 +1,11 @@
+import os
 import subprocess
 import time
 
 import click
+
+from launch.env import override_default
+from launch.lib.automation.environment.functions import readFile
 
 
 def make_configure(
@@ -31,23 +35,24 @@ def make_build(
                 fg="yellow",
             )
         else:
-            subprocess.run(["make", "build"], check=True)
+            env = os.environ.copy()
+            subprocess.run(["make", "build"], env=env, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
 
-def make_docker_push(
+def make_push(
     dry_run: bool = True,
 ) -> None:
-    click.secho(f"Running make docker/push")
+    click.secho(f"Running make push")
     try:
         if dry_run:
             click.secho(
-                f"[DRYRUN] Would have ran subprocess: make docker/push",
+                f"[DRYRUN] Would have ran subprocess: make push",
                 fg="yellow",
             )
         else:
-            subprocess.run(["make", "docker/push"], check=True)
+            subprocess.run(["make", "push"], check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 

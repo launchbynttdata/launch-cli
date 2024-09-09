@@ -70,14 +70,9 @@ from launch.lib.github.auth import read_github_token
     help=f"(Optional) The target environment to run the terragrunt command against. Defaults to {TARGETENV}.",
 )
 @click.option(
-    "--platform-env",
-    default=PLATFORM_ENV,
-    help=f"(Optional) The target environment to run the terragrunt command against. Defaults to {PLATFORM_ENV}.",
-)
-@click.option(
     "--platform-resource",
     default="service",
-    help="(Optional) If set, this will set the specified pipeline resource to run terragrunt against. Defaults to service.  accepted values are 'pipeline', 'webhooks', or 'service'",
+    help="(Optional) If set, this will set the specified pipeline resource to run terragrunt against. Defaults to service.  accepted values are 'pipeline', 'webhook', or 'service'",
 )
 @click.option(
     "--generation",
@@ -131,7 +126,6 @@ def terragrunt(
     url: str,
     tag: str,
     target_environment: str,
-    platform_env: str,
     platform_resource: dict,
     generation: bool,
     check_diff: bool,

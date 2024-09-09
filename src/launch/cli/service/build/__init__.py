@@ -1,6 +1,7 @@
 import click
 import json
 import logging
+import os
 from pathlib import Path
 
 from launch.cli.common.options import provider
@@ -139,6 +140,9 @@ def build(
                 temp_repo = readFile("GIT_REPO")
                 url = f"{temp_server_url}/{temp_org}/{temp_repo}"
                 tag = readFile("MERGE_COMMIT_ID")
+                os.environ["CONTAINER_IMAGE_VERSION"] = readFile(
+                    "CONTAINER_IMAGE_VERSION"
+                )
                 service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
         else:
             with open(LAUNCHCONFIG_NAME, "r") as f:
