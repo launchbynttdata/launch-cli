@@ -1,7 +1,11 @@
+import os
 import subprocess
 import time
 
 import click
+
+from launch.env import override_default
+from launch.lib.automation.environment.functions import readFile
 
 
 def make_configure(
@@ -31,7 +35,8 @@ def make_build(
                 fg="yellow",
             )
         else:
-            subprocess.run(["make", "build"], check=True)
+            env = os.environ.copy()
+            subprocess.run(["make", "build"], env=env, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
