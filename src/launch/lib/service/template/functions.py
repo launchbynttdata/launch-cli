@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def process_template(
+    repo_base: Path,
     dest_base: Path,
     config: dict,
     parent_keys=[],
@@ -52,7 +53,16 @@ def process_template(
                     fg="yellow",
                 )
             else:
-                current_path.mkdir(parents=True, exist_ok=True)
+                if key != LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value:
+                    current_path.mkdir(parents=True, exist_ok=True)
+
+            if LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value in value:
+                LaunchConfigTemplate(dry_run).copy_additional_files(
+                    value=value,
+                    current_path=current_path,
+                    repo_base=repo_base,
+                    dest_base=dest_base,
+                )
 
             if LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value in value:
                 LaunchConfigTemplate(dry_run).properties_file(
@@ -73,6 +83,7 @@ def process_template(
                     dest_base=dest_base,
                 )
             updated_config[key] = process_template(
+                repo_base=repo_base,
                 dest_base=dest_base,
                 config=value,
                 parent_keys=current_keys,
