@@ -85,6 +85,45 @@ def process_template(
     return updated_config
 
 
+def copy_additional_files(
+    platform_config: dict, target_dir: Path, dry_run: bool = True
+) -> None:
+    for platform_resource_key, platform_resource in platform_config.items():
+        for environment_key, environment in platform_resource.items():
+            for region_key, region in environment.items():
+                for environment_number, numbered_environment in region.items():
+                    for destination_filename, source_file in numbered_environment.get(
+                        "additional_files", {}
+                    ).items():
+                        source_path = Path(source_file)
+                        destination_path = (
+                            Path(target_dir)
+                            .joinpath(PLATFORM_SRC_DIR_PATH)
+                            .joinpath(platform_resource_key)
+                            .joinpath(environment_key)
+                            .joinpath(region_key)
+                            .joinpath(environment_number)
+                            .joinpath(destination_filename)
+                        )
+
+                        create_specific_path(
+                            base_path=destination_path.parent,
+                            path_parts=[],
+                            dry_run=dry_run,
+                        )
+
+                        if dry_run:
+                            click.secho(
+                                f"[DRYRUN] Copying additional file, would have copied {source_path} to {destination_path}",
+                                fg="yellow",
+                            )
+                        else:
+                            shutil.copyfile(src=source_path, dst=destination_path)
+                            click.echo(
+                                f"Copied additional file from {source_path} to {destination_path}"
+                            )
+
+
 def copy_template_files(
     src_dir: Path, target_dir: Path, not_platform: bool = False, dry_run: bool = True
 ) -> None:

@@ -14,6 +14,7 @@ from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.local_repo.repo import checkout_branch, clone_repository
 from launch.lib.service.common import input_data_validation
 from launch.lib.service.template.functions import (
+    copy_additional_files,
     copy_and_render_templates,
     copy_template_files,
     list_jinja_templates,
@@ -152,6 +153,12 @@ def generate(
         repository_url=skeleton_url,
         target=build_skeleton_path,
         branch=skeleton_tag,
+        dry_run=dry_run,
+    )
+
+    copy_additional_files(
+        platform_config=input_data[PLATFORM_SRC_DIR_PATH],
+        target_dir=Path(build_path_service),
         dry_run=dry_run,
     )
 
