@@ -52,7 +52,8 @@ def process_template(
                     fg="yellow",
                 )
             else:
-                current_path.mkdir(parents=True, exist_ok=True)
+                if key != LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value:
+                    current_path.mkdir(parents=True, exist_ok=True)
 
             if LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value in value:
                 LaunchConfigTemplate(dry_run).properties_file(
