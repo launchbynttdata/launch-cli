@@ -107,18 +107,17 @@ def copy_additional_files(
                             .joinpath(destination_filename)
                         )
 
-                        create_specific_path(
-                            base_path=destination_path.parent,
-                            path_parts=[],
-                            dry_run=dry_run,
-                        )
-
                         if dry_run:
                             click.secho(
                                 f"[DRYRUN] Copying additional file, would have copied {source_path} to {destination_path}",
                                 fg="yellow",
                             )
                         else:
+                            create_specific_path(
+                                base_path=destination_path.parent,
+                                path_parts=[],
+                                dry_run=dry_run,
+                            )
                             shutil.copyfile(src=source_path, dst=destination_path)
                             click.echo(
                                 f"Copied additional file from {source_path} to {destination_path}"
