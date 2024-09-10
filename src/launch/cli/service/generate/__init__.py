@@ -14,7 +14,6 @@ from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.local_repo.repo import checkout_branch, clone_repository
 from launch.lib.service.common import input_data_validation
 from launch.lib.service.template.functions import (
-    copy_additional_files,
     copy_and_render_templates,
     copy_template_files,
     list_jinja_templates,
@@ -156,12 +155,6 @@ def generate(
         dry_run=dry_run,
     )
 
-    copy_additional_files(
-        platform_config=input_data[PLATFORM_SRC_DIR_PATH],
-        target_dir=Path(build_path_service),
-        dry_run=dry_run,
-    )
-
     copy_template_files(
         src_dir=Path(build_skeleton_path),
         target_dir=Path(build_path_service),
@@ -169,6 +162,7 @@ def generate(
     )
 
     input_data[PLATFORM_SRC_DIR_PATH] = process_template(
+        repo_base=Path.cwd(),
         dest_base=Path(build_path_service),
         config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
         skip_uuid=True,

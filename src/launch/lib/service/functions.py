@@ -124,6 +124,7 @@ def common_service_workflow(
     # Process the template files. This is the main logic that loops over the template and
     # creates the directories and files in the service directory.
     input_data[PLATFORM_SRC_DIR_PATH] = process_template(
+        repo_base=Path.cwd(),
         dest_base=Path(service_path),
         config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
         skip_uuid=not uuid,

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
-from launch.lib.service.template.functions import copy_additional_files
+from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
 
 @pytest.fixture(scope="class")
@@ -104,7 +104,18 @@ def built_dir(launch_service_directory, launch_config_file_contents):
     target_dir = launch_service_directory.joinpath(BUILD_TEMP_DIR_PATH).joinpath(
         Path.cwd().name
     )
-    copy_additional_files(platform_config=config, target_dir=target_dir, dry_run=False)
+    LaunchConfigTemplate(dry_run=False).copy_additional_files(
+        value=config["service"]["root"]["us-east-2"]["000"],
+        current_path=(
+            target_dir.joinpath("platform")
+            .joinpath("service")
+            .joinpath("root")
+            .joinpath("us-east-2")
+            .joinpath("000")
+        ),
+        repo_base=launch_service_directory,
+        dest_base=target_dir,
+    )
     yield launch_service_directory
 
 

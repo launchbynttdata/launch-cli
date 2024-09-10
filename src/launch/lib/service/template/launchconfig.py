@@ -33,6 +33,28 @@ class LaunchConfigTemplate:
             except shutil.SameFileError:
                 pass
 
+    def copy_additional_files(
+        self, value: dict, current_path: Path, repo_base: Path, dest_base: Path
+    ) -> None:
+        # print(f"\n\n{value=}\n{current_path=}\n{repo_base=}\n{dest_base=}\n\n")
+        # breakpoint()
+        for target_file, source_file in value[
+            LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value
+        ].items():
+            source_path = repo_base.joinpath(source_file)
+            target_path = Path(current_path).joinpath(target_file)
+            if self.dry_run:
+                click.secho(
+                    f"[DRYRUN] Copying additional file, would have copied {source_path} to {target_path}",
+                    fg="yellow",
+                )
+            else:
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(src=source_path, dst=target_path)
+                click.echo(
+                    f"Copied additional file from {source_path} to {target_path}"
+                )
+
     def templates(self, value: dict, current_path: Path, dest_base: Path) -> None:
         for name, templates in value[LAUNCHCONFIG_KEYS.TEMPLATES.value].items():
             logger.info(f"{templates=}")
