@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
-from launch.config.common import TOOL_VERSION_FILE
+from launch.config.common import IS_PIPELINE, TOOL_VERSION_FILE
 from launch.config.github import GIT_MACHINE_USER, GIT_SCM_ENDPOINT
 
 logger = logging.getLogger(__name__)
@@ -53,28 +53,33 @@ def set_netrc(
     netrc_path=Path.home().joinpath(".netrc"),
     dry_run: bool = True,
 ) -> None:
-    click.secho(f"Setting {netrc_path} variables")
-    if netrc_path.exists():
-        click.secho(
-            f"{netrc_path} already exists, skipping...",
-            fg="yellow",
+    if not IS_PIPELINE:
+        click.echo(
+            f"Not running in a pipeline, skipping setting {netrc_path} variables."
         )
-        return
-    try:
-        if dry_run:
+    else:
+        click.echo(f"Setting {netrc_path} variables")
+        if netrc_path.exists():
             click.secho(
-                f"[DRYRUN] Would have written to {netrc_path}: {machine=} {login=}",
+                f"{netrc_path} already exists, skipping...",
                 fg="yellow",
             )
-        else:
-            with open(netrc_path, "a") as file:
-                file.write(f"machine {machine}\n")
-                file.write(f"login {login}\n")
-                file.write(f"password {password}\n")
+            return
+        try:
+            if dry_run:
+                click.secho(
+                    f"[DRYRUN] Would have written to {netrc_path}: {machine=} {login=}",
+                    fg="yellow",
+                )
+            else:
+                with open(netrc_path, "a") as file:
+                    file.write(f"machine {machine}\n")
+                    file.write(f"login {login}\n")
+                    file.write(f"password {password}\n")
 
-            os.chmod(netrc_path, 0o600)
-    except Exception as e:
-        raise RuntimeError(f"An error occurred: {str(e)}")
+                os.chmod(netrc_path, 0o600)
+        except Exception as e:
+            raise RuntimeError(f"An error occurred: {str(e)}")
 
 
 # This can be deprecated when we refactor the lambdas and no longer use shell scipts in the build process
