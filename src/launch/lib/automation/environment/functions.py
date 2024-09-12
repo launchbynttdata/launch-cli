@@ -57,29 +57,30 @@ def set_netrc(
         click.echo(
             f"Not running in a pipeline, skipping setting {netrc_path} variables."
         )
-    else:
-        click.echo(f"Setting {netrc_path} variables")
-        if netrc_path.exists():
+        return
+
+    click.echo(f"Setting {netrc_path} variables")
+    if netrc_path.exists():
+        click.secho(
+            f"{netrc_path} already exists, skipping...",
+            fg="yellow",
+        )
+        return
+    try:
+        if dry_run:
             click.secho(
-                f"{netrc_path} already exists, skipping...",
+                f"[DRYRUN] Would have written to {netrc_path}: {machine=} {login=}",
                 fg="yellow",
             )
-            return
-        try:
-            if dry_run:
-                click.secho(
-                    f"[DRYRUN] Would have written to {netrc_path}: {machine=} {login=}",
-                    fg="yellow",
-                )
-            else:
-                with open(netrc_path, "x") as file:
-                    file.write(f"machine {machine}\n")
-                    file.write(f"login {login}\n")
-                    file.write(f"password {password}\n")
+        else:
+            with open(netrc_path, "x") as file:
+                file.write(f"machine {machine}\n")
+                file.write(f"login {login}\n")
+                file.write(f"password {password}\n")
 
-                os.chmod(netrc_path, 0o600)
-        except Exception as e:
-            raise RuntimeError(f"An error occurred: {str(e)}")
+            os.chmod(netrc_path, 0o600)
+    except Exception as e:
+        raise RuntimeError(f"An error occurred: {str(e)}")
 
 
 # This can be deprecated when we refactor the lambdas and no longer use shell scipts in the build process
