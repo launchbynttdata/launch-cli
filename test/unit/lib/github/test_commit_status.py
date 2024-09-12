@@ -100,11 +100,11 @@ def test_get_commit_status_no_context_match(
 
     expected_repo_path = f"{repo_and_commit_attributes['org_name']}/{repo_and_commit_attributes['repo_name']}"
 
-    assert mocked_github["github_instance"].get_repo.called_once_with(
-        expected_repo_path
+    mocked_github["github_instance"].get_repo.assert_called_once_with(
+        full_name_or_id=expected_repo_path
     )
-    assert mocked_github["repo_instance"].called_once_with(
-        repo_and_commit_attributes["commit_sha"]
+    mocked_github["repo_instance"].get_commit.assert_called_once_with(
+        sha=repo_and_commit_attributes["commit_sha"]
     )
     assert mocked_github["commit_instance"].get_combined_status.called_once()
     assert found_status is None
@@ -128,13 +128,13 @@ def test_set_commit_status(mocker, mocked_github, repo_and_commit_attributes):
 
     expected_repo_path = f"{repo_and_commit_attributes['org_name']}/{repo_and_commit_attributes['repo_name']}"
 
-    assert mocked_github["github_instance"].get_repo.called_once_with(
-        expected_repo_path
+    mocked_github["github_instance"].get_repo.assert_called_once_with(
+        full_name_or_id=expected_repo_path
     )
-    assert mocked_github["repo_instance"].called_once_with(
-        repo_and_commit_attributes["commit_sha"]
+    mocked_github["repo_instance"].get_commit.assert_called_once_with(
+        sha=repo_and_commit_attributes["commit_sha"]
     )
-    assert mocked_github["commit_instance"].create_status.called_once_with(
+    mocked_github["commit_instance"].create_status.assert_called_once_with(
         state=payload.state,
         target_url=str(payload.target_url),
         description=payload.description,
