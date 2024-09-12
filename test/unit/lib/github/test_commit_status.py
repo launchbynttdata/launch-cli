@@ -72,11 +72,11 @@ def test_get_commit_status(
 
     expected_repo_path = f"{repo_and_commit_attributes['org_name']}/{repo_and_commit_attributes['repo_name']}"
 
-    assert mocked_github["github_instance"].get_repo.called_once_with(
-        expected_repo_path
+    mocked_github["github_instance"].get_repo.assert_called_once_with(
+        full_name_or_id=expected_repo_path
     )
-    assert mocked_github["repo_instance"].called_once_with(
-        repo_and_commit_attributes["commit_sha"]
+    mocked_github["repo_instance"].assert_called_once_with(
+        sha=repo_and_commit_attributes["commit_sha"]
     )
     assert mocked_github["commit_instance"].get_combined_status.called_once()
     assert found_status.context == context_words["context_word"]
