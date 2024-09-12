@@ -33,7 +33,12 @@ def get(organization: str, repository_name: str, commit_hash: str, context: str)
         commit_sha=commit_hash,
         context=context,
     )
-    click.echo(status.state)
+    if status:
+        click.echo(status.state)
+    else:
+        click.echo(
+            f"No status found for {commit_hash} in {organization}/{repository_name}."
+        )
 
 
 @click.command("set")
