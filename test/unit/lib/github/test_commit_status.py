@@ -75,7 +75,7 @@ def test_get_commit_status(
     mocked_github["github_instance"].get_repo.assert_called_once_with(
         full_name_or_id=expected_repo_path
     )
-    mocked_github["repo_instance"].assert_called_once_with(
+    mocked_github["repo_instance"].get_commit.assert_called_once_with(
         sha=repo_and_commit_attributes["commit_sha"]
     )
     assert mocked_github["commit_instance"].get_combined_status.called_once()
