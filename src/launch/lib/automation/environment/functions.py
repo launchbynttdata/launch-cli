@@ -72,7 +72,7 @@ def set_netrc(
                     fg="yellow",
                 )
             else:
-                with open(netrc_path, "a") as file:
+                with open(netrc_path, "x") as file:
                     file.write(f"machine {machine}\n")
                     file.write(f"login {login}\n")
                     file.write(f"password {password}\n")
