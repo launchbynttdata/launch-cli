@@ -1,4 +1,4 @@
-from launch.env import override_default
+from launch.env import get_bool_env_var, override_default
 
 BUILD_DEPENDENCIES_PATH = override_default(
     key_name="BUILD_DEPENDENCIES_PATH",
@@ -19,6 +19,8 @@ DOCKER_FILE_NAME = override_default(
     key_name="DOCKER_FILE_NAME",
     default="Dockerfile",
 )
+
+IS_PIPELINE = get_bool_env_var(env_var_name="IS_PIPELINE", default_value=False)
 
 PLATFORM_SRC_DIR_PATH = override_default(
     key_name="PLATFORM_SRC_DIR_PATH",

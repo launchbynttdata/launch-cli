@@ -6,7 +6,7 @@ from pathlib import Path
 import click
 
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
-from launch.config.common import TOOL_VERSION_FILE
+from launch.config.common import IS_PIPELINE, TOOL_VERSION_FILE
 from launch.config.github import GIT_MACHINE_USER, GIT_SCM_ENDPOINT
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,13 @@ def set_netrc(
     netrc_path=Path.home().joinpath(".netrc"),
     dry_run: bool = True,
 ) -> None:
-    click.secho(f"Setting {netrc_path} variables")
+    if not IS_PIPELINE:
+        click.echo(
+            f"Not running in a pipeline, skipping setting {netrc_path} variables."
+        )
+        return
+
+    click.echo(f"Setting {netrc_path} variables")
     if netrc_path.exists():
         click.secho(
             f"{netrc_path} already exists, skipping...",
@@ -67,7 +73,7 @@ def set_netrc(
                 fg="yellow",
             )
         else:
-            with open(netrc_path, "a") as file:
+            with open(netrc_path, "x") as file:
                 file.write(f"machine {machine}\n")
                 file.write(f"login {login}\n")
                 file.write(f"password {password}\n")
