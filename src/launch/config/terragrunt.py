@@ -13,8 +13,3 @@ TARGETENV = override_default(
     key_name="TARGETENV",
     default="sandbox",
 )
-
-PLATFORM_ENV = override_default(
-    key_name="TARGETENV",
-    default="root",
-)

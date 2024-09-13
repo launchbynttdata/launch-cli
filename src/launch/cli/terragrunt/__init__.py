@@ -26,7 +26,7 @@ from launch.config.github import (
     GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
-from launch.config.terragrunt import PLATFORM_ENV, TARGETENV, TERRAGRUNT_RUN_DIRS
+from launch.config.terragrunt import TARGETENV, TERRAGRUNT_RUN_DIRS
 from launch.config.webhook import WEBHOOK_GIT_REPO_URL
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
@@ -147,7 +147,6 @@ def terragrunt(
         url (str): The URL of the repository to clone.
         tag (str): The tag of the repository to clone.
         target_environment (str): The target environment to run the terragrunt command against.
-        platform_env (str): The target environment to run the terragrunt command against.
         platform_resource (dict): If set, this will set the specified pipeline resource to run terragrunt against.
         generation (bool): If set, it will generate the terragrunt files.
         check_diff (bool): If set, it will check the diff between the pipeline and service changes.
@@ -197,6 +196,7 @@ def terragrunt(
         dry_run=dry_run,
     )
 
+    app_image_version = CONTAINER_IMAGE_VERSION
     if not url:
         if not Path(LAUNCHCONFIG_NAME).exists():
             if not Path(AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE).exists():
@@ -209,7 +209,8 @@ def terragrunt(
                 temp_server_url = readFile("GIT_SERVER_URL")
                 temp_org = readFile("GIT_ORG")
                 temp_repo = readFile("GIT_REPO")
-                CONTAINER_IMAGE_VERSION = readFile("CONTAINER_IMAGE_VERSION")
+                if not app_image_version:
+                    app_image_version = readFile("CONTAINER_IMAGE_VERSION")
                 url = f"{temp_server_url}/{temp_org}/{temp_repo}"
                 tag = readFile("MERGE_COMMIT_ID")
 
@@ -312,11 +313,11 @@ def terragrunt(
             for instance in os.scandir(tg_dir):
                 if instance.is_dir():
                     click.secho(
-                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {CONTAINER_IMAGE_VERSION=}"
+                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {app_image_version=}"
                     )
                     create_tf_auto_file(
                         data={
-                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{CONTAINER_IMAGE_VERSION}"'
+                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{app_image_version}"'
                         },
                         out_file=tg_dir.joinpath(instance, "app_image.auto.tfvars"),
                         dry_run=dry_run,
