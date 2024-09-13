@@ -78,7 +78,7 @@ def test_get_commit_status(
     mocked_github["repo_instance"].get_commit.assert_called_once_with(
         sha=repo_and_commit_attributes["commit_sha"]
     )
-    assert mocked_github["commit_instance"].get_combined_status.called_once()
+    mocked_github["commit_instance"].get_combined_status.assert_called_once()
     assert found_status.context == context_words["context_word"]
 
 
@@ -106,7 +106,7 @@ def test_get_commit_status_no_context_match(
     mocked_github["repo_instance"].get_commit.assert_called_once_with(
         sha=repo_and_commit_attributes["commit_sha"]
     )
-    assert mocked_github["commit_instance"].get_combined_status.called_once()
+    mocked_github["commit_instance"].get_combined_status.assert_called_once()
     assert found_status is None
 
 
