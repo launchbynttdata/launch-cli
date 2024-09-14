@@ -1,29 +1,34 @@
-import click
 import json
 import logging
 import os
 from pathlib import Path
+
+import click
 
 from launch.cli.github.auth.commands import application
 from launch.cli.service.clean import clean
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, DOCKER_FILE_NAME
 from launch.config.github import (
-    GITHUB_APPLICATION_ID,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
+    GITHUB_APPLICATION_ID,
     GITHUB_INSTALLATION_ID,
+    GITHUB_PACKAGE_PUBLISHER,
+    GITHUB_PACKAGE_REGISTRY,
+    GITHUB_PACKAGE_SCOPE,
+    GITHUB_PUBLISH_TOKEN_SECRET_NAME,
+    GITHUB_REPO_PATH,
     GITHUB_SIGNING_CERT_SECRET_NAME,
+    GITHUB_SOURCE_BRANCH,
+    GITHUB_SOURCE_FOLDER_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
-from launch.lib.github.auth import read_github_token
-from launch.lib.automation.environment.functions import (
-    readFile,
-    set_netrc,
-)
+from launch.lib.automation.environment.functions import readFile, set_netrc
 from launch.lib.common.utilities import extract_repo_name_from_url
-from launch.lib.local_repo.repo import clone_repository, checkout_branch
-from launch.lib.service.build.functions import execute_build
+from launch.lib.github.auth import read_github_token
+from launch.lib.local_repo.repo import checkout_branch, clone_repository
+from launch.lib.service.publish.functions import execute_publish
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +42,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--tag",
     default=SERVICE_MAIN_BRANCH,
-    help=f"(Optional) The tag of the repository to clone. Defaults to None",
-)
-@click.option(
-    "--push",
-    is_flag=True,
-    default=False,
-    help="(Optional) Will push the built image to the repository.",
+    help=f"(Optional) The tag of the repository to clone. Defaults to {SERVICE_MAIN_BRANCH}",
 )
 @click.option(
     "--skip-clone",
@@ -53,7 +52,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--registry-type",
-    help="(Required) Based off of the registry-type value, the sequence of make commands used before build is decided. For example, if the registry-type is npm, the sequence of make commands will be make install, make build, and make publish. If the registry-type is docker, the sequence of make commands will be make configure, make build, and make push.",
+    help="(Required) Based off of the registry-type value, the sequence of make commands used before build is decided.",
 )
 @click.option(
     "--dry-run",
@@ -61,28 +60,64 @@ logger = logging.getLogger(__name__)
     default=False,
     help="(Optional) Perform a dry run that reports on what it would do.",
 )
+@click.option(
+    "--package-scope",
+    default=GITHUB_PACKAGE_SCOPE,
+    help="(Optional) The scope of the package.",
+)
+@click.option(
+    "--package-publisher",
+    default=GITHUB_PACKAGE_PUBLISHER,
+    help="(Optional) The user who will publish the package.",
+)
+@click.option(
+    "--package-registry",
+    default=GITHUB_PACKAGE_REGISTRY,
+    help="(Optional) The registry url where package will be published.",
+)
+@click.option(
+    "--source-folder-name",
+    default=None,
+    help="(Optional) The name of the source folder.",
+)
+@click.option(
+    "--repo-path",
+    default=GITHUB_REPO_PATH,
+    help="(Optional) The path to the repository to be tagged.",
+)
+@click.option(
+    "--source-branch",
+    default=GITHUB_SOURCE_BRANCH,
+    help="(Optional) The branch to be tagged.",
+)
 @click.pass_context
-def build(
+def publish(
     context: click.Context,
     registry_type: str,
     url: str,
     tag: str,
-    push: bool,
     skip_clone: bool,
     dry_run: bool,
+    package_scope: str,
+    package_publisher: str,
+    package_registry: str,
+    source_folder_name: str,
+    repo_path: str,
+    source_branch: str,
 ):
     """
-    Builds an application defined in a .launch_config file.
+    Publishes an application defined in a .launch_config file.
 
-    Args:
+    Ars:
         context: click.Context: The context of the click command.
         registry_type (str): The registry type to use. Examples include: "docker", "npm", "nuget".
         url: str: The URL of the repository to clone.
         tag: str: The tag of the repository to clone.
-        push: bool: Will push the built image to the repository.
         skip_clone: bool: Skip cloning the application files.
         dry_run: bool: Perform a dry run that reports on what it would do.
-
+        package_scope: str: The scope of the package.
+        package_publisher: str: The publisher of the package.
+        package_registry: str: The registry url where package will be published.
     Returns:
         None
     """
@@ -95,15 +130,6 @@ def build(
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be built.", fg="yellow"
         )
-
-    if Path(DOCKER_FILE_NAME).exists():
-        execute_build(
-            service_dir=Path.cwd(),
-            registry_type=registry_type,
-            push=push,
-            dry_run=dry_run,
-        )
-        quit()
 
     if (
         GITHUB_APPLICATION_ID
@@ -166,9 +192,22 @@ def build(
             dry_run=dry_run,
         )
 
-    execute_build(
-        service_dir=service_dir,
-        registry_type=registry_type,
-        push=push,
-        dry_run=dry_run,
-    )
+    if GITHUB_PUBLISH_TOKEN_SECRET_NAME is None:
+        click.secho(
+            f"No PAT token found for AWS CodeBuild. Please set {GITHUB_PUBLISH_TOKEN_SECRET_NAME} in the environment variables.",
+            fg="red",
+        )
+        exit(1)
+    else:
+        execute_publish(
+            service_dir=service_dir,
+            registry_type=registry_type,
+            dry_run=dry_run,
+            token_secret_name=GITHUB_PUBLISH_TOKEN_SECRET_NAME,
+            package_scope=package_scope,
+            package_publisher=package_publisher,
+            package_registry=package_registry,
+            source_folder_name=source_folder_name,
+            repo_path=repo_path,
+            source_branch=source_branch,
+        )

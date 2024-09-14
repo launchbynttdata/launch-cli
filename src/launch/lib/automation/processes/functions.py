@@ -6,7 +6,10 @@ import click
 
 from launch.env import override_default
 from launch.lib.automation.environment.functions import readFile
-
+from launch.lib.github.generate_github_token import get_secret_value
+from pathlib import Path
+from launch.lib.local_repo.predict import predict_version
+from launch.lib.local_repo.tags import read_semantic_tags
 
 def make_configure(
     dry_run: bool = True,
@@ -41,6 +44,40 @@ def make_build(
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
 
+def make_install(
+    dry_run: bool = True,
+) -> None:
+    click.secho(f"Running make install")
+    try:
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: make install",
+                fg="yellow",
+            )
+        else:
+            env = os.environ.copy()
+            subprocess.run(["make", "install"], env=env, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"An error occurred: {str(e)}") from e
+
+
+def make_test(
+    dry_run: bool = True,
+) -> None:
+    click.secho(f"Running make test")
+    try:
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: make test",
+                fg="yellow",
+            )
+        else:
+            env = os.environ.copy()
+            subprocess.run(["make", "test"], env=env, check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"An error occurred: {str(e)}") from e
+
+
 def make_push(
     dry_run: bool = True,
 ) -> None:
@@ -53,6 +90,48 @@ def make_push(
             )
         else:
             subprocess.run(["make", "push"], check=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"An error occurred: {str(e)}") from e
+
+
+def make_publish(
+    dry_run: bool = True,
+    token_secret_name: str = None,
+    package_scope: str = None,
+    package_publisher: str = None,
+    package_registry: str = None,
+    source_folder_name: str = None,
+    repo_path: str = None,
+    source_branch: str = None,
+) -> None:
+    click.secho(f"Running make publish")
+    try:
+        if dry_run:
+            click.secho(
+                f"[DRYRUN] Would have ran subprocess: make publish",
+                fg="yellow",
+            )
+        else:
+            if token_secret_name is not None:
+                token = get_secret_value(token_secret_name)
+
+                # Predict the tag
+                predicted_version = predict_version(
+                    existing_tags=read_semantic_tags(repo_path=repo_path),
+                    branch_name=source_branch,
+                )
+                click.echo(f"predicted_version is: {predicted_version}")
+                # Update package.json to reflect new version
+                subprocess.run(f"make version TAG={predicted_version}", shell=True, check=True)
+                # NPM login
+                subprocess.run(["make", "login", f"PACKAGE_REGISTRY={package_registry}", f"PACKAGE_PUBLISHER={package_publisher}", f"PACKAGE_SCOPE={package_scope}", f"TOKEN={token}"], check=True)
+                # Publish to npm registry
+                subprocess.run(["make", "publish"], check=True)
+            else:
+                click.secho(
+                    f"Valid PAT token must be provided to publish to npm registry", fg="red",
+                )
+                quit()
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 
