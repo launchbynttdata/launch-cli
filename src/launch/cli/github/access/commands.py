@@ -91,15 +91,15 @@ def check_user_organization(
     organization: str, user_id: int = None, user_name: str = None
 ):
     """Checks if a user is a member of an organization."""
-    g = get_github_instance()
-    org = g.get_organization(login=organization)
-
     if user_id is None and user_name is None:
         click.secho("Either a --user-id or --user-name must be provided.")
         exit(-1)
     if not user_id is None and not user_name is None:
         click.secho("Only one of --user-id or --user-name can be provided.")
         exit(-2)
+
+    g = get_github_instance()
+    org = g.get_organization(login=organization)
 
     if user_id:
         user = g.get_user_by_id(user_id)
