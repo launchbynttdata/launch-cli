@@ -78,7 +78,7 @@ class TestUserOrganization:
             commands.check_user_organization,
             ["--organization", "phony_org", "--user-id", "12345"],
         )
-        assert mocked_org.has_in_members.called_once_with(mocked_user)
+        mocked_org.has_in_members.assert_called_once_with(mocked_user)
         assert result.exception
         assert result.exit_code != 0
 
@@ -97,7 +97,7 @@ class TestUserOrganization:
             commands.check_user_organization,
             ["--organization", "phony_org", "--user-name", "phony_user"],
         )
-        assert mocked_org.has_in_members.called_once_with(mocked_user)
+        mocked_org.has_in_members.assert_called_once_with(mocked_user)
         assert result.exception
         assert result.exit_code != 0
 
@@ -146,6 +146,6 @@ class TestPullRequestOrganization:
             commands.check_pr_organization,
             ["--repository", "phony_repo", "--pr-number", "12345"],
         )
-        assert mocked_org.has_in_members.called_once_with(mocked_user)
+        mocked_org.has_in_members.assert_called_once_with(mocked_user)
         assert result.exception
         assert result.exit_code != 0
