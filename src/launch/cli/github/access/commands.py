@@ -69,3 +69,78 @@ def set_default(organization: str, repository_name: str, dry_run: bool):
     if specific_admin_team:
         grant_admin(team=specific_admin_team, repository=repository, dry_run=dry_run)
     configure_default_branch_protection(repository=repository, dry_run=dry_run)
+
+
+@click.command("check-user")
+@click.option(
+    "--user-id",
+    type=click.INT,
+    help="The user ID of the user to check. Mutually exclusive with --user-name.",
+)
+@click.option(
+    "--user-name",
+    type=click.STRING,
+    help="The user name of the user to check. Mutually exclusive with --user-id.",
+)
+@click.option(
+    "--organization",
+    default=GITHUB_ORG_NAME,
+    help=f"GitHub organization to verify the user's membership. Defaults to the {GITHUB_ORG_NAME} organization.",
+)
+def check_user_organization(
+    organization: str, user_id: int = None, user_name: str = None
+):
+    """Checks if a user is a member of an organization."""
+    if user_id is None and user_name is None:
+        click.secho("Either a --user-id or --user-name must be provided.")
+        exit(-1)
+    if not user_id is None and not user_name is None:
+        click.secho("Only one of --user-id or --user-name can be provided.")
+        exit(-2)
+
+    g = get_github_instance()
+    org = g.get_organization(login=organization)
+
+    if user_id:
+        user = g.get_user_by_id(user_id)
+    else:
+        user = g.get_user(login=user_name)
+
+    if org.has_in_members(user):
+        click.echo(f"{user.login} is a member of {org.login}")
+    else:
+        click.echo(f"{user.login} is not a member of {org.login}")
+        exit(1)
+
+
+@click.command("check-pr")
+@click.option(
+    "--repository",
+    envvar="GIT_REPO",
+    type=click.STRING,
+    required=True,
+    help="The Repository where the pull request was opened.",
+)
+@click.option(
+    "--pr-number",
+    type=click.INT,
+    required=True,
+    help="The ID of the pull request to check.",
+)
+@click.option(
+    "--organization",
+    default=GITHUB_ORG_NAME,
+    help=f"GitHub organization to verify the user's membership. Defaults to the {GITHUB_ORG_NAME} organization.",
+)
+def check_pr_organization(repository: str, pr_number: int, organization: str):
+    """Checks if a pull request originated from inside the organization or from outside."""
+    g = get_github_instance()
+    org = g.get_organization(login=organization)
+    pr = org.get_repo(repository).get_pull(pr_number)
+    user = pr.user
+
+    if org.has_in_members(user):
+        click.echo(f"{user.login} is a member of {org.login}")
+    else:
+        click.echo(f"{user.login} is not a member of {org.login}")
+        exit(1)
