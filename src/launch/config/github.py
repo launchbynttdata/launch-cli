@@ -52,3 +52,38 @@ DEFAULT_TOKEN_EXPIRATION_SECONDS = override_default(
     key_name="DEFAULT_TOKEN_EXPIRATION_SECONDS",
     default=600,
 )
+
+GITHUB_PUBLISH_TOKEN_SECRET_NAME = override_default(
+    key_name="GITHUB_PUBLISH_TOKEN_SECRET_NAME",
+    default=None,
+)
+
+GITHUB_PACKAGE_PUBLISHER = override_default(
+    key_name="GITHUB_PACKAGE_PUBLISHER",
+    default=None,
+)
+
+GITHUB_PACKAGE_REGISTRY = override_default(
+    key_name="GITHUB_PACKAGE_REGISTRY",
+    default=None,
+)
+
+GITHUB_PACKAGE_SCOPE = override_default(
+    key_name="GITHUB_PACKAGE_SCOPE",
+    default=None,
+)
+
+GITHUB_SOURCE_FOLDER_NAME = override_default(
+    key_name="GITHUB_SOURCE_FOLDER_NAME",
+    default=None,
+)
+
+GITHUB_REPO_PATH = override_default(
+    key_name="GITHUB_REPO_PATH",
+    default=None,
+)
+
+GITHUB_SOURCE_BRANCH = override_default(
+    key_name="GITHUB_SOURCE_BRANCH",
+    default=None,
+)
