@@ -6,7 +6,7 @@ from launch.lib.service.build import functions as build_functions
 
 @pytest.mark.parametrize("registry_type", ["npm", "docker"])
 @pytest.mark.parametrize("push", [True, False])
-def test_execute_build_push(mocker, capsys, registry_type, push):
+def test_execute_build_no_push(mocker, capsys, registry_type, push):
     service_dir = Path("/fake/dir")
 
     mock_os = mocker.patch.object(build_functions, "os")

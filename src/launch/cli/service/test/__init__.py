@@ -1,29 +1,27 @@
-import click
 import json
 import logging
 import os
 from pathlib import Path
+
+import click
 
 from launch.cli.github.auth.commands import application
 from launch.cli.service.clean import clean
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
 from launch.config.common import BUILD_TEMP_DIR_PATH, DOCKER_FILE_NAME
 from launch.config.github import (
-    GITHUB_APPLICATION_ID,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
+    GITHUB_APPLICATION_ID,
     GITHUB_INSTALLATION_ID,
     GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
-from launch.lib.github.auth import read_github_token
-from launch.lib.automation.environment.functions import (
-    readFile,
-    set_netrc,
-)
+from launch.lib.automation.environment.functions import readFile, set_netrc
 from launch.lib.common.utilities import extract_repo_name_from_url
-from launch.lib.local_repo.repo import clone_repository, checkout_branch
-from launch.lib.service.build.functions import execute_build
+from launch.lib.github.auth import read_github_token
+from launch.lib.local_repo.repo import checkout_branch, clone_repository
+from launch.lib.service.test.functions import execute_test
 
 logger = logging.getLogger(__name__)
 
@@ -40,12 +38,6 @@ logger = logging.getLogger(__name__)
     help=f"(Optional) The tag of the repository to clone. Defaults to None",
 )
 @click.option(
-    "--push",
-    is_flag=True,
-    default=False,
-    help="(Optional) Will push the built image to the repository.",
-)
-@click.option(
     "--skip-clone",
     is_flag=True,
     default=False,
@@ -53,7 +45,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--registry-type",
-    help="(Required) Based off of the registry-type value, the sequence of make commands used before build is decided. For example, if the registry-type is npm, the sequence of make commands will be make install, make build, and make publish. If the registry-type is docker, the sequence of make commands will be make configure, make build, and make push.",
+    help="(Optional) Based off of the registry-type value, the sequence of make commands used before build is decided.",
 )
 @click.option(
     "--dry-run",
@@ -62,24 +54,22 @@ logger = logging.getLogger(__name__)
     help="(Optional) Perform a dry run that reports on what it would do.",
 )
 @click.pass_context
-def build(
+def test(
     context: click.Context,
     registry_type: str,
     url: str,
     tag: str,
-    push: bool,
     skip_clone: bool,
     dry_run: bool,
 ):
     """
     Builds an application defined in a .launch_config file.
 
-    Args:
+    Ars:
         context: click.Context: The context of the click command.
-        registry_type (str): The registry type to use. Examples include: "docker", "npm", "nuget".
+        registry_type (str): The registry type to use for the build. Examples include 'docker', 'npm', 'pypi'.
         url: str: The URL of the repository to clone.
         tag: str: The tag of the repository to clone.
-        push: bool: Will push the built image to the repository.
         skip_clone: bool: Skip cloning the application files.
         dry_run: bool: Perform a dry run that reports on what it would do.
 
@@ -95,15 +85,6 @@ def build(
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be built.", fg="yellow"
         )
-
-    if Path(DOCKER_FILE_NAME).exists():
-        execute_build(
-            service_dir=Path.cwd(),
-            registry_type=registry_type,
-            push=push,
-            dry_run=dry_run,
-        )
-        quit()
 
     if (
         GITHUB_APPLICATION_ID
@@ -166,9 +147,7 @@ def build(
             dry_run=dry_run,
         )
 
-    execute_build(
+    execute_test(
         service_dir=service_dir,
-        registry_type=registry_type,
-        push=push,
         dry_run=dry_run,
     )
