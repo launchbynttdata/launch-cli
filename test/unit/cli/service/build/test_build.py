@@ -16,11 +16,6 @@ class TestBuild:
             ["--provider", "aws", "--dry-run"],
         )
 
-        # Debugging outputs
-        print(f"Output: {result.output}")
-        print(f"Exit Code: {result.exit_code}")
-        print(f"Exception: {result.exception}")
-
         assert not result.exception
         assert result.exit_code == 0
 
@@ -29,11 +24,6 @@ class TestBuild:
             build,
             ["--provider", "aws", "--url", "invalid-url"],
         )
-
-        # Debugging outputs
-        print(f"Output: {result.output}")
-        print(f"Exit Code: {result.exit_code}")
-        print(f"Exception: {result.exception}")
 
         assert result.exception
         assert result.exit_code == 1
