@@ -1,6 +1,6 @@
 import pytest
 
 
-@pytest.mark.skip("TODO: Ticket: tbd XXXXX")
+@pytest.mark.skip("TODO: Ticket: 250")
 def test_generate():
     pass
