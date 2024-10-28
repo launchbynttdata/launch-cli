@@ -23,6 +23,7 @@ from launch.lib.automation.environment.functions import (
 )
 from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.local_repo.repo import clone_repository, checkout_branch
+from launch.lib.service.common import load_launchconfig
 from launch.lib.service.build.functions import execute_build
 
 logger = logging.getLogger(__name__)
@@ -147,11 +148,10 @@ def build(
                 )
                 service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
         else:
-            with open(LAUNCHCONFIG_NAME, "r") as f:
-                input_data = json.load(f)
-                url = input_data["sources"]["application"]["url"]
-                tag = input_data["sources"]["application"]["tag"]
-                service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
+            input_data=load_launchconfig()
+            url = input_data["sources"]["application"]["url"]
+            tag = input_data["sources"]["application"]["tag"]
+            service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
 
     if not skip_clone:
         repository = clone_repository(

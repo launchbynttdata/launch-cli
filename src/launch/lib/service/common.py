@@ -6,7 +6,7 @@ import click
 from ruamel.yaml import YAML
 
 from launch.config.launchconfig import SERVICE_SKELETON, SKELETON_BRANCH
-from launch.constants.launchconfig import LAUNCHCONFIG_NAME
+from launch.constants.launchconfig import LAUNCHCONFIG_PATH_LOCAL, LAUNCHCONFIG_NAME
 from launch.lib.common.utilities import extract_uuid_key, recursive_dictionary_merge
 
 logger = logging.getLogger(__name__)
@@ -70,3 +70,26 @@ def determine_existing_uuid(
         input_data = recursive_dictionary_merge(input_data, uuid_dict["platform"])
 
     return input_data
+
+
+def load_launchconfig(path=LAUNCHCONFIG_PATH_LOCAL) -> dict:
+    """
+    Load the launchconfig file from the given path.
+    
+    Args:
+        path (str): Path to the launchconfig file
+        
+    Returns:
+        dict: The launchconfig file contents
+        
+    Raises:
+        Exception: If the launchconfig file cannot be read
+    """
+    with open(path, "r") as f:
+        click.secho(
+            f"Reading config file found at local path: {LAUNCHCONFIG_PATH_LOCAL=}"
+        )
+        input_data = json.load(f)
+        input_data = input_data_validation(input_data)
+        return input_data
+    raise Exception("Failed to read launchconfig file")

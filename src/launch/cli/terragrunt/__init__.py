@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 
@@ -46,8 +47,11 @@ from launch.lib.automation.terragrunt.functions import (
     terragrunt_init,
     terragrunt_plan,
 )
-from launch.lib.common.utilities import extract_repo_name_from_url
+from launch.lib.common.utilities import (
+    extract_repo_name_from_url,
+)
 from launch.lib.github.auth import read_github_token
+from launch.lib.service.common import load_launchconfig
 
 
 @click.command()
@@ -254,18 +258,25 @@ def terragrunt(
             tag=tag,
             dry_run=dry_run,
         )
+    else:
+        input_data=load_launchconfig()
 
     install_tool_versions()
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure
     # i.e. az login, or service principal is already applied to the environment.
     # If the provider is AWS, we need to assume the role for deployment.
-    if aws_deployment_role:
-        assume_role(
-            aws_deployment_role=aws_deployment_role,
-            aws_deployment_region=aws_deployment_region,
-            profile=input_data["accounts"][target_environment],
-        )
+    if input_data["provider"].lower()=="aws":
+        if aws_deployment_role:
+            assume_role(
+                aws_deployment_role=aws_deployment_role,
+                aws_deployment_region=aws_deployment_region,
+                profile=input_data["accounts"][target_environment],
+            )
+    elif input_data["provider"].lower()=="az":
+        # TODO: deploy remote state
+        pass
+        
 
     run_dirs = []
     if platform_resource in TERRAGRUNT_RUN_DIRS:
