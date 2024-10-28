@@ -5,8 +5,10 @@ from pathlib import Path
 import click
 from git import Repo
 
+from launch.cli.common.options import (
+    deployment_region,
+)
 from launch.cli.common.options.aws import (
-    aws_deployment_region,
     aws_deployment_role,
     aws_secrets_profile,
     aws_secrets_region,
@@ -56,7 +58,7 @@ from launch.lib.service.common import load_launchconfig
 
 @click.command()
 @aws_deployment_role
-@aws_deployment_region
+@deployment_region
 @aws_secrets_region
 @aws_secrets_profile
 @click.option(
@@ -124,7 +126,7 @@ from launch.lib.service.common import load_launchconfig
 def terragrunt(
     context: click.Context,
     aws_deployment_role: str,
-    aws_deployment_region: str,
+    deployment_region: str,
     aws_secrets_region: str,
     aws_secrets_profile: str,
     url: str,
@@ -145,7 +147,7 @@ def terragrunt(
     Args:
         context (click.Context): The context object passed from click.
         aws_deployment_role (str): The AWS deployment role to assume.
-        aws_deployment_region (str): The AWS deployment region to assume.
+        deployment_region (str): The deployment region to deploy to.
         aws_secrets_region (str): The AWS region to use for secrets retrieval.
         aws_secrets_profile (str): The AWS profile to use for secrets retrieval.
         url (str): The URL of the repository to clone.
@@ -270,7 +272,7 @@ def terragrunt(
         if aws_deployment_role:
             assume_role(
                 aws_deployment_role=aws_deployment_role,
-                aws_deployment_region=aws_deployment_region,
+                aws_deployment_region=deployment_region,
                 profile=input_data["accounts"][target_environment],
             )
     elif input_data["provider"].lower()=="az":
@@ -314,7 +316,7 @@ def terragrunt(
         )
 
     for run_dir in run_dirs:
-        tg_dir = build_path.joinpath(run_dir, aws_deployment_region)
+        tg_dir = build_path.joinpath(run_dir, deployment_region)
         if not (tg_dir).exists():
             message = f"Error: Path {tg_dir} does not exist."
             click.secho(message, fg="red")
