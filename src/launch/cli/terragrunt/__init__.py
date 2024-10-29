@@ -40,6 +40,7 @@ from launch.lib.automation.environment.functions import (
     set_netrc,
 )
 from launch.lib.automation.provider.aws.functions import assume_role
+from launch.lib.automation.provider.az.functions import deploy_remote_state
 from launch.lib.automation.terragrunt.functions import (
     copy_webhook,
     create_tf_auto_file,
@@ -277,6 +278,14 @@ def terragrunt(
             )
     elif input_data["provider"].lower()=="az":
         # TODO: deploy remote state
+        # deploy_remote_state(
+        #     uuid_value: str,
+        #     naming_prefix: str,
+        #     target_environment: str,
+        #     region: deployment_region,
+        #     instance: str,
+        #     provider_config: dict,
+        # )
         pass
         
 

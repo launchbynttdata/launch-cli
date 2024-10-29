@@ -63,15 +63,14 @@ def process_template(
                     repo_base=repo_base,
                     dest_base=dest_base,
                 )
-
             if LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value in value:
                 LaunchConfigTemplate(dry_run).properties_file(
                     value=value,
                     current_path=current_path,
                     dest_base=dest_base,
                 )
-            if LAUNCHCONFIG_KEYS.UUID.value in value and not skip_uuid:
-                LaunchConfigTemplate(dry_run).uuid(value=value)
+                if not skip_uuid:
+                    LaunchConfigTemplate(dry_run).uuid(value=value)
             if LAUNCHCONFIG_KEYS.TEMPLATES.value in value:
                 LaunchConfigTemplate(dry_run).templates(
                     value=value, current_path=current_path, dest_base=dest_base

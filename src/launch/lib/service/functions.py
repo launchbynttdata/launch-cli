@@ -127,7 +127,7 @@ def common_service_workflow(
         repo_base=Path.cwd(),
         dest_base=Path(service_path),
         config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
-        skip_uuid=not uuid,
+        skip_uuid=uuid,
         dry_run=dry_run,
     )[PLATFORM_SRC_DIR_PATH]
 

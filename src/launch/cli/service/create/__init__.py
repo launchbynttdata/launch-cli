@@ -213,7 +213,7 @@ def create(
         repository=repository,
         input_data=input_data,
         git_message=git_message,
-        uuid=not skip_uuid,
+        uuid=skip_uuid,
         skip_sync=False,
         skip_git=skip_git,
         skip_commit=skip_commit,

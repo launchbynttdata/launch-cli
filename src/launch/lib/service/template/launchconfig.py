@@ -113,3 +113,11 @@ class LaunchConfigTemplate:
                     shutil.copy(file_path, relative_path)
                 except shutil.SameFileError:
                     pass
+
+
+    def uuid(
+        self,
+        value: dict
+    ) -> None:
+        if LAUNCHCONFIG_KEYS.UUID.value not in value:
+            value[LAUNCHCONFIG_KEYS.UUID.value] = f"{str(uuid4())[:6]}"
