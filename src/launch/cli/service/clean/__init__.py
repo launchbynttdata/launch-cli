@@ -31,19 +31,26 @@ def clean(
             "[DRYRUN] Performing a dry run, nothing will be cleaned", fg="yellow"
         )
 
-    try:
-        if dry_run:
+    delete_list = [
+        BUILD_TEMP_DIR_PATH,
+        ".repo",
+        "components",
+        ".pre-commit-config.yaml",
+    ]
+    for item in delete_list:
+        try:
+            if dry_run:
+                click.secho(
+                    f"[DRYRUN] Would have removed the following directory: {item=}",
+                    fg="yellow",
+                )
+            else:
+                shutil.rmtree(item)
+                click.secho(
+                    f"Deleted: {item=}",
+                )
+        except FileNotFoundError:
             click.secho(
-                f"[DRYRUN] Would have removed the following directory: {BUILD_TEMP_DIR_PATH=}",
-                fg="yellow",
+                f"item not found. nothing to clean: {item=}",
+                fg="red",
             )
-        else:
-            shutil.rmtree(BUILD_TEMP_DIR_PATH)
-            click.secho(
-                f"Deleted directory: {BUILD_TEMP_DIR_PATH=}",
-            )
-    except FileNotFoundError:
-        click.secho(
-            f"Directory not found. nothing to clean: {BUILD_TEMP_DIR_PATH=}",
-            fg="red",
-        )

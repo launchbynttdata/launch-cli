@@ -80,8 +80,9 @@ def override_default(
     if Path(os.path.expanduser(LAUNCHCONFIG_HOME_LOCAL)).exists():
         with open(os.path.expanduser(LAUNCHCONFIG_HOME_LOCAL), "r") as f:
             global_config = json.load(f)
-            if key_name in global_config["override"]:
-                return global_config["override"][key_name]
+            if "override" in global_config:
+                if key_name in global_config["override"]:
+                    return global_config["override"][key_name]
 
     if required and default is None:
         raise RuntimeError(

@@ -1,6 +1,11 @@
 import logging
 import re
+import os
 import subprocess
+import click
+from pathlib import Path
+
+from launch.lib.automation.processes.functions import make_configure
 
 logger = logging.getLogger(__name__)
 
@@ -11,11 +16,16 @@ def deploy_remote_state(
     target_environment: str,
     region: str,
     instance: str,
-    provider_config: dict,
+    build_path: Path,
+    dry_run: bool,
 ) -> None:
+    pwd = Path.cwd()
+    os.chdir(build_path)
+    click.secho(Path.cwd(), fg="red")
     run_list = ["make"]
-    provider = provider_config["provider"]
 
+    make_configure(dry_run=dry_run)
+ 
     stripped_name = re.sub("[\W_]+", "", naming_prefix)
     storage_account_name = f"{stripped_name[0:16]}{uuid_value}"
     if naming_prefix:
@@ -27,18 +37,6 @@ def deploy_remote_state(
     if instance:
         run_list.append(f"ENV_INSTANCE={instance}")
 
-    if provider in provider_config:
-        if "container_name" in provider_config[provider]:
-            run_list.append(
-                f"CONTAINER_NAME={provider_config[provider].get('container_name')}"
-            )
-        if "storage_account_name" in provider_config[provider]:
-            storage_account_name = provider_config[provider].get("storage_account_name")
-        if provider_config[provider].get("resource_group_name"):
-            run_list.append(
-                f"RESOURCE_GROUP_NAME={provider_config[provider].get('resource_group_name')}"
-            )
-
     run_list.append(f"STORAGE_ACCOUNT_NAME={storage_account_name}")
     run_list.append("terragrunt/remote_state/azure")
 
@@ -47,3 +45,5 @@ def deploy_remote_state(
         subprocess.run(run_list, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
+    finally:
+        os.chdir(pwd)

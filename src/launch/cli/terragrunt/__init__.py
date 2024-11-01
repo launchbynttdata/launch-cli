@@ -55,6 +55,7 @@ from launch.lib.common.utilities import (
 )
 from launch.lib.github.auth import read_github_token
 from launch.lib.service.common import load_launchconfig
+from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
 
 @click.command()
@@ -269,25 +270,15 @@ def terragrunt(
     # If the Provider is AZURE there is a prequisite requirement of logging into azure
     # i.e. az login, or service principal is already applied to the environment.
     # If the provider is AWS, we need to assume the role for deployment.
-    if input_data["provider"].lower()=="aws":
+    
+    provider = LaunchConfigTemplate(dry_run).get_provider(platform_resource, input_data)
+    if provider == "aws":
         if aws_deployment_role:
             assume_role(
                 aws_deployment_role=aws_deployment_role,
                 aws_deployment_region=deployment_region,
                 profile=input_data["accounts"][target_environment],
             )
-    elif input_data["provider"].lower()=="az":
-        # TODO: deploy remote state
-        # deploy_remote_state(
-        #     uuid_value: str,
-        #     naming_prefix: str,
-        #     target_environment: str,
-        #     region: deployment_region,
-        #     instance: str,
-        #     provider_config: dict,
-        # )
-        pass
-        
 
     run_dirs = []
     if platform_resource in TERRAGRUNT_RUN_DIRS:
@@ -331,19 +322,34 @@ def terragrunt(
             click.secho(message, fg="red")
             raise FileNotFoundError(message)
         os.chdir(tg_dir)
-        if render_app_vars:
-            for instance in os.scandir(tg_dir):
-                if instance.is_dir():
-                    click.secho(
-                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {app_image_version=}"
+        for instance in os.scandir(tg_dir):
+            if instance.is_dir():
+                # If the Provider is AZURE we need to deploy the remote state
+                if provider == "az" or provider == "ado":
+                    if platform_resource == "service":
+                        uuid_value = input_data["platform"][platform_resource][target_environment][deployment_region][instance.name][LAUNCHCONFIG_KEYS.UUID.value]
+                    else:
+                        uuid_value = input_data["platform"]["pipeline"][f"{platform_resource}-provider"][target_environment][deployment_region][instance.name][LAUNCHCONFIG_KEYS.UUID.value]
+                    deploy_remote_state(
+                        uuid_value = uuid_value,
+                        naming_prefix = input_data["naming_prefix"],
+                        target_environment = target_environment,
+                        region = deployment_region,
+                        instance = instance.name,
+                        build_path = build_path,
+                        dry_run = dry_run,
                     )
+                click.secho(
+                    f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {app_image_version=}"
+                )
+                if render_app_vars:
                     create_tf_auto_file(
                         data={
                             "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{app_image_version}"'
                         },
                         out_file=tg_dir.joinpath(instance, "app_image.auto.tfvars"),
                         dry_run=dry_run,
-                    )
+                        )
         terragrunt_init(
             dry_run=dry_run,
         )

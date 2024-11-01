@@ -10,6 +10,7 @@ from launch.cli.service.clean import clean
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME, LAUNCHCONFIG_PATH_LOCAL
+from launch.lib.automation.processes.functions import make_configure
 from launch.lib.common.utilities import (
     extract_repo_name_from_url,
 )
@@ -165,6 +166,7 @@ def generate(
     template_paths, jinja_paths = list_jinja_templates(
         Path(build_skeleton_path),
     )
+
     copy_and_render_templates(
         base_dir=Path(build_path_service),
         template_paths=template_paths,

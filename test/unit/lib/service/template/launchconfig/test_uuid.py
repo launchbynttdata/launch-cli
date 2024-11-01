@@ -1,14 +1,5 @@
 import pytest
-
-
-@pytest.mark.skip("TODO: Ticket: tbd XXXXX")
-def test_templates():
-    pass
-
-
-import pytest
 from unittest.mock import patch
-from uuid import uuid4
 from launch.enums.launchconfig import LAUNCHCONFIG_KEYS
 from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 

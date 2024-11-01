@@ -121,3 +121,12 @@ class LaunchConfigTemplate:
     ) -> None:
         if LAUNCHCONFIG_KEYS.UUID.value not in value:
             value[LAUNCHCONFIG_KEYS.UUID.value] = f"{str(uuid4())[:6]}"
+            
+    def get_provider(self, resource: str, input_data: dict) -> str:
+        if isinstance(input_data[LAUNCHCONFIG_KEYS.PROVIDER.value], dict):
+            if resource in input_data[LAUNCHCONFIG_KEYS.PROVIDER.value]:
+                return input_data[LAUNCHCONFIG_KEYS.PROVIDER.value][resource]
+            else:
+                return input_data[LAUNCHCONFIG_KEYS.PROVIDER.value]["service"]
+        else:
+            return input_data[LAUNCHCONFIG_KEYS.PROVIDER.value]
