@@ -345,7 +345,9 @@ def terragrunt(
                 if render_app_vars:
                     create_tf_auto_file(
                         data={
-                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{app_image_version}"'
+                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{app_image_version}"',
+                            "redeploy_on_apply": "true",
+                            "force_new_deployment": "true",
                         },
                         out_file=tg_dir.joinpath(instance, "app_image.auto.tfvars"),
                         dry_run=dry_run,
