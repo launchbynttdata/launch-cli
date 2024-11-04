@@ -1,8 +1,6 @@
-import json
+import click
 import os
 from pathlib import Path
-
-import click
 from git import Repo
 
 from launch.cli.common.options import (

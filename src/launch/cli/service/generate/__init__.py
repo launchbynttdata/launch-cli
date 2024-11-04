@@ -1,5 +1,5 @@
-import json
 import logging
+from git import Repo
 import os
 import shutil
 from pathlib import Path
@@ -99,7 +99,7 @@ def generate(
         output_path = f"{output_path}/{service_dir}"
         Path(output_path).mkdir(parents=True, exist_ok=True)
     else:
-        service_dir = Path.cwd().name
+        service_dir = extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)
     build_path_service = f"{output_path}/{BUILD_TEMP_DIR_PATH}/{service_dir}"
     Path(output_path).mkdir(parents=True, exist_ok=True)
 
