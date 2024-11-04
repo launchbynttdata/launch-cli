@@ -27,4 +27,8 @@ def execute_build(
         if registry_type == "docker":
             if provider == "aws":
                 functions.make_docker_aws_ecr_login(dry_run=dry_run)
+            click.secho(
+                f"make push",
+                fg="red",
+            )
             functions.make_push(dry_run=dry_run)

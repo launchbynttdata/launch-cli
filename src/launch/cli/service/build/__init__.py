@@ -104,6 +104,7 @@ def build(
             service_dir=Path.cwd(),
             registry_type=registry_type,
             push=push,
+            provider=provider,
             dry_run=dry_run,
         )
         quit()
