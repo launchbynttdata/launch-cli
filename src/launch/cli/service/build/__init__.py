@@ -146,6 +146,8 @@ def build(
             tag = input_data["sources"]["application"]["tag"]
             service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
 
+    provider = LaunchConfigTemplate(dry_run).get_provider("service", input_data)
+
     if Path(DOCKER_FILE_NAME).exists():
         execute_build(
             service_dir=Path.cwd(),
@@ -155,8 +157,6 @@ def build(
             dry_run=dry_run,
         )
         quit()
-        
-    provider = LaunchConfigTemplate(dry_run).get_provider("service", input_data)
 
     if not skip_clone:
         repository = clone_repository(
