@@ -1,10 +1,11 @@
-import logging
-from git import Repo
-import os
-import shutil
-from pathlib import Path
 
 import click
+import logging
+import os
+import shutil
+
+from git import Repo
+from pathlib import Path
 
 from launch.cli.service.clean import clean
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
