@@ -1,4 +1,5 @@
 import os
+import click
 from pathlib import Path
 
 from launch.lib.automation.processes import functions
@@ -24,7 +25,13 @@ def execute_build(
     functions.make_build(dry_run=dry_run)
 
     if push:
+        click.secho(
+            "[TEST] in push.", fg="yellow"
+        )
         if registry_type == "docker":
+            click.secho(
+                "[TEST] Register docker.", fg="yellow"
+            )
             if provider == "aws":
                 functions.make_docker_aws_ecr_login(dry_run=dry_run)
             functions.make_push(dry_run=dry_run)
