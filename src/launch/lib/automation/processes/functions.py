@@ -4,10 +4,7 @@ import time
 
 import click
 
-from launch.env import override_default
-from launch.lib.automation.environment.functions import readFile
 from launch.lib.github.generate_github_token import get_secret_value
-from pathlib import Path
 from launch.lib.local_repo.predict import predict_version
 from launch.lib.local_repo.tags import read_semantic_tags
 
@@ -89,7 +86,8 @@ def make_push(
                 fg="yellow",
             )
         else:
-            subprocess.run(["make", "push"], check=True)
+            env = os.environ.copy()
+            subprocess.run(["make", "push"], env=env, check=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
 

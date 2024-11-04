@@ -1,7 +1,7 @@
 import click
-import json
 import logging
 import os
+from git import Repo
 from pathlib import Path
 
 from launch.cli.github.auth.commands import application
@@ -142,6 +142,7 @@ def build(
                 service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
         else:
             input_data=load_launchconfig()
+            os.environ["CONTAINER_IMAGE_VERSION"] = Repo(Path().cwd()).head.object.hexsha
             url = input_data["sources"]["application"]["url"]
             tag = input_data["sources"]["application"]["tag"]
             service_dir = service_dir.joinpath(extract_repo_name_from_url(url))

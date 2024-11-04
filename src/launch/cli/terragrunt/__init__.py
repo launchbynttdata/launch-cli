@@ -229,24 +229,12 @@ def terragrunt(
             )
         )
     else:
-        click.secho(
-            f"Path cmd = {Path().cwd()}",
-            fg="red",
-        )
-        click.secho(
-            f"extract remotes = {extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)}",
-            fg="red",
-        )
         build_path = (
             Path()
             .cwd()
             .joinpath(
                 f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)}"
             )
-        )
-        click.secho(
-            f"build_path = {build_path}",
-            fg="red",
         )
 
     webhooks_path = (
@@ -349,9 +337,6 @@ def terragrunt(
                         build_path = build_path,
                         dry_run = dry_run,
                     )
-                click.secho(
-                    f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {app_image_version=}"
-                )
                 if render_app_vars:
                     create_tf_auto_file(
                         data={
