@@ -232,7 +232,11 @@ def terragrunt(
         )
     else:
         click.secho(
-            f"extract = {extract_repo_name_from_url(Repo(Path().cwd()))}",
+            f"Path cmd = {Path().cwd()}",
+            fg="red",
+        )
+        click.secho(
+            f"extract remotes = {extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)}",
             fg="red",
         )
         click.secho(
