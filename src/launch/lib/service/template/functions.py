@@ -60,7 +60,6 @@ def process_template(
                 LaunchConfigTemplate(dry_run).copy_additional_files(
                     value=value,
                     current_path=current_path,
-                    repo_base=repo_base,
                     dest_base=dest_base,
                 )
             if LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value in value:
