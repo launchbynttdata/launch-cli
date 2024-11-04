@@ -268,7 +268,7 @@ def terragrunt(
     install_tool_versions()
     if not IS_PIPELINE:
         git_config(
-            dry_run: bool = True,
+            dry_run=dry_run
         )
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure 
