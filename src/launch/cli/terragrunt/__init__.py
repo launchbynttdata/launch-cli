@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from git import Repo
 
+from launch.config.common import IS_PIPELINE
 from launch.cli.common.options import (
     deployment_region,
 )
@@ -37,6 +38,7 @@ from launch.lib.automation.environment.functions import (
     readFile,
     set_netrc,
 )
+from launch.lib.automation.processes.functions import git_config
 from launch.lib.automation.provider.aws.functions import assume_role
 from launch.lib.automation.provider.az.functions import deploy_remote_state
 from launch.lib.automation.terragrunt.functions import (
@@ -264,6 +266,10 @@ def terragrunt(
         input_data=load_launchconfig()
 
     install_tool_versions()
+    if not IS_PIPELINE:
+        git_config(
+            dry_run: bool = True,
+        )
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure 
     # i.e. az login, or service principal is already applied to the environment.: az login; az account get-access-token
