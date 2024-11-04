@@ -266,7 +266,7 @@ def terragrunt(
         input_data=load_launchconfig()
 
     install_tool_versions()
-    if not IS_PIPELINE:
+    if IS_PIPELINE:
         git_config(
             dry_run=dry_run
         )
