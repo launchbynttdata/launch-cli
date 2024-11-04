@@ -25,6 +25,7 @@ from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.local_repo.repo import clone_repository, checkout_branch
 from launch.lib.service.common import load_launchconfig
 from launch.lib.service.build.functions import execute_build
+from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,8 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--registry-type",
-    help="(Required) Based off of the registry-type value, the sequence of make commands used before build is decided. For example, if the registry-type is npm, the sequence of make commands will be make install, make build, and make publish. If the registry-type is docker, the sequence of make commands will be make configure, make build, and make push.",
+    default="docker",
+    help="Based off of the registry-type value, the sequence of make commands used before build is decided. For example, if the registry-type is npm, the sequence of make commands will be make install, make build, and make publish. If the registry-type is docker, the sequence of make commands will be make configure, make build, and make push. Defaults to 'docker'.",
 )
 @click.option(
     "--dry-run",
@@ -153,6 +155,8 @@ def build(
             tag = input_data["sources"]["application"]["tag"]
             service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
 
+    provider = LaunchConfigTemplate(dry_run).get_provider("service", input_data)
+
     if not skip_clone:
         repository = clone_repository(
             repository_url=url,
@@ -170,5 +174,6 @@ def build(
         service_dir=service_dir,
         registry_type=registry_type,
         push=push,
+        provider=provider,
         dry_run=dry_run,
     )
