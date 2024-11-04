@@ -99,16 +99,6 @@ def build(
             "[DRYRUN] Performing a dry run, nothing will be built.", fg="yellow"
         )
 
-    if Path(DOCKER_FILE_NAME).exists():
-        execute_build(
-            service_dir=Path.cwd(),
-            registry_type=registry_type,
-            push=push,
-            provider=provider,
-            dry_run=dry_run,
-        )
-        quit()
-
     if (
         GITHUB_APPLICATION_ID
         and GITHUB_INSTALLATION_ID
@@ -156,6 +146,16 @@ def build(
             tag = input_data["sources"]["application"]["tag"]
             service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
 
+    if Path(DOCKER_FILE_NAME).exists():
+        execute_build(
+            service_dir=Path.cwd(),
+            registry_type=registry_type,
+            push=push,
+            provider=provider,
+            dry_run=dry_run,
+        )
+        quit()
+        
     provider = LaunchConfigTemplate(dry_run).get_provider("service", input_data)
 
     if not skip_clone:
