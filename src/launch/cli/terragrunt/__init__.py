@@ -239,16 +239,16 @@ def terragrunt(
             f"extract remotes = {extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)}",
             fg="red",
         )
-        click.secho(
-            f"extract remotes = {extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)}",
-            fg="red",
-        )
         build_path = (
             Path()
             .cwd()
             .joinpath(
                 f"{BUILD_TEMP_DIR_PATH}/{extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)}"
             )
+        )
+        click.secho(
+            f"build_path = {build_path}",
+            fg="red",
         )
 
     webhooks_path = (
