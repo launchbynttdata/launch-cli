@@ -34,4 +34,5 @@ def execute_build(
             )
             if provider == "aws":
                 functions.make_docker_aws_ecr_login(dry_run=dry_run)
+            
             functions.make_push(dry_run=dry_run)

@@ -17,7 +17,7 @@ def deploy_remote_state(
     region: str,
     instance: str,
     build_path: Path,
-    dry_run: bool,
+    dry_run: bool = False,
 ) -> None:
     pwd = Path.cwd()
     os.chdir(build_path)

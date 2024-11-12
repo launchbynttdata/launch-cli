@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class LaunchConfigTemplate:
-    def __init__(self, dry_run: str):
+    def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
 
     def properties_file(self, value: dict, current_path: Path, dest_base: Path) -> None:
@@ -40,18 +40,20 @@ class LaunchConfigTemplate:
             LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value
         ].items():
             file_path = Path(source_file).resolve()
-            relative_path = current_path.joinpath(file_path.name)
+            target_path = current_path.joinpath(target_file)
             value[LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value][target_file] = str(
-                f"./{relative_path.relative_to(dest_base).with_name(target_file)}"
+                f"./{target_path.relative_to(dest_base)}"
             )
+            
             if self.dry_run:
                 click.secho(
-                    f"[DRYRUN] Processing template, would have copied: {file_path} to {relative_path}",
+                    f"[DRYRUN] Processing template, would have copied: {file_path} to {target_path}",
                     fg="yellow",
                 )
             else:
                 try:
-                    shutil.copy(file_path, relative_path.with_name(target_file))
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(file_path, target_path)
                 except shutil.SameFileError:
                     pass
 

@@ -26,9 +26,7 @@ def test_deploy_remote_state_all_parameters(mocker, fakedata):
         "REGION=us-west-2",
         "ENVIRONMENT=prod",
         "ENV_INSTANCE=instance1",
-        "CONTAINER_NAME=test_container",
-        "RESOURCE_GROUP_NAME=test_resource_group",
-        "STORAGE_ACCOUNT_NAME=test_storage_account",
+        "STORAGE_ACCOUNT_NAME=testprefixuuid-test",
         "terragrunt/remote_state/azure",
     ]
 
@@ -45,10 +43,10 @@ def test_deploy_remote_state_all_parameters(mocker, fakedata):
         target_environment,
         region,
         instance,
-        fakedata["provider_config"],
+        "./",
     )
 
-    mock_run.assert_called_once_with(expected_run_list, check=True)
+    mock_run.assert_called_with(expected_run_list, check=True)
     mock_logger.assert_called()
 
 
@@ -60,9 +58,7 @@ def test_deploy_remote_state_minimal_parameters(mocker, fakedata):
     instance = ""
     expected_run_list = [
         "make",
-        "CONTAINER_NAME=test_container",
-        "RESOURCE_GROUP_NAME=test_resource_group",
-        "STORAGE_ACCOUNT_NAME=test_storage_account",
+        "STORAGE_ACCOUNT_NAME=uuid-test",
         "terragrunt/remote_state/azure",
     ]
 
@@ -79,10 +75,10 @@ def test_deploy_remote_state_minimal_parameters(mocker, fakedata):
         target_environment,
         region,
         instance,
-        fakedata["provider_config"],
+        "./",
     )
 
-    mock_run.assert_called_once_with(expected_run_list, check=True)
+    mock_run.assert_called_with(expected_run_list, check=True)
     mock_logger.assert_called()
 
 
@@ -99,7 +95,7 @@ def test_deploy_remote_state_error_handling(mocker, fakedata):
             "prod",
             "us-west-2",
             "instance1",
-            fakedata["provider_config"],
+            "./",
         )
 
     assert "An error occurred:" in str(
