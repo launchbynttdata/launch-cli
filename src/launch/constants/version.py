@@ -1,5 +1,7 @@
+from importlib.metadata import version 
 from semver import Version
 
-VERSION = "0.13.0"
+
+VERSION = version('launch-cli')
 
 SEMANTIC_VERSION = Version.parse(VERSION)

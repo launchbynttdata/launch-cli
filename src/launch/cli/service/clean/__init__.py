@@ -4,7 +4,7 @@ import shutil
 import click
 
 from launch.config.common import BUILD_TEMP_DIR_PATH
-
+from launch.constants.version import SEMANTIC_VERSION
 logger = logging.getLogger(__name__)
 
 
@@ -25,6 +25,8 @@ def clean(
     Args:
         dry_run (bool): If set, it will not delete the resources, but will log what it would have
     """
+    
+    click.secho(f"VERSION = {SEMANTIC_VERSION}")
 
     if dry_run:
         click.secho(
