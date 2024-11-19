@@ -44,7 +44,10 @@ python3.11 -m pip install launch-cli==0.1.0
 ### Development Installation
 
 1. Clone this repository to your machine and enter the repository's directory.
-2. Create a new virtual environment and activate it with `python3.11 -m venv .venv && source .venv/bin/activate`.
+2. For Windows 11, for creating virtual environments with .
+3. Create a new virtual environment and activate it:
+      for windows 11 - `py -m venv .venv` and `.venv\Scripts\activate`
+      with other OS - `python3.11 -m venv .venv && source .venv/bin/activate`
 4. Issue the command `python3.11 -m pip install -e '.[dev]'` to create an editable installation.
 5. You can now use the `launch` command family from your CLI, and changes made to most code should be available the next time you run the CLI command, but changes to the entrypoint or pyproject.toml may require that you issue the pip install command again to update the generated shortcut.
 
