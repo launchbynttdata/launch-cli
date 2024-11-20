@@ -9,17 +9,17 @@ def test_git_config_dry_run():
         mock_secho.assert_any_call(f"[DRYRUN] Would have ran subprocess: git config", fg="yellow")
         mock_run.assert_not_called()
 
-def test_git_config_success():
+def test_git_config_success(self):
     with patch("click.secho") as mock_secho, patch("subprocess.run") as mock_run:
         git_config(dry_run=False)
         mock_secho.assert_any_call(f"Running make git config")
-        assert mock_run.call_count == 2
+        self.assertEqual(mock_run.call_count,2)
         mock_run.assert_any_call(["git", "config", "--global", "user.name", "nobody"], check=True)
         mock_run.assert_any_call(["git", "config", "--global", "user.email", "nobody@nttdata.com"], check=True)
 
-def test_git_config_failure():
+def test_git_config_failure(self):
     with patch("subprocess.run") as mock_run:
         mock_run.side_effect = subprocess.CalledProcessError(1, "git config")
         with pytest.raises(RuntimeError) as exc_info:
             git_config(dry_run=False)
-        assert "An error occurred:" in str(exc_info.value)
+        self.assertIn("An error occurred:" , str(exc_info.value))
