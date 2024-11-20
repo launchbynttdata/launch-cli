@@ -50,3 +50,14 @@ def fakedata():
 @pytest.fixture
 def base_path(tmp_path) -> str:
     return str(tmp_path)
+
+
+@pytest.fixture
+def fakeData_forPath():
+    return {
+        "a": {
+            "b": {
+                "c": "value"
+            }
+        }
+    }
