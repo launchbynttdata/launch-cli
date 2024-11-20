@@ -7,6 +7,12 @@ from launch.config.common import BUILD_TEMP_DIR_PATH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.lib.service.functions import prepare_service
 
+# @pytest.fixture
+# def fakedata():
+#     config_path = Path(__file__).parent / "data" / "fakedata.json"
+#     with config_path.open() as f:
+#         return json.load(f)
+
 
 @pytest.fixture
 def mock_dependencies(mocker):
@@ -24,7 +30,7 @@ def mock_dependencies(mocker):
     }
 
 
-def test_prepare_service_with_in_file(mock_dependencies, mocker):
+def test_prepare_service_with_in_file(mock_dependencies, mocker, fakedata):
     mock_file = mocker.mock_open(read_data=json.dumps({"key": "value"}))
     mocker.patch("builtins.open", mock_file)
     mocker.patch("json.load", return_value={"key": "value"})
@@ -32,13 +38,7 @@ def test_prepare_service_with_in_file(mock_dependencies, mocker):
         input_data, service_path, repository, g = prepare_service(
             name="test_service", in_file=f, dry_run=True
         )
-    assert input_data == {
-        "key": "value",
-        "skeleton": {
-            "url": "https://github.com/launchbynttdata/lcaf-template-terragrunt.git",
-            "tag": "main",
-        },
-    }
+    assert input_data == fakedata["prepare_service"]
     assert service_path == f"{Path.cwd()}/test_service"
     assert repository is None
     assert g == mock_dependencies["mock_get_github_instance"].return_value
@@ -48,19 +48,13 @@ def test_prepare_service_with_in_file(mock_dependencies, mocker):
     )
 
 
-def test_prepare_service_without_in_file_with_launchconfig(mock_dependencies):
+def test_prepare_service_without_in_file_with_launchconfig(mock_dependencies, fakedata):
     mock_dependencies["mock_path_exists"].return_value = True
     mock_dependencies["mock_path_read_text"].return_value = json.dumps({"key": "value"})
     input_data, service_path, repository, g = prepare_service(
         name="test_service", in_file=None, dry_run=True
     )
-    assert input_data == {
-        "key": "value",
-        "skeleton": {
-            "url": "https://github.com/launchbynttdata/lcaf-template-terragrunt.git",
-            "tag": "main",
-        },
-    }
+    assert input_data == fakedata["prepare_service"]
     assert service_path == f"{Path.cwd()}"
     assert repository is None
     assert g == mock_dependencies["mock_get_github_instance"].return_value
