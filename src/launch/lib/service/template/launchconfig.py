@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from contextlib import suppress
 from pathlib import Path
 from uuid import uuid4
 
@@ -28,10 +29,8 @@ class LaunchConfigTemplate:
                 fg="yellow",
             )
         else:
-            try:
+            with suppress(shutil.SameFileError):
                 shutil.copy(file_path, relative_path.with_name(TERRAFORM_VAR_FILE))
-            except shutil.SameFileError:
-                pass
 
     def copy_additional_files(
         self, value: dict, current_path: Path, dest_base: Path
@@ -116,14 +115,13 @@ class LaunchConfigTemplate:
                 except shutil.SameFileError:
                     pass
 
-
     def uuid(
         self,
         value: dict
     ) -> None:
         if LAUNCHCONFIG_KEYS.UUID.value not in value:
             value[LAUNCHCONFIG_KEYS.UUID.value] = f"{str(uuid4())[:6]}"
-            
+
     def get_provider(self, resource: str, input_data: dict) -> str:
         if isinstance(input_data[LAUNCHCONFIG_KEYS.PROVIDER.value], dict):
             if resource in input_data[LAUNCHCONFIG_KEYS.PROVIDER.value]:

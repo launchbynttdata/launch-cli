@@ -68,7 +68,7 @@ def common_service_workflow(
     repository: Repo,
     input_data: dict,
     git_message: str,
-    uuid: bool,
+    skip_uuid: bool,
     skip_sync: bool,
     skip_git: bool,
     skip_commit: bool,
@@ -127,7 +127,7 @@ def common_service_workflow(
         repo_base=Path.cwd(),
         dest_base=Path(service_path),
         config={PLATFORM_SRC_DIR_PATH: input_data[PLATFORM_SRC_DIR_PATH]},
-        skip_uuid=uuid,
+        skip_uuid=skip_uuid,
         dry_run=dry_run,
     )[PLATFORM_SRC_DIR_PATH]
 

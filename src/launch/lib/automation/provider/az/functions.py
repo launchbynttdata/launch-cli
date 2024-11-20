@@ -19,9 +19,6 @@ def deploy_remote_state(
     build_path: Path,
     dry_run: bool = False,
 ) -> None:
-    pwd = Path.cwd()
-    os.chdir(build_path)
-    click.secho(Path.cwd(), fg="red")
     run_list = ["make"]
 
     make_configure(dry_run=dry_run)
@@ -42,8 +39,6 @@ def deploy_remote_state(
 
     logger.info(f"Running {run_list}")
     try:
-        subprocess.run(run_list, check=True)
+        subprocess.run(run_list, check=True, cwd=build_path)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"An error occurred: {str(e)}") from e
-    finally:
-        os.chdir(pwd)

@@ -92,4 +92,3 @@ def load_launchconfig(path=LAUNCHCONFIG_PATH_LOCAL) -> dict:
         input_data = json.load(f)
         input_data = input_data_validation(input_data)
         return input_data
-    raise Exception("Failed to read launchconfig file")
