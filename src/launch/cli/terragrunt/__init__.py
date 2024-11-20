@@ -272,7 +272,7 @@ def terragrunt(
         )
 
     # If the Provider is AZURE there is a prequisite requirement of logging into azure 
-    # i.e. az login, or service principal is already applied to the environment.: az login; az account get-access-token
+    # i.e. az login, or service principal is already applied to the environment: az login; az account get-access-token
     # If the provider is AWS, we need to assume the role for deployment.
     
     provider = LaunchConfigTemplate(dry_run).get_provider(platform_resource, input_data)
