@@ -13,7 +13,9 @@ from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 @pytest.fixture(scope="class")
 def launch_config_file_contents():
     yield {
-        "provider": "aws",
+        "provider": {
+            "service": "aws"
+        },
         "accounts": {"root": "launch-root-admin"},
         "naming_prefix": "unit-test",
         "skeleton": {
@@ -104,16 +106,16 @@ def built_dir(launch_service_directory, launch_config_file_contents):
     target_dir = launch_service_directory.joinpath(BUILD_TEMP_DIR_PATH).joinpath(
         Path.cwd().name
     )
-    LaunchConfigTemplate(dry_run=False).copy_additional_files(
-        value=config["service"]["root"]["us-east-2"]["000"],
-        current_path=(
+    current_path=(
             target_dir.joinpath("platform")
             .joinpath("service")
             .joinpath("root")
             .joinpath("us-east-2")
             .joinpath("000")
-        ),
-        repo_base=launch_service_directory,
+        )
+    LaunchConfigTemplate(dry_run=False).copy_additional_files(
+        value=config["service"]["root"]["us-east-2"]["000"],
+        current_path=current_path,
         dest_base=target_dir,
     )
     yield launch_service_directory
@@ -125,7 +127,7 @@ class TestCopyAdditionalFiles:
         build_path = built_dir.joinpath(BUILD_TEMP_DIR_PATH).joinpath(Path.cwd().name)
         expected_environment_file_path = build_path.joinpath(
             "platform/service/root/us-east-2/000/environment_file.txt"
-        )
+        )       
         assert expected_environment_file_path.exists()
         assert expected_environment_file_path.is_file()
         assert expected_environment_file_path.read_text() == "environment file"
@@ -156,6 +158,9 @@ class TestCopyAdditionalFiles:
         expected_root_file_path = build_path.joinpath(
             "platform/service/root/us-east-2/000/root_file.txt"
         )
+        print(os.listdir(build_path.joinpath(
+            "platform/service/root/us-east-2/000"
+        )))
         assert expected_root_file_path.exists()
         assert expected_root_file_path.is_file()
         assert expected_root_file_path.read_text() == "root file"

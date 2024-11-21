@@ -1,11 +1,13 @@
+import click
 import os
 from pathlib import Path
-
-import click
 from git import Repo
 
+from launch.config.common import IS_PIPELINE
+from launch.cli.common.options import (
+    deployment_region,
+)
 from launch.cli.common.options.aws import (
-    aws_deployment_region,
     aws_deployment_role,
     aws_secrets_profile,
     aws_secrets_region,
@@ -36,7 +38,9 @@ from launch.lib.automation.environment.functions import (
     readFile,
     set_netrc,
 )
+from launch.lib.automation.processes.functions import git_config
 from launch.lib.automation.provider.aws.functions import assume_role
+from launch.lib.automation.provider.az.functions import deploy_remote_state
 from launch.lib.automation.terragrunt.functions import (
     copy_webhook,
     create_tf_auto_file,
@@ -46,13 +50,17 @@ from launch.lib.automation.terragrunt.functions import (
     terragrunt_init,
     terragrunt_plan,
 )
-from launch.lib.common.utilities import extract_repo_name_from_url
+from launch.lib.common.utilities import (
+    extract_repo_name_from_url,
+)
 from launch.lib.github.auth import read_github_token
+from launch.lib.service.common import load_launchconfig
+from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
 
 @click.command()
 @aws_deployment_role
-@aws_deployment_region
+@deployment_region
 @aws_secrets_region
 @aws_secrets_profile
 @click.option(
@@ -120,7 +128,7 @@ from launch.lib.github.auth import read_github_token
 def terragrunt(
     context: click.Context,
     aws_deployment_role: str,
-    aws_deployment_region: str,
+    deployment_region: str,
     aws_secrets_region: str,
     aws_secrets_profile: str,
     url: str,
@@ -141,7 +149,7 @@ def terragrunt(
     Args:
         context (click.Context): The context object passed from click.
         aws_deployment_role (str): The AWS deployment role to assume.
-        aws_deployment_region (str): The AWS deployment region to assume.
+        deployment_region (str): The deployment region to deploy to.
         aws_secrets_region (str): The AWS region to use for secrets retrieval.
         aws_secrets_profile (str): The AWS profile to use for secrets retrieval.
         url (str): The URL of the repository to clone.
@@ -254,18 +262,27 @@ def terragrunt(
             tag=tag,
             dry_run=dry_run,
         )
+    else:
+        input_data=load_launchconfig()
 
     install_tool_versions()
-
-    # If the Provider is AZURE there is a prequisite requirement of logging into azure
-    # i.e. az login, or service principal is already applied to the environment.
-    # If the provider is AWS, we need to assume the role for deployment.
-    if aws_deployment_role:
-        assume_role(
-            aws_deployment_role=aws_deployment_role,
-            aws_deployment_region=aws_deployment_region,
-            profile=input_data["accounts"][target_environment],
+    if IS_PIPELINE:
+        git_config(
+            dry_run=dry_run
         )
+
+    # If the Provider is AZURE there is a prequisite requirement of logging into azure 
+    # i.e. az login, or service principal is already applied to the environment: az login; az account get-access-token
+    # If the provider is AWS, we need to assume the role for deployment.
+    
+    provider = LaunchConfigTemplate(dry_run).get_provider(platform_resource, input_data)
+    if provider == "aws":
+        if aws_deployment_role:
+            assume_role(
+                aws_deployment_role=aws_deployment_role,
+                aws_deployment_region=deployment_region,
+                profile=input_data["accounts"][target_environment],
+            )
 
     run_dirs = []
     if platform_resource in TERRAGRUNT_RUN_DIRS:
@@ -303,25 +320,39 @@ def terragrunt(
         )
 
     for run_dir in run_dirs:
-        tg_dir = build_path.joinpath(run_dir, aws_deployment_region)
+        tg_dir = build_path.joinpath(run_dir, deployment_region)
         if not (tg_dir).exists():
             message = f"Error: Path {tg_dir} does not exist."
             click.secho(message, fg="red")
             raise FileNotFoundError(message)
         os.chdir(tg_dir)
-        if render_app_vars:
-            for instance in os.scandir(tg_dir):
-                if instance.is_dir():
-                    click.secho(
-                        f"{CONTAINER_REGISTRY=} {CONTAINER_IMAGE_NAME=} {app_image_version=}"
+        for instance in os.scandir(tg_dir):
+            if instance.is_dir():
+                # If the Provider is AZURE we need to deploy the remote state
+                if provider == "az" or provider == "ado":
+                    if platform_resource == "service":
+                        uuid_value = input_data["platform"][platform_resource][target_environment][deployment_region][instance.name][LAUNCHCONFIG_KEYS.UUID.value]
+                    else:
+                        uuid_value = input_data["platform"]["pipeline"][f"{platform_resource}-provider"][target_environment][deployment_region][instance.name][LAUNCHCONFIG_KEYS.UUID.value]
+                    deploy_remote_state(
+                        uuid_value = uuid_value,
+                        naming_prefix = input_data["naming_prefix"],
+                        target_environment = target_environment,
+                        region = deployment_region,
+                        instance = instance.name,
+                        build_path = build_path,
+                        dry_run = dry_run,
                     )
+                if render_app_vars:
                     create_tf_auto_file(
                         data={
-                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{app_image_version}"'
+                            "app_image": f'"{CONTAINER_REGISTRY}/{CONTAINER_IMAGE_NAME}:{app_image_version}"',
+                            "redeploy_on_apply": "true",
+                            "force_new_deployment": "true",
                         },
                         out_file=tg_dir.joinpath(instance, "app_image.auto.tfvars"),
                         dry_run=dry_run,
-                    )
+                        )
         terragrunt_init(
             dry_run=dry_run,
         )
