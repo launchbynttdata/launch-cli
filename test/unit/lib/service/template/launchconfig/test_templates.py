@@ -24,10 +24,6 @@ def test_templates(mocker, fakedata):
         current_path.joinpath("templates/my_template"), exist_ok=True
     )
 
-    print(dest_base.joinpath("./current/templates/my_template/readme.yaml"))
-    print(value["templates"]["my_template"]["readme"])
-
-    # Ensure value dictionary updates correctly
     assert value["templates"]["my_template"]["readme"] == (
         "./current/templates/my_template/readme.yaml"
     )
