@@ -8,19 +8,7 @@ from launch.config.launchconfig import SERVICE_REMOTE_BRANCH
 from launch.lib.service.functions import common_service_workflow
 
 
-@pytest.fixture
-def test_fakedata():
-    return {
-        "mock_repo": MagicMock(),
-        "workflow": {
-            "skeleton": {"url": "skeleton_url", "tag": "skeleton_tag"},
-            "sources": {"application": {"url": "app_url", "tag": "app_tag"}},
-            PLATFORM_SRC_DIR_PATH: "platform_src_path",
-        },
-    }
-
-
-def test_common_service_workflow(mocker, test_fakedata):
+def test_common_service_workflow(mocker, fakedata):
     LAUNCHCONFIG_NAME = mocker.patch(
         "launch.constants.launchconfig.LAUNCHCONFIG_NAME", ".launch_config"
     )
@@ -41,8 +29,8 @@ def test_common_service_workflow(mocker, test_fakedata):
     mocker.patch("click.secho")
 
     service_path = "service_path"
-    repository = test_fakedata["mock_repo"]
-    input_data = test_fakedata["workflow"]
+    repository = MagicMock()
+    input_data = fakedata["workflow"]
     git_message = "commit message"
     skip_uuid = False
     skip_sync = False
