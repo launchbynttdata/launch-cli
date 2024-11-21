@@ -1,18 +1,22 @@
-import json
+
+import click
 import logging
 import os
 import shutil
-from pathlib import Path
 
-import click
+from git import Repo
+from pathlib import Path
 
 from launch.cli.service.clean import clean
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME, LAUNCHCONFIG_PATH_LOCAL
-from launch.lib.common.utilities import extract_repo_name_from_url
+from launch.lib.automation.processes.functions import make_configure
+from launch.lib.common.utilities import (
+    extract_repo_name_from_url,
+)
 from launch.lib.local_repo.repo import checkout_branch, clone_repository
-from launch.lib.service.common import input_data_validation
+from launch.lib.service.common import load_launchconfig
 from launch.lib.service.template.functions import (
     copy_and_render_templates,
     copy_template_files,
@@ -96,7 +100,7 @@ def generate(
         output_path = f"{output_path}/{service_dir}"
         Path(output_path).mkdir(parents=True, exist_ok=True)
     else:
-        service_dir = Path.cwd().name
+        service_dir = extract_repo_name_from_url(Repo(Path().cwd()).remotes.origin.url)
     build_path_service = f"{output_path}/{BUILD_TEMP_DIR_PATH}/{service_dir}"
     Path(output_path).mkdir(parents=True, exist_ok=True)
 
@@ -124,19 +128,9 @@ def generate(
     )
 
     if Path(LAUNCHCONFIG_PATH_LOCAL).exists():
-        with open(LAUNCHCONFIG_PATH_LOCAL, "r") as f:
-            click.secho(
-                f"Reading config file found at local path: {LAUNCHCONFIG_PATH_LOCAL=}"
-            )
-            input_data = json.load(f)
-            input_data = input_data_validation(input_data)
+        input_data=load_launchconfig()
     elif Path(f"{build_path_service}/{LAUNCHCONFIG_NAME}").exists():
-        with open(f"{build_path_service}/{LAUNCHCONFIG_NAME}", "r") as f:
-            click.secho(
-                f"Reading config file found at local path: {build_path_service}/{LAUNCHCONFIG_NAME}"
-            )
-            input_data = json.load(f)
-            input_data = input_data_validation(input_data)
+        input_data=load_launchconfig(f"{build_path_service}/{LAUNCHCONFIG_NAME}")
     else:
         click.secho(
             f"No {LAUNCHCONFIG_NAME} found. Exiting.",
@@ -173,6 +167,7 @@ def generate(
     template_paths, jinja_paths = list_jinja_templates(
         Path(build_skeleton_path),
     )
+
     copy_and_render_templates(
         base_dir=Path(build_path_service),
         template_paths=template_paths,

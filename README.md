@@ -99,133 +99,9 @@ The service family of commands represents all the automation needed for the life
 
 `launch service create`: command is used to create a new service for the launch platform. This will create a new repository to the standard needed to run on the launch platform. This will be a properties driven only repository.
 
-```sh
-$ launch service create --help
-Usage: launch service create [OPTIONS]
-
-  Creates a new service.
-
-Options:
-  --organization TEXT   GitHub organization containing your repository.
-                        Defaults to the launchbynttdata organization.
-  --name TEXT           Name of the service to  be created.  [required]
-  --description TEXT    A short description of the repository.
-  --public              The visibility of the repository.
-  --visibility TEXT     The visibility of the repository. Can be one of:
-                        public, private.
-  --main-branch TEXT    The name of the main branch.
-  --remote-branch TEXT  The name of the remote branch when creating/updating a
-                        repository.
-  --in-file FILENAME    Inputs to be used with the skeleton during creation.
-                        [required]
-  --skip-commit         If set, it will skip commiting the local changes.
-  --git-message TEXT    The git commit message to use when creating a commit.
-                        Defaults to 'Initial commit'.
-  --no-uuid             If set, it will not generate a UUID to be used in
-                        skeleton files.
-  --dry-run             Perform a dry run that reports on what it would do,
-                        but does not create webhooks.
-  --help                Show this message and exit.
-```
-
 Example command use:
 ```sh
 $ launch service create --name my-service --in-file ~/workplace/data/launch_az_inputs.json
-```
-
-Example of launch_az_inputs.json:
-```sh
-{
-    "sources":{
-        "service":{
-            "module": "https://github.com/launchbynttdata/tf-azurerm-module-resource_group.git",
-            "tag" : "0.2.0"
-        },
-        "pipeline":{
-            "module": "https://github.com/launchbynttdata/tf-azureado-module_ref-pipeline.git",
-            "tag" : "0.1.0"
-        }
-    },
-    "provider": "az",
-    "accounts": {
-        "sandbox": "e71eb3cd-83f2-46eb-8f47-3b779e27672f"
-    },
-    "naming_prefix": "demo",
-    "platform": {
-        "service": {
-            "sandbox": {
-                "eastus": {
-                    "000": {
-                        "properties_file": "/exact/path/az_rg.tfvars"
-                    }
-                }
-            }
-        },
-        "pipeline": {
-            "pipeline-azdo": {
-                "azdo": {
-                    "sandbox": {
-                        "000": {
-                            "properties_file": "/exact/path/ado_pipeline.tfvars"
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-```
-
-Example of launch_aws_inputs.json:
-```sh
-{
-    "sources":{
-        "service":{
-            "module": "https://github.com/launchbynttdata/tf-aws-wrapper_module-s3_bucket.git",
-            "tag" : "0.1.1"
-        },
-        "pipeline":{
-            "module": "https://github.com/launchbynttdata/tf-aws-wrapper_module-codepipelines.git",
-            "tag" : "0.1.1"
-        },
-        "webhook":{
-            "module": "https://github.com/launchbynttdata/tf-aws-wrapper_module-bulk_lambda_function.git",
-            "tag" : "0.1.0"
-        }
-    },
-    "provider": "aws",
-    "accounts": {
-        "sandbox": "launch-sandbox-admin"
-    },
-    "naming_prefix": "demo",
-    "platform": {
-        "service": {
-            "sandbox": {
-                "us-east-2": {
-                    "000": {
-                        "properties_file": "/exact/path/aws_s3.tfvars"
-                    }
-                }
-            }
-        },
-        "pipeline": {
-            "pipeline-aws": {
-                "aws": {
-                    "sandbox": {
-                        "properties_file": "/exact/path/aws_s3.tfvars"
-                    }
-                }
-            },
-            "webhook-aws": {
-                "aws": {
-                    "webhook": {
-                        "properties_file": "/exact/path/aws_s3.tfvars"
-                    }
-                }
-            }
-        }
-    }
-}
 ```
 
 `launch service update`: command updates a service repository with the new supplied --in-file. This command is used if you have added new environments, pipelines resources, or other aspects outside of service configuration. Updating service configs, such as *.tfvars, should be handled through your normal SCM tool such as `git`. If for example, you want to add a new instance, this would be the correct command.
@@ -235,33 +111,6 @@ Example command use:
 $ launch service update --name my-service --in-file  ~/workplace/data/launch_az_inputs.json --git-message 'adding instance 001'
 ```
 
-```sh
-$ launch service update --help
-Usage: launch service update [OPTIONS]
-
-  Updates a service.
-
-Options:
-  --organization TEXT   GitHub organization containing your repository.
-                        Defaults to the launchbynttdata organization.
-  --name TEXT           Name of the service to  be created.  [required]
-  --main-branch TEXT    The name of the main branch.
-  --remote-branch TEXT  The name of the remote branch when creating/updating a
-                        repository.
-  --in-file FILENAME    Inputs to be used with the skeleton during creation.
-                        [required]
-  --skip-git            If set, it will ignore cloning and checking out the
-                        git repository.
-  --skip-commit         If set, it will skip commiting the local changes.
-  --git-message TEXT    The git commit message to use when creating a commit.
-                        Defaults to 'bot: launch service update commit'.
-  --uuid                If set, it will generate a new UUID to be used in
-                        skeleton files.
-  --dry-run             Perform a dry run that reports on what it would do,
-                        but does not create webhooks.
-  --help                Show this message and exit.
-```
-
 `launch service generate`: command to generate a service from a skeleton repository in you .launch_config file. From this defined skeleton repository based on jinja2 templates, this will dynamically generate a repository with this skeleton rendered with the --name service repository properties. This will create a new directory with the prefix `<service_name>-singleRun`.
 
 Example command use:
@@ -269,46 +118,11 @@ Example command use:
 $ launch service generate --name my-service --service-branch feature/init
 ```
 
-```sh
-$ launch service generate --help
-Usage: launch service generate [OPTIONS]
-
-  Dynamically generates terragrunt files based off a service.
-
-Options:
-  --organization TEXT    GitHub organization containing your repository.
-                         Defaults to the launchbynttdata organization.
-  --name TEXT            Name of the service to  be created.  [required]
-  --service-branch TEXT  The name of the service branch.
-  --skip-git             If set, it will ignore cloning and checking out the
-                         git repository and it's properties.
-  --work-dir TEXT        The work directory to generate launch platform files.
-                         Defaults to the current directory.
-  --dry-run              Perform a dry run that reports on what it would do,
-                         but does not create webhooks.
-  --help                 Show this message and exit.
-```
-
 `launch service cleanup`: command to clean up launch platform generated files. This will remove any directories or files created from the 'launch service generate' command.
 
 Example command use:
 ```sh
 $ launch service cleanup --name my-service
-```
-
-```sh
-launch service cleanup --help
-Usage: launch service cleanup [OPTIONS]
-
-  Cleans up launch-cli reources that are created from code generation.
-
-Options:
-  --name TEXT      Name of the service to  be created.  [required]
-  --work-dir TEXT  The work directory to clean the launch generated files
-                   from. Defaults to the current directory.
-  --dry-run        Perform a dry run that reports on what it would do, but
-                   does not create webhooks.
-  --help           Show this message and exit.
 ```
 
 ### Terragrunt Family Usage

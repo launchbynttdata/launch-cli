@@ -1,5 +1,4 @@
-from launch.lib.service.common import extract_uuid_key
-
+from launch.lib.common.utilities import extract_uuid_key
 
 def test_uuid_extract_maintains_structure():
     input = {

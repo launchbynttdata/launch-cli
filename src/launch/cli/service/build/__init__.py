@@ -1,7 +1,7 @@
 import click
-import json
 import logging
 import os
+from git import Repo
 from pathlib import Path
 
 from launch.cli.github.auth.commands import application
@@ -23,7 +23,9 @@ from launch.lib.automation.environment.functions import (
 )
 from launch.lib.common.utilities import extract_repo_name_from_url
 from launch.lib.local_repo.repo import clone_repository, checkout_branch
+from launch.lib.service.common import load_launchconfig
 from launch.lib.service.build.functions import execute_build
+from launch.lib.service.template.launchconfig import LaunchConfigTemplate
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,8 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--registry-type",
-    help="(Required) Based off of the registry-type value, the sequence of make commands used before build is decided. For example, if the registry-type is npm, the sequence of make commands will be make install, make build, and make publish. If the registry-type is docker, the sequence of make commands will be make configure, make build, and make push.",
+    default="docker",
+    help="Based off of the registry-type value, the sequence of make commands used before build is decided. For example, if the registry-type is npm, the sequence of make commands will be make install, make build, and make publish. If the registry-type is docker, the sequence of make commands will be make configure, make build, and make push. Defaults to 'docker'.",
 )
 @click.option(
     "--dry-run",
@@ -95,15 +98,6 @@ def build(
         click.secho(
             "[DRYRUN] Performing a dry run, nothing will be built.", fg="yellow"
         )
-
-    if Path(DOCKER_FILE_NAME).exists():
-        execute_build(
-            service_dir=Path.cwd(),
-            registry_type=registry_type,
-            push=push,
-            dry_run=dry_run,
-        )
-        quit()
 
     if (
         GITHUB_APPLICATION_ID
@@ -147,11 +141,23 @@ def build(
                 )
                 service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
         else:
-            with open(LAUNCHCONFIG_NAME, "r") as f:
-                input_data = json.load(f)
-                url = input_data["sources"]["application"]["url"]
-                tag = input_data["sources"]["application"]["tag"]
-                service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
+            input_data=load_launchconfig()
+            os.environ["CONTAINER_IMAGE_VERSION"] = Repo(Path().cwd()).head.object.hexsha
+            url = input_data["sources"]["application"]["url"]
+            tag = input_data["sources"]["application"]["tag"]
+            service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
+
+    provider = LaunchConfigTemplate(dry_run).get_provider("service", input_data)
+
+    if Path(DOCKER_FILE_NAME).exists():
+        execute_build(
+            service_dir=Path.cwd(),
+            registry_type=registry_type,
+            push=push,
+            provider=provider,
+            dry_run=dry_run,
+        )
+        quit()
 
     if not skip_clone:
         repository = clone_repository(
@@ -170,5 +176,6 @@ def build(
         service_dir=service_dir,
         registry_type=registry_type,
         push=push,
+        provider=provider,
         dry_run=dry_run,
     )

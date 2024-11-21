@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from contextlib import suppress
 from pathlib import Path
 from uuid import uuid4
 
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class LaunchConfigTemplate:
-    def __init__(self, dry_run: str):
+    def __init__(self, dry_run: bool = False):
         self.dry_run = dry_run
 
     def properties_file(self, value: dict, current_path: Path, dest_base: Path) -> None:
@@ -28,32 +29,32 @@ class LaunchConfigTemplate:
                 fg="yellow",
             )
         else:
-            try:
+            with suppress(shutil.SameFileError):
                 shutil.copy(file_path, relative_path.with_name(TERRAFORM_VAR_FILE))
-            except shutil.SameFileError:
-                pass
 
     def copy_additional_files(
-        self, value: dict, current_path: Path, repo_base: Path, dest_base: Path
+        self, value: dict, current_path: Path, dest_base: Path
     ) -> None:
-        # print(f"\n\n{value=}\n{current_path=}\n{repo_base=}\n{dest_base=}\n\n")
-        # breakpoint()
         for target_file, source_file in value[
             LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value
         ].items():
-            source_path = repo_base.joinpath(source_file)
-            target_path = Path(current_path).joinpath(target_file)
+            file_path = Path(source_file).resolve()
+            target_path = current_path.joinpath(target_file)
+            value[LAUNCHCONFIG_KEYS.ADDITIONAL_FILES.value][target_file] = str(
+                f"./{target_path.relative_to(dest_base)}"
+            )
+            
             if self.dry_run:
                 click.secho(
-                    f"[DRYRUN] Copying additional file, would have copied {source_path} to {target_path}",
+                    f"[DRYRUN] Processing template, would have copied: {file_path} to {target_path}",
                     fg="yellow",
                 )
             else:
-                target_path.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy(src=source_path, dst=target_path)
-                click.echo(
-                    f"Copied additional file from {source_path} to {target_path}"
-                )
+                try:
+                    target_path.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy(file_path, target_path)
+                except shutil.SameFileError:
+                    pass
 
     def templates(self, value: dict, current_path: Path, dest_base: Path) -> None:
         for name, templates in value[LAUNCHCONFIG_KEYS.TEMPLATES.value].items():
@@ -113,3 +114,19 @@ class LaunchConfigTemplate:
                     shutil.copy(file_path, relative_path)
                 except shutil.SameFileError:
                     pass
+
+    def uuid(
+        self,
+        value: dict
+    ) -> None:
+        if LAUNCHCONFIG_KEYS.UUID.value not in value:
+            value[LAUNCHCONFIG_KEYS.UUID.value] = f"{str(uuid4())[:6]}"
+
+    def get_provider(self, resource: str, input_data: dict) -> str:
+        if isinstance(input_data[LAUNCHCONFIG_KEYS.PROVIDER.value], dict):
+            if resource in input_data[LAUNCHCONFIG_KEYS.PROVIDER.value]:
+                return input_data[LAUNCHCONFIG_KEYS.PROVIDER.value][resource]
+            else:
+                return input_data[LAUNCHCONFIG_KEYS.PROVIDER.value]["service"]
+        else:
+            return input_data[LAUNCHCONFIG_KEYS.PROVIDER.value]
