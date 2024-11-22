@@ -33,4 +33,4 @@ jobs:
         launch --help
     - name: Test with pytest
       run: |
-        pytest
+        pytest --cov --cov-fail-under=80
