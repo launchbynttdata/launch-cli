@@ -12,5 +12,11 @@
         "context_data" : {"key": "value"}
     },
     "uuid": "12345678-1234-1234-1234-123456789012",
-    "existing_uuid": "abcdef"
+    "existing_uuid": "abcdef",
+    "templates": {
+        "my_template": {
+            "config": "template.yaml",
+            "readme": "README.md"
+        }
+    }
 }
