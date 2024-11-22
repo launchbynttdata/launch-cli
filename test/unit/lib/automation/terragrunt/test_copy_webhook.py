@@ -86,7 +86,7 @@ def test_copy_webhook(
     )
     mock_os_chdir.assert_any_call(webhooks_path)
     mock_os_chmod.assert_called_once_with(
-        webhooks_path.joinpath(WEBHOOK_BUILD_SCRIPT), 0o755
+        webhooks_path.joinpath(WEBHOOK_BUILD_SCRIPT),
     )
     mock_subprocess_run.assert_called_once_with(
         [webhooks_path.joinpath(WEBHOOK_BUILD_SCRIPT)], check=True
