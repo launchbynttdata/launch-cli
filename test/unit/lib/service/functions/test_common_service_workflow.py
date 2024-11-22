@@ -8,7 +8,7 @@ from launch.config.launchconfig import SERVICE_REMOTE_BRANCH
 from launch.lib.service.functions import common_service_workflow
 
 
-def test_common_service_workflow(mocker, fakedata):
+def setup_mocks_and_params(mocker, fakedata):
     LAUNCHCONFIG_NAME = mocker.patch(
         "launch.constants.launchconfig.LAUNCHCONFIG_NAME", ".launch_config"
     )
@@ -37,6 +37,46 @@ def test_common_service_workflow(mocker, fakedata):
     skip_git = False
     skip_commit = False
     dry_run = False
+
+    return (
+        LAUNCHCONFIG_NAME,
+        extract_repo_name_from_url,
+        clone_repository,
+        copy_template_files,
+        process_template,
+        write_text,
+        push_branch,
+        service_path,
+        repository,
+        input_data,
+        git_message,
+        skip_uuid,
+        skip_sync,
+        skip_git,
+        skip_commit,
+        dry_run,
+    )
+
+
+def test_common_service_workflow(mocker, fakedata):
+    (
+        LAUNCHCONFIG_NAME,
+        extract_repo_name_from_url,
+        clone_repository,
+        copy_template_files,
+        process_template,
+        write_text,
+        push_branch,
+        service_path,
+        repository,
+        input_data,
+        git_message,
+        skip_uuid,
+        skip_sync,
+        skip_git,
+        skip_commit,
+        dry_run,
+    ) = setup_mocks_and_params(mocker, fakedata)
 
     try:
         common_service_workflow(
