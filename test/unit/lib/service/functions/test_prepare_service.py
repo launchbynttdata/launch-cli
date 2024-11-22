@@ -7,12 +7,6 @@ from launch.config.common import BUILD_TEMP_DIR_PATH
 from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.lib.service.functions import prepare_service
 
-# @pytest.fixture
-# def fakedata():
-#     config_path = Path(__file__).parent / "data" / "fakedata.json"
-#     with config_path.open() as f:
-#         return json.load(f)
-
 
 @pytest.fixture
 def mock_dependencies(mocker):
