@@ -18,7 +18,6 @@ class TestLaunchConfigTemplate(unittest.TestCase):
             relative_path = current_path.joinpath(file_path.name)
             dest_base = Path("/current")
 
-
             launch_config.properties_file(value,current_path,dest_base)
             
             mock_secho.assert_called_once_with(
