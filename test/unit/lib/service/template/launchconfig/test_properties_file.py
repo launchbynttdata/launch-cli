@@ -3,8 +3,6 @@ from unittest.mock import patch
 from pathlib import Path
 import os
 
-TERRAFORM_VAR_FILE = "terraform.tfvars"
-
 from launch.lib.service.template.launchconfig import LAUNCHCONFIG_KEYS,LaunchConfigTemplate
 
 class TestLaunchConfigTemplate(unittest.TestCase):
