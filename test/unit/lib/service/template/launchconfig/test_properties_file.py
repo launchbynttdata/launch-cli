@@ -26,7 +26,7 @@ class TestLaunchConfigTemplate(unittest.TestCase):
                 fg="yellow"
             )
             mock_copy.assert_not_called()
-            self.assertEqual(value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value], "./path\\test.properties\\terraform.tfvars")
+            self.assertEqual(value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value], os.path.join("./path","test.properties","terraform.tfvars"))
 
     def test_properties_file_success(self):
         with patch("click.secho") as mock_secho, patch("shutil.copy") as mock_copy:
@@ -42,5 +42,5 @@ class TestLaunchConfigTemplate(unittest.TestCase):
             mock_copy.assert_called_once_with(
                 file_path, Path("/current/path/terraform.tfvars")
             )
-            self.assertEqual(value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value], "./path\\terraform.tfvars")
+            self.assertEqual(value[LAUNCHCONFIG_KEYS.PROPERTIES_FILE.value], os.path.join("./path","terraform.tfvars"))
 
