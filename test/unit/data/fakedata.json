@@ -18,5 +18,12 @@
             "config": "template.yaml",
             "readme": "README.md"
         }
+    },
+    "prepare_service": {
+        "key": "value",
+        "skeleton": {
+            "url": "https://github.com/launchbynttdata/lcaf-template-terragrunt.git",
+            "tag": "main"
+        }
     }
 }
