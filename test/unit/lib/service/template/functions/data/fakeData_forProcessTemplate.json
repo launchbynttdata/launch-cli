@@ -1,0 +1,10 @@
+{
+    "dir1": {
+        "dir2": {
+            "additional_files": {},
+            "properties_file": {},
+            "templates": {},
+            "template_properties": {}
+        }
+    }
+}
