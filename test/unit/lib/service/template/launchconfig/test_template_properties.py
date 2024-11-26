@@ -52,7 +52,7 @@ class TestTemplateProperties(unittest.TestCase):
             
             mock_secho.assert_not_called()
             mock_makedirs.assert_called_once_with(
-                Path("/current/path/TEMPLATE_PROPERTIES"),
+                Path("/current/path/template_properties"),
                 exist_ok=True
             )
             mock_copy.assert_called_once_with(
