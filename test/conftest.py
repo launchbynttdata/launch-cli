@@ -51,13 +51,18 @@ def fakedata():
 def base_path(tmp_path) -> str:
     return str(tmp_path)
 
+@pytest.fixture
+def fakeData_forLibServiceTemplateFunction() -> dict:
+    def _load_data(filename: str) -> dict:
+        config_path = Path(__file__).parent / "unit" / "lib" / "service" / "template" / "functions" / "data" / filename
+        with config_path.open() as f:
+            return json.load(f)
+    return _load_data
 
 @pytest.fixture
-def fakeData_forPath():
-    return {
-        "a": {
-            "b": {
-                "c": "value"
-            }
-        }
-    }
+def mock_paths(tmp_path):
+    repo_base = tmp_path / "repo_base"
+    dest_base = tmp_path / "dest_base"
+    repo_base.mkdir()
+    dest_base.mkdir()
+    return repo_base, dest_base
