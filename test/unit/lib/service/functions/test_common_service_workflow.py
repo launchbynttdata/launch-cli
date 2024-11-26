@@ -5,14 +5,12 @@ import pytest
 
 from launch.config.common import BUILD_TEMP_DIR_PATH, PLATFORM_SRC_DIR_PATH
 from launch.config.launchconfig import SERVICE_REMOTE_BRANCH
+from launch.constants.launchconfig import LAUNCHCONFIG_NAME
 from launch.lib.service.functions import common_service_workflow
 
 
 def setup_patches(mocker):
     patches = {
-        "LAUNCHCONFIG_NAME": mocker.patch(
-            "launch.constants.launchconfig.LAUNCHCONFIG_NAME", ".launch_config"
-        ),
         "extract_repo_name_from_url": mocker.patch(
             "launch.lib.service.functions.extract_repo_name_from_url",
             return_value="repo_name",
@@ -101,7 +99,7 @@ def test_common_service_workflow(mocker, fakedata):
     )
     patches["write_text"].assert_called_with(
         data=data["input_data"],
-        path=Path(f"{data['service_path']}/{patches['LAUNCHCONFIG_NAME']}"),
+        path=Path(f"{data['service_path']}/{LAUNCHCONFIG_NAME}"),
         dry_run=data["dry_run"],
     )
     patches["push_branch"].assert_called_with(
