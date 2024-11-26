@@ -25,5 +25,10 @@
             "url": "https://github.com/launchbynttdata/lcaf-template-terragrunt.git",
             "tag": "main"
         }
+    },
+    "workflow": {
+        "skeleton": {"url": "skeleton_url", "tag": "skeleton_tag"},
+        "sources": {"application": {"url": "app_url", "tag": "app_tag"}},
+        "platform": "platform_src_path"
     }
 }
