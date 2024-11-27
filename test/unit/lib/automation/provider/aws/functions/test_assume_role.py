@@ -50,7 +50,7 @@ class TestAssumeRole(unittest.TestCase):
 
     def test_assume_role_assume_role_failure(self):
         with patch("subprocess.check_output") as mock_check_output:
-            aws_deployment_role, aws_deployment_region, profile,sts_response = self.aws_setup()
+            aws_deployment_role, aws_deployment_region, profile,_ = self.aws_setup()
             mock_check_output.side_effect = subprocess.CalledProcessError(1, "aws sts assume-role")
             
             with self.assertRaises(RuntimeError) as context:
