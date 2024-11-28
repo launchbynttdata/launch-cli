@@ -30,5 +30,9 @@
         "skeleton": {"url": "skeleton_url", "tag": "skeleton_tag"},
         "sources": {"application": {"url": "app_url", "tag": "app_tag"}},
         "platform": "platform_src_path"
+    },
+    "create_tf_auto_file": {
+        "data": {"key1": "value1", "key2": "value2"},
+        "out_file": "test.test"
     }
 }
