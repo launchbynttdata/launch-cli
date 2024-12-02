@@ -131,3 +131,135 @@ def resolve_next_layer_dependencies(
                 global_dependencies,
                 dry_run=dry_run,
             )
+
+
+def registry_login(registry: str, username: str, password: str) -> None:
+    """Execute Helm registry login using the provided registry, username, and password.
+    Args:
+        registry (str): The registry URL.
+        username (str): The username for authentication.
+        password (str): The password for authentication.
+    """
+    command = [
+        "helm",
+        "registry",
+        "login",
+        registry,
+        "--username",
+        username,
+        "--password",
+        password,
+    ]
+    subprocess.call(command)
+
+
+def run_deployment(
+    helm_directory: pathlib.Path,
+    release_name: str,
+    namespace: str,
+    dry_run: bool = False,
+    diff_only: bool = False,
+) -> None:
+    """Run a deployment using Helm.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace to install the chart into.
+        dry_run (bool, optional): Whether to perform a dry run or not. Defaults to False.
+        diff_only (bool, optional): Whether to only show the diff or perform the deployment. Defaults to False.
+    """
+    if diff_only:
+        diff_chart(helm_directory, release_name, namespace)
+    else:
+        if dry_run:
+            install_chart(helm_directory, release_name, namespace, dry_run=True)
+        else:
+            update_chart(helm_directory, release_name, namespace, dry_run=False)
+
+
+def install_chart(
+    helm_directory: pathlib.Path, release_name: str, namespace: str, dry_run: bool
+) -> None:
+    """Install a Helm chart.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace to install the chart into.
+        dry_run (bool): Whether to perform a dry run or not.
+    """
+    command = [
+        "helm",
+        "install",
+        release_name,
+        helm_directory,
+        "--namespace",
+        namespace,
+    ]
+    if dry_run:
+        command.append("--dry-run")
+    subprocess.call(command)
+
+
+def update_chart(
+    helm_directory: pathlib.Path, release_name: str, namespace: str, dry_run: bool
+) -> None:
+    """Update a Helm chart.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace of the release.
+        dry_run (bool): Whether to perform a dry run or not.
+    """
+    command = [
+        "helm",
+        "upgrade",
+        release_name,
+        helm_directory,
+        "--namespace",
+        namespace,
+    ]
+    if dry_run:
+        command.append("--dry-run")
+    subprocess.call(command)
+
+
+def diff_chart(helm_directory: pathlib.Path, release_name: str, namespace: str) -> None:
+    """Execute a Helm diff to compare the installed chart with the desired state.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace of the release.
+    """
+    command = [
+        "helm",
+        "diff",
+        "upgrade",
+        release_name,
+        helm_directory,
+        "--namespace",
+        namespace,
+    ]
+    subprocess.call(command)
+
+
+def template_chart(
+    helm_directory: pathlib.Path, release_name: str, namespace: str
+) -> str:
+    """Run Helm template command to generate the composed manifests.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace of the release.
+    Returns:
+        str: The composed manifests as a string.
+    """
+    command = [
+        "helm",
+        "template",
+        release_name,
+        helm_directory,
+        "--namespace",
+        namespace,
+    ]
+    output = subprocess.check_output(command, universal_newlines=True)
+    return output
