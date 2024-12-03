@@ -9,7 +9,6 @@ class TestFindAppTemplates(unittest.TestCase):
 
     def test_find_app_templates(self):
         with patch("os.walk") as mock_os_walk, patch("launch.lib.automation.terragrunt.functions.process_app_templates") as mock_process_app_templates:
-            # Setup
             context = MagicMock(spec=click.Context)
             base_dir = Path("/base/dir")
             template_dir = Path("/template/dir")
