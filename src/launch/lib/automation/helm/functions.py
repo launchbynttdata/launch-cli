@@ -133,32 +133,11 @@ def resolve_next_layer_dependencies(
             )
 
 
-def registry_login(registry: str, username: str, password: str) -> None:
-    """Execute Helm registry login using the provided registry, username, and password.
-    Args:
-        registry (str): The registry URL.
-        username (str): The username for authentication.
-        password (str): The password for authentication.
-    """
-    command = [
-        "helm",
-        "registry",
-        "login",
-        registry,
-        "--username",
-        username,
-        "--password",
-        password,
-    ]
-    subprocess.call(command)
-
-
 def run_deployment(
     helm_directory: pathlib.Path,
     release_name: str,
     namespace: str,
     dry_run: bool = False,
-    diff_only: bool = False,
 ) -> None:
     """Run a deployment using Helm.
     Args:
@@ -166,15 +145,32 @@ def run_deployment(
         release_name (str): Name of the release.
         namespace (str): Namespace to install the chart into.
         dry_run (bool, optional): Whether to perform a dry run or not. Defaults to False.
-        diff_only (bool, optional): Whether to only show the diff or perform the deployment. Defaults to False.
     """
-    if diff_only:
-        diff_chart(helm_directory, release_name, namespace)
+    if check_release_existence(release_name, namespace):
+        update_chart(helm_directory, release_name, namespace, dry_run)
     else:
-        if dry_run:
-            install_chart(helm_directory, release_name, namespace, dry_run=True)
-        else:
-            update_chart(helm_directory, release_name, namespace, dry_run=False)
+        install_chart(helm_directory, release_name, namespace, dry_run)
+
+
+def check_release_existence(release_name: str, namespace: str) -> bool:
+    """Check if a Helm release already exists in the specified namespace.
+    Args:
+        release_name (str): Name of the release.
+        namespace (str): Namespace to check.
+    Returns:
+        bool: True if the release exists, False otherwise.
+    """
+    command = [
+        "helm",
+        "list",
+        "--namespace",
+        namespace,
+        "--short",
+        "--deployed",
+    ]
+    output = subprocess.check_output(command, universal_newlines=True)
+    releases = output.strip().split("\n")
+    return release_name in releases
 
 
 def install_chart(
@@ -220,25 +216,6 @@ def update_chart(
     ]
     if dry_run:
         command.append("--dry-run")
-    subprocess.call(command)
-
-
-def diff_chart(helm_directory: pathlib.Path, release_name: str, namespace: str) -> None:
-    """Execute a Helm diff to compare the installed chart with the desired state.
-    Args:
-        helm_directory (pathlib.Path): Directory containing the Helm chart.
-        release_name (str): Name of the release.
-        namespace (str): Namespace of the release.
-    """
-    command = [
-        "helm",
-        "diff",
-        "upgrade",
-        release_name,
-        helm_directory,
-        "--namespace",
-        namespace,
-    ]
     subprocess.call(command)
 
 
