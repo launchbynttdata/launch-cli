@@ -75,7 +75,7 @@ def resolve_dependencies(path: pathlib.Path, dry_run: bool):
 def run_deployment(
     path: pathlib.Path, release_name: str, namespace: str, dry_run: bool
 ):
-    """Execute the Helm deployment."""
+    """Execute the deployment for a Helm chart."""
     try:
         click.secho(f"Running Helm deployment in {path}.", fg="green")
         run_helm_deployment(
@@ -113,7 +113,7 @@ def run_deployment(
     help="Kubernetes namespace to deploy the chart into.",
 )
 def template_chart(path: pathlib.Path, release_name: str, namespace: str):
-    """Execute the Helm template command."""
+    """Execute the template command for a Helm chart."""
     try:
         click.secho(f"Running Helm template in {path}.", fg="green")
         output = run_helm_template(
