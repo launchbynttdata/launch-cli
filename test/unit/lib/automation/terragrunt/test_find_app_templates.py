@@ -27,7 +27,7 @@ class TestFindAppTemplates(unittest.TestCase):
             mock_process_app_templates.assert_called_once_with(
                 context=context,
                 instance_path="/base/dir",
-                properties_path=Path("/base/dir/TEMPLATE_PROPERTIES"),
+                properties_path=Path("/base/dir/template_properties"),
                 template_dir=template_dir,
                 aws_profile=aws_profile,
                 aws_region=aws_region,
