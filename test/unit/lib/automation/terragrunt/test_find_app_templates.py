@@ -14,7 +14,7 @@ class TestFindAppTemplates(unittest.TestCase):
             template_dir = Path("/template/dir")
             aws_profile = "test-profile"
             aws_region = "us-west-2"
-            dry_run = True
+            dry_run = False
 
             mock_os_walk.return_value = [
                 ("/base/dir", ["template_properties"], ["file1", "file2"]),
