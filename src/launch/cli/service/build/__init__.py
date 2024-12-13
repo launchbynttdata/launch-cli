@@ -147,14 +147,12 @@ def build(
             tag = input_data["sources"]["application"]["tag"]
             service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
 
-    provider = LaunchConfigTemplate(dry_run).get_provider("service", input_data)
-
     if Path(DOCKER_FILE_NAME).exists():
         execute_build(
             service_dir=Path.cwd(),
             registry_type=registry_type,
             push=push,
-            provider=provider,
+            provider=LaunchConfigTemplate(dry_run).get_provider("service", input_data),
             dry_run=dry_run,
         )
         quit()
@@ -176,6 +174,6 @@ def build(
         service_dir=service_dir,
         registry_type=registry_type,
         push=push,
-        provider=provider,
+        provider=LaunchConfigTemplate(dry_run).get_provider("service", input_data),
         dry_run=dry_run,
     )
