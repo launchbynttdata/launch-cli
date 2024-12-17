@@ -19,7 +19,7 @@ from launch.config.github import (
     GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
-from launch.constants.launchconfig import LAUNCHCONFIG_NAME
+from launch.constants.launchconfig import LAUNCHCONFIG_NAME, LAUNCHCONFIG_PATH_LOCAL
 from launch.lib.github.auth import read_github_token
 from launch.lib.automation.environment.functions import (
     readFile,
@@ -173,7 +173,7 @@ def build(
             target_branch=tag,
             dry_run=dry_run,
         )
-        input_data=load_launchconfig()
+        input_data=load_launchconfig(path=service_dir.joinpath(LAUNCHCONFIG_PATH_LOCAL))
 
     execute_build(
         service_dir=service_dir,
