@@ -15,6 +15,11 @@ DEFAULT_CLOUD_PROVIDER = override_default(
     default="aws",
 )
 
+DOCKER_FILE_DIR = override_default(
+    key_name="DOCKER_FILE_DIR",
+    default="source",
+)
+
 DOCKER_FILE_NAME = override_default(
     key_name="DOCKER_FILE_NAME",
     default="Dockerfile",

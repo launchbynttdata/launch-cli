@@ -7,7 +7,11 @@ from pathlib import Path
 from launch.cli.github.auth.commands import application
 from launch.cli.service.clean import clean
 from launch.config.aws import AWS_LAMBDA_CODEBUILD_ENV_VAR_FILE
-from launch.config.common import BUILD_TEMP_DIR_PATH, DOCKER_FILE_NAME
+from launch.config.common import (
+    BUILD_TEMP_DIR_PATH,
+    DOCKER_FILE_DIR,
+    DOCKER_FILE_NAME
+)
 from launch.config.github import (
     GITHUB_APPLICATION_ID,
     DEFAULT_TOKEN_EXPIRATION_SECONDS,
@@ -15,7 +19,7 @@ from launch.config.github import (
     GITHUB_SIGNING_CERT_SECRET_NAME,
 )
 from launch.config.launchconfig import SERVICE_MAIN_BRANCH
-from launch.constants.launchconfig import LAUNCHCONFIG_NAME
+from launch.constants.launchconfig import LAUNCHCONFIG_NAME, LAUNCHCONFIG_PATH_LOCAL
 from launch.lib.github.auth import read_github_token
 from launch.lib.automation.environment.functions import (
     readFile,
@@ -121,6 +125,16 @@ def build(
 
     input_data = None
     service_dir = Path.cwd().joinpath(BUILD_TEMP_DIR_PATH)
+    
+    if Path(f"{Path.cwd()}/{DOCKER_FILE_DIR}/{DOCKER_FILE_NAME}").exists():
+        execute_build(
+            service_dir=Path.cwd(),
+            registry_type=registry_type,
+            push=push,
+            provider=LaunchConfigTemplate(dry_run).get_provider("service", input_data),
+            dry_run=dry_run,
+        )
+        quit()
 
     if not url:
         if not Path(LAUNCHCONFIG_NAME).exists():
@@ -147,16 +161,6 @@ def build(
             tag = input_data["sources"]["application"]["tag"]
             service_dir = service_dir.joinpath(extract_repo_name_from_url(url))
 
-    if Path(DOCKER_FILE_NAME).exists():
-        execute_build(
-            service_dir=Path.cwd(),
-            registry_type=registry_type,
-            push=push,
-            provider=LaunchConfigTemplate(dry_run).get_provider("service", input_data),
-            dry_run=dry_run,
-        )
-        quit()
-
     if not skip_clone:
         repository = clone_repository(
             repository_url=url,
@@ -169,6 +173,7 @@ def build(
             target_branch=tag,
             dry_run=dry_run,
         )
+        input_data=load_launchconfig(path=service_dir.joinpath(LAUNCHCONFIG_PATH_LOCAL))
 
     execute_build(
         service_dir=service_dir,
