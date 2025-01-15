@@ -33,12 +33,6 @@ logger = logging.getLogger(__name__)
     help="(Optional) The git commit message to use when creating a commit. Defaults to 'bot: launch service update commit'.",
 )
 @click.option(
-    "--uuid",
-    is_flag=True,
-    default=False,
-    help="(Optional) If set, it will generate a new UUID to be used in skeleton files.",
-)
-@click.option(
     "--clone",
     is_flag=True,
     default=False,
@@ -63,6 +57,12 @@ logger = logging.getLogger(__name__)
     help="(Optional) If set, it will skip syncing the template files and only update the properties files and directories.",
 )
 @click.option(
+    "--skip-uuid",
+    is_flag=True,
+    default=False,
+    help="(Optional) If set, it will not generate a UUID to be used in skeleton files.",
+)
+@click.option(
     "--dry-run",
     is_flag=True,
     default=False,
@@ -78,11 +78,11 @@ def update(
     name: str,
     in_file: IO[Any],
     git_message: str,
-    uuid: bool,
     clone: bool,
     skip_git: bool,
     skip_commit: bool,
     skip_sync: bool,
+    skip_uuid: bool,
     dry_run: bool,
     force: bool,
 ):
@@ -93,11 +93,11 @@ def update(
     Args:
         in_file (IO[Any]): The input file to be used to update the service.
         git_message (str, Optional): The git commit message to use when creating a commit.
-        uuid (bool): If set, it will generate a new UUID to be used in skeleton files.
         clone (bool): If set, it will clone the repository and perform the update.
         skip_git (bool): If set, it will ignore cloning and checking out the git repository.
         skip_commit (bool): If set, it will skip commiting the local changes.
         skip_sync (bool): If set, it will skip syncing the template files and only update the properties files and directories.
+        skip_uuid (bool): If set, it will not generate a UUID to be used in skeleton files.
         dry_run (bool): If set, it will not make any changes, but will log what it would.
         force (bool): If set, it will override safeguards.
     """
@@ -156,7 +156,7 @@ def update(
         repository=repository,
         input_data=input_data,
         git_message=git_message,
-        uuid=uuid,
+        skip_uuid=skip_uuid,
         skip_sync=skip_sync,
         skip_git=skip_git,
         skip_commit=skip_commit,
