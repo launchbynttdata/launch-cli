@@ -5,7 +5,7 @@ from functools import wraps
 import click
 
 from launch.lib.local_repo.branch import get_current_branch_name
-from launch.lib.local_repo.predict import predict_version
+from launch.lib.local_repo.predict import predict_change_type, predict_version
 from launch.lib.local_repo.tags import (
     CommitNotTaggedException,
     CommitTagNotSemanticVersionException,
@@ -44,16 +44,25 @@ def version_required_options_wrapper(f):
 
 
 @click.command()
+@click.option(
+    "--change-type",
+    type=click.BOOL,
+    is_flag=True,
+    help="Print the type of predicted change (e.g. 'major', 'minor', 'patch') rather than the version.",
+)
 @version_required_options_wrapper
-def predict(repo_path: pathlib.Path, source_branch: str):
+def predict(repo_path: pathlib.Path, source_branch: str, change_type: bool):
     """Predicts the next semantic version for a repository."""
 
     try:
-        predicted_version = predict_version(
-            existing_tags=read_semantic_tags(repo_path=repo_path),
-            branch_name=source_branch,
-        )
-        click.echo(predicted_version)
+        if change_type:
+            click.echo(predict_change_type(branch_name=source_branch))
+        else:
+            predicted_version = predict_version(
+                existing_tags=read_semantic_tags(repo_path=repo_path),
+                branch_name=source_branch,
+            )
+            click.echo(predicted_version)
     except Exception as e:
         click.secho(
             f"Failed to predict next version for repository at {repo_path}: {e}",
