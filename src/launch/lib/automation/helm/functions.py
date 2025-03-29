@@ -131,3 +131,112 @@ def resolve_next_layer_dependencies(
                 global_dependencies,
                 dry_run=dry_run,
             )
+
+
+def run_deployment(
+    helm_directory: pathlib.Path,
+    release_name: str,
+    namespace: str,
+    dry_run: bool = False,
+) -> None:
+    """Run a deployment using Helm.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace to install the chart into.
+        dry_run (bool, optional): Whether to perform a dry run or not. Defaults to False.
+    """
+    if check_release_existence(release_name, namespace):
+        update_chart(helm_directory, release_name, namespace, dry_run)
+    else:
+        install_chart(helm_directory, release_name, namespace, dry_run)
+
+
+def check_release_existence(release_name: str, namespace: str) -> bool:
+    """Check if a Helm release already exists in the specified namespace.
+    Args:
+        release_name (str): Name of the release.
+        namespace (str): Namespace to check.
+    Returns:
+        bool: True if the release exists, False otherwise.
+    """
+    command = [
+        "helm",
+        "list",
+        "--namespace",
+        namespace,
+        "--short",
+        "--deployed",
+    ]
+    output = subprocess.check_output(command, universal_newlines=True)
+    releases = output.strip().split("\n")
+    return release_name in releases
+
+
+def install_chart(
+    helm_directory: pathlib.Path, release_name: str, namespace: str, dry_run: bool
+) -> None:
+    """Install a Helm chart.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace to install the chart into.
+        dry_run (bool): Whether to perform a dry run or not.
+    """
+    command = [
+        "helm",
+        "install",
+        release_name,
+        helm_directory,
+        "--namespace",
+        namespace,
+    ]
+    if dry_run:
+        command.append("--dry-run")
+    subprocess.call(command)
+
+
+def update_chart(
+    helm_directory: pathlib.Path, release_name: str, namespace: str, dry_run: bool
+) -> None:
+    """Update a Helm chart.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace of the release.
+        dry_run (bool): Whether to perform a dry run or not.
+    """
+    command = [
+        "helm",
+        "upgrade",
+        release_name,
+        helm_directory,
+        "--namespace",
+        namespace,
+    ]
+    if dry_run:
+        command.append("--dry-run")
+    subprocess.call(command)
+
+
+def template_chart(
+    helm_directory: pathlib.Path, release_name: str, namespace: str
+) -> str:
+    """Run Helm template command to generate the composed manifests.
+    Args:
+        helm_directory (pathlib.Path): Directory containing the Helm chart.
+        release_name (str): Name of the release.
+        namespace (str): Namespace of the release.
+    Returns:
+        str: The composed manifests as a string.
+    """
+    command = [
+        "helm",
+        "template",
+        release_name,
+        helm_directory,
+        "--namespace",
+        namespace,
+    ]
+    output = subprocess.check_output(command, universal_newlines=True)
+    return output
