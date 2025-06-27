@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 BRANCH_DELIMITER = "/"
 
-PATCH_NAME_PARTS = ["fix", "bug", "patch", "dependabot"]
+PATCH_NAME_PARTS = ["chore", "fix", "bug", "patch", "dependabot"]
 MINOR_NAME_PARTS = ["feature"]
 MAJOR_NAME_PARTS = []
 
